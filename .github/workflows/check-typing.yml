@@ -1,0 +1,38 @@
+name: Check TypeScript Types
+
+on:
+  push:
+    branches: [ main, develop, 'fix/**', 'feature/**' ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-typing:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: fix/imports
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: examples/electron
+        run: npm install
+
+      - name: TypeScript type checking
+        working-directory: examples/electron
+        run: npm run type-check
