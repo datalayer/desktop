@@ -34,7 +34,8 @@ import './lodash-internals';
 import './lodash-globals';
 
 // 5. Node.js built-in module polyfills
-import './nodejs-builtins';
+// Commented out due to production build issues
+// import './nodejs-builtins';
 
 // 6. RequireJS/AMD compatibility shim
 import './requirejs';

@@ -88,6 +88,14 @@ export default defineConfig({
           '@react-navigation/stack',
           '@jupyterlite/pyodide-kernel',
           '@jupyterlite/kernel',
+          'prettier/parser-postcss',
+          'prettier/parser-html',
+          'prettier/parser-babel',
+          'prettier/plugins/estree',
+          'prettier/parser-markdown',
+          'prettier/parser-typescript',
+          'prettier/standalone',
+          '@primer/react-brand/lib/css/main.css',
           /\.whl$/,
         ],
         plugins: [
@@ -2309,20 +2317,20 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer'),
-        '@datalayer/core': resolve(__dirname, '../..'),
-        '@primer/css': resolve(__dirname, '../../node_modules/@primer/css'),
+        '@datalayer/core': resolve(__dirname, '../core'),
+        '@primer/css': resolve(__dirname, 'node_modules/@primer/css'),
         '@datalayer/jupyter-react': resolve(
           __dirname,
-          '../../node_modules/@datalayer/jupyter-react'
+          'node_modules/@datalayer/jupyter-react'
         ),
         '~react-toastify': 'react-toastify',
-        json5: resolve(__dirname, '../../node_modules/json5/lib/index.js'),
+        json5: resolve(__dirname, 'node_modules/json5/lib/index.js'),
         // Alias underscore to lodash
         underscore: 'lodash',
         // Force @jupyterlite to use our root @jupyterlab/services
         '@jupyterlite/server/node_modules/@jupyterlab/services': resolve(
           __dirname,
-          '../../node_modules/@jupyterlab/services'
+          'node_modules/@jupyterlab/services'
         ),
       },
     },

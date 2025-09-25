@@ -159,94 +159,114 @@ var createAssigner$5 = createAssigner$1;
 
 async function fixBundle() {
   try {
-    // Find the main bundle (largest JS file)
+    // Find ALL JS files in the dist folder
     const distPath = path.join(__dirname, '..', 'dist', 'renderer', 'assets');
-    const jsFiles = await glob('index-*.js', { cwd: distPath });
+    const jsFiles = await glob('*.js', { cwd: distPath });
 
     if (jsFiles.length === 0) {
       console.log('❌ No bundle files found');
       return false;
     }
 
-    // Find the largest bundle
-    let largestFile = null;
-    let largestSize = 0;
+    console.log(`🔍 Found ${jsFiles.length} JS files to check`);
+
+    // Process all JS files
+    let fixedFiles = 0;
 
     for (const file of jsFiles) {
       const filePath = path.join(distPath, file);
       const stats = fs.statSync(filePath);
-      if (stats.size > largestSize) {
-        largestSize = stats.size;
-        largestFile = file;
+      let content = fs.readFileSync(filePath, 'utf8');
+      let modified = false;
+
+      // Check if file contains the problematic CSS import
+      if (content.includes('@primer/react-brand/lib/css/main.css')) {
+        console.log(`🎯 Fixing: ${file} (${Math.round(stats.size / 1024)}kb)`);
+
+        // Remove the problematic CSS import
+        content = content.replace(
+          /import\s+['"]@primer\/react-brand\/lib\/css\/main\.css['"];?\s*/g,
+          '// Removed problematic CSS import: @primer/react-brand/lib/css/main.css\n'
+        );
+        modified = true;
+        fixedFiles++;
+      }
+
+      // Apply main bundle specific fixes only to the largest file
+      if (stats.size > 1000000) {
+        console.log(`🎯 Applying main bundle fixes to: ${file}`);
+        let originalContent = content;
+
+        // Step 1: Check if Symbol polyfill is already injected by Vite
+        if (content.includes('[Vite Symbol] Injected at bundle start')) {
+          console.log('✅ Symbol polyfill already injected by Vite plugin');
+        } else if (!content.startsWith('// CRITICAL POLYFILLS')) {
+          // Only inject if not already present
+          content = CRITICAL_POLYFILLS + '\n' + content;
+          console.log('✅ Injected critical polyfills at bundle start');
+          modified = true;
+        }
+
+        // Step 2: Fix React's Symbol.for calls in async context
+        // React's minified code uses Symbol.for but Symbol is undefined in async scope
+        // Replace all Symbol.for calls with a safe version that uses the global Symbol
+
+        // First, ensure global Symbol is available in async scope
+        const asyncStartPattern =
+          /let __tla = Promise\.all\(\[[\s\S]*?\]\)\.then\(async \(\)=>{/;
+        if (asyncStartPattern.test(content)) {
+          content = content.replace(asyncStartPattern, match => {
+            return (
+              match +
+              '\n    // Ensure Symbol is available in async scope\n    if (typeof Symbol === "undefined") { var Symbol = globalThis.Symbol || window.Symbol; }\n'
+            );
+          });
+          console.log('✅ Added Symbol reference to async scope');
+          modified = true;
+        }
+
+        // Step 3: Rename conflicting widget base$1 to widgetBase$1
+        if (content.includes('const base$1 = Object.freeze(Object.defineProperty({')) {
+          // Find const base$1 = Object.freeze(Object.defineProperty({
+          content = content.replace(
+            /const base\$1 = Object\.freeze\(Object\.defineProperty\({/g,
+            'const widgetBase$1 = Object.freeze(Object.defineProperty({'
+          );
+
+          // Update references to widget exports
+          content = content.replace(
+            /window\.define\('@jupyter-widgets\/base', base\$1\);/g,
+            "window.define('@jupyter-widgets/base', widgetBase$1);"
+          );
+
+          content = content.replace(
+            /__vitePreload\(\(\)=>Promise\.resolve\(\)\.then\(\(\)=>base\$1\)/g,
+            '__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)'
+          );
+
+          content = content.replace(/resolve\(base\$1\);/g, 'resolve(widgetBase$1);');
+
+          if (content !== originalContent) {
+            console.log('✅ Renamed conflicting widget base$1 to widgetBase$1');
+            modified = true;
+          }
+        }
+      }
+
+      // Write the file only if it was modified
+      if (modified) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`✅ Fixed: ${file}`);
       }
     }
 
-    if (!largestFile || largestSize < 1000000) {
-      console.log('❌ No large bundle found to fix');
-      return false;
+    if (fixedFiles > 0) {
+      console.log(`🎉 Fixed ${fixedFiles} files with CSS import issues`);
+    } else {
+      console.log('✅ No CSS import issues found');
     }
 
-    const bundlePath = path.join(distPath, largestFile);
-    console.log(
-      `🎯 Fixing bundle: ${largestFile} (${Math.round(largestSize / 1024)}kb)`
-    );
-
-    let content = fs.readFileSync(bundlePath, 'utf8');
-
-    // Step 1: Check if Symbol polyfill is already injected by Vite
-    if (content.includes('[Vite Symbol] Injected at bundle start')) {
-      console.log('✅ Symbol polyfill already injected by Vite plugin');
-    } else if (!content.startsWith('// CRITICAL POLYFILLS')) {
-      // Only inject if not already present
-      content = CRITICAL_POLYFILLS + '\n' + content;
-      console.log('✅ Injected critical polyfills at bundle start');
-    }
-
-    // Step 2: Fix React's Symbol.for calls in async context
-    // React's minified code uses Symbol.for but Symbol is undefined in async scope
-    // Replace all Symbol.for calls with a safe version that uses the global Symbol
-
-    // First, ensure global Symbol is available in async scope
-    const asyncStartPattern =
-      /let __tla = Promise\.all\(\[[\s\S]*?\]\)\.then\(async \(\)=>{/;
-    content = content.replace(asyncStartPattern, match => {
-      return (
-        match +
-        '\n    // Ensure Symbol is available in async scope\n    if (typeof Symbol === "undefined") { var Symbol = globalThis.Symbol || window.Symbol; }\n'
-      );
-    });
-
-    console.log('✅ Added Symbol reference to async scope');
-
-    // Step 3: Rename conflicting widget base$1 to widgetBase$1
-    const originalContent = content;
-
-    // Find const base$1 = Object.freeze(Object.defineProperty({
-    content = content.replace(
-      /const base\$1 = Object\.freeze\(Object\.defineProperty\({/g,
-      'const widgetBase$1 = Object.freeze(Object.defineProperty({'
-    );
-
-    // Update references to widget exports
-    content = content.replace(
-      /window\.define\('@jupyter-widgets\/base', base\$1\);/g,
-      "window.define('@jupyter-widgets/base', widgetBase$1);"
-    );
-
-    content = content.replace(
-      /__vitePreload\(\(\)=>Promise\.resolve\(\)\.then\(\(\)=>base\$1\)/g,
-      '__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)'
-    );
-
-    content = content.replace(/resolve\(base\$1\);/g, 'resolve(widgetBase$1);');
-
-    if (content !== originalContent) {
-      console.log('✅ Renamed conflicting widget base$1 to widgetBase$1');
-    }
-
-    // Write the fixed bundle
-    fs.writeFileSync(bundlePath, content, 'utf8');
-    console.log('🎉 Bundle fixes applied successfully!');
+    console.log('🎉 All bundle fixes applied successfully!');
     return true;
   } catch (error) {
     console.error('❌ Error fixing bundle:', error);

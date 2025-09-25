@@ -254,12 +254,5 @@ console.log('Node.js polyfills loaded successfully');
 // Make nodeModules available globally for the bundler
 window.nodeModules = nodeModules;
 
-// Export individual modules for ES module imports
-// These will be used when files do `import path from 'path'` etc.
-if (typeof module !== 'undefined' && module.exports) {
-  // CommonJS export
-  module.exports = nodeModules;
-} else if (typeof window !== 'undefined') {
-  // Browser environment - create individual module exports
-  window.__nodeModuleExports = nodeModules;
-}
+// Export for ES modules
+export default nodeModules;
