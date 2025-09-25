@@ -3,9 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module shared/types/document
+ *
+ * Type definitions for the Lexical document editor.
+ * Includes interfaces for document data, editor state, and component props.
+ */
+
 import type { LexicalEditor } from 'lexical';
 
-// Document data structure
+/**
+ * Document data structure for Lexical documents.
+ */
 export interface DocumentData {
   id: string;
   name: string;

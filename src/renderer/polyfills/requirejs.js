@@ -4,6 +4,14 @@
  */
 
 /**
+ * @module renderer/polyfills/requirejs
+ *
+ * RequireJS/AMD module system shim.
+ * Provides a minimal AMD-compatible module loader for compatibility
+ * with legacy Jupyter components that use define() and require().
+ */
+
+/**
  * RequireJS shim for Jupyter widgets in Electron
  *
  * This provides a minimal RequireJS implementation that allows Jupyter widgets

@@ -4,6 +4,14 @@
  */
 
 /**
+ * @module renderer/polyfills/lodash-globals
+ *
+ * Global lodash and Backbone setup.
+ * Makes lodash available as underscore (_) and sets up Backbone globally
+ * for compatibility with Jupyter widgets.
+ */
+
+/**
  * Lodash/Underscore Global Setup
  * Makes lodash available globally as _ and underscore for Backbone compatibility
  */

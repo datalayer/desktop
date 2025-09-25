@@ -4,6 +4,19 @@
  */
 
 /**
+ * @module renderer/polyfills/lodash-internals
+ *
+ * Lodash internal data structures polyfill.
+ * Provides implementations of ListCache, MapCache, Stack, and Hash
+ * that lodash requires for proper operation in production builds.
+ *
+ * @remarks
+ * These internal data structures are not properly defined in production
+ * builds due to bundling optimizations. This polyfill provides complete
+ * implementations to ensure lodash functions correctly.
+ */
+
+/**
  * Lodash polyfills to fix bundling issues with Map/Set constructors
  * This must be loaded before any lodash code executes
  */

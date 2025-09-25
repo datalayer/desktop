@@ -4,14 +4,21 @@
  */
 
 /**
- * Runtime loader for ServiceManager that handles CommonJS/ESM issues
+ * @module renderer/services/serviceManagerLoader
+ *
+ * Runtime loader for ServiceManager that handles CommonJS/ESM module resolution issues.
+ * Provides dynamic loading of JupyterLab services to work around bundling conflicts.
  */
 
 let realServiceManager: any = null;
 let realServerConnection: any = null;
 
 /**
- * Dynamically load the real ServiceManager at runtime
+ * Dynamically load the real ServiceManager at runtime.
+ * Caches the loaded module for subsequent calls.
+ *
+ * @returns Promise resolving to ServiceManager and ServerConnection classes
+ * @throws {Error} If ServiceManager cannot be loaded from the module
  */
 export async function loadServiceManager() {
   if (realServiceManager) {
@@ -79,7 +86,11 @@ export async function loadServiceManager() {
 }
 
 /**
- * Create a service manager instance using the dynamically loaded class
+ * Create a service manager instance using the dynamically loaded class.
+ *
+ * @param options - Optional configuration options for ServiceManager
+ * @returns Promise resolving to a new ServiceManager instance
+ * @throws {Error} If ServiceManager could not be loaded
  */
 export async function createServiceManager(options?: any) {
   const { ServiceManager } = await loadServiceManager();

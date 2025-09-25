@@ -5,8 +5,21 @@
 
 /**
  * @module preload/index
- * @description Preload script that provides a secure bridge between the main and renderer processes.
- * Exposes protected APIs for Electron, Datalayer, and proxy communication.
+ *
+ * Preload script that provides a secure bridge between the main and renderer processes.
+ * Implements context isolation by exposing carefully controlled APIs to the renderer.
+ * All communication between renderer and main process goes through this secure bridge.
+ *
+ * Exposed APIs:
+ * - electronAPI: System information, menu actions, platform detection
+ * - proxyAPI: HTTP and WebSocket proxying for Jupyter kernel communication
+ * - datalayerAPI: Authentication, runtime management, notebook operations
+ *
+ * Security features:
+ * - Context isolation enabled
+ * - No direct Node.js access from renderer
+ * - All IPC calls are explicitly defined
+ * - Type-safe API contracts
  */
 
 import { contextBridge, ipcRenderer } from 'electron';

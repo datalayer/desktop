@@ -4,8 +4,11 @@
  */
 
 /**
- * Electron-aware Collaboration Provider for Datalayer
- * Uses IPC bridge instead of direct HTTP requests
+ * @module renderer/services/electronCollaborationProvider
+ *
+ * Electron-aware collaboration provider for Datalayer.
+ * Uses IPC bridge instead of direct HTTP requests for secure
+ * collaborative document editing in the desktop application.
  */
 
 import { YNotebook } from '@jupyter/ydoc';

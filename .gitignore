@@ -68,3 +68,5 @@ logs/
 tmp/
 temp/
 *.tmp
+# Generated documentation
+docs/

@@ -8,8 +8,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/datalayer/core.git",
-    "directory": "examples/electron"
+    "url": "https://github.com/datalayer/desktop.git"
   },
   "scripts": {
     "dev": "electron-vite dev",
@@ -39,7 +38,7 @@
     "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
   "dependencies": {
-    "@datalayer/core": "file:../core",
+    "@datalayer/core": "^0.0.12",
     "@datalayer/jupyter-lexical": "^1.0.4",
     "@datalayer/jupyter-react": "^1.1.0",
     "@datalayer/lexical-loro": "^0.0.7",
@@ -73,18 +72,25 @@
   },
   "devDependencies": {
     "@axe-core/react": "^4.10.2",
+    "@eslint/js": "^9.36.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@types/form-data": "^2.2.1",
     "@types/node": "^20.16.17",
     "@types/prismjs": "^1.26.5",
     "@types/react": "^18.3.13",
     "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "electron": "34.5.8",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
+    "eslint": "^9.36.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "glob": "^11.0.3",
     "patch-package": "^8.0.0",
     "typedoc": "^0.28.13",
@@ -118,6 +124,8 @@
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "resources/icon.png",
+      "identity": null,
+      "notarize": false,
       "target": [
         {
           "target": "default",

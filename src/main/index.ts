@@ -5,8 +5,18 @@
 
 /**
  * @module main/index
- * @description Main process entry point for the Datalayer Electron application.
- * Handles window creation, IPC communication, menu setup, and security configurations.
+ *
+ * Main process entry point for the Datalayer Desktop Electron application.
+ * Manages the application lifecycle, window creation, menu configuration,
+ * security policies, and IPC communication with renderer processes.
+ *
+ * Key responsibilities:
+ * - Application window creation and management
+ * - Menu bar configuration for different platforms
+ * - Security configuration (CSP, DevTools control, context isolation)
+ * - IPC handlers for API operations and WebSocket proxying
+ * - Runtime lifecycle management and cleanup
+ * - Logging configuration and EPIPE error handling
  */
 
 // Initialize electron-log FIRST, before any other imports

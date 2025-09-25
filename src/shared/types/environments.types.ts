@@ -3,6 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module shared/types/environments
+ *
+ * Type definitions for compute environments and resource configurations.
+ * These types define the structure of environments available for running notebooks and documents.
+ */
+
+/**
+ * Represents a compute environment configuration.
+ */
 export interface Environment {
   name: string;
   language?: string;

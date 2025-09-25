@@ -4,8 +4,11 @@
  */
 
 /**
- * @module CollaborationWebSocketAdapter
- * @description WebSocket adapter for real-time collaboration that bridges between LoroCollaborativePlugin and Electron's IPC-based WebSocket proxy
+ * @module renderer/services/collaborationWebSocketAdapter
+ *
+ * WebSocket adapter for real-time collaboration.
+ * Bridges between LoroCollaborativePlugin and Electron's IPC-based WebSocket proxy
+ * for secure collaborative document editing.
  */
 
 import { logger } from '../utils/logger';

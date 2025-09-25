@@ -4,8 +4,12 @@
  */
 
 /**
- * Master Polyfill Loader
+ * @module renderer/polyfills
  *
+ * Master polyfill loader for the renderer process.
+ * Ensures compatibility with various module systems and provides required globals.
+ *
+ * @remarks
  * CRITICAL: These polyfills MUST be loaded in this exact order to prevent
  * temporal dead zone errors and ensure all dependencies are available.
  *

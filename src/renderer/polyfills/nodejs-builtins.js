@@ -4,6 +4,14 @@
  */
 
 /**
+ * @module renderer/polyfills/nodejs-builtins
+ *
+ * Node.js built-in modules polyfill.
+ * Provides browser-compatible implementations of Node.js core modules
+ * like path, os, util, events, crypto, buffer, stream, and fs.
+ */
+
+/**
  * Comprehensive polyfills for Node.js built-ins and require() in Electron renderer
  */
 

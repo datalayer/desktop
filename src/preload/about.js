@@ -3,6 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module preload/about
+ *
+ * Preload script for the about dialog window.
+ * Provides secure context bridge for about dialog functionality,
+ * exposing version information and external link handling.
+ */
+
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose protected methods that allow the renderer process to use the API safely

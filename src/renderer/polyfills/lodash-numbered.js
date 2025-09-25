@@ -4,6 +4,18 @@
  */
 
 /**
+ * @module renderer/polyfills/lodash-numbered
+ *
+ * Lodash numbered variations polyfill.
+ * Provides numbered variations of lodash internal functions that are created
+ * by the bundler during production builds.
+ *
+ * @remarks
+ * Production bundlers create numbered variations like baseGetTag$1, baseGetTag$2, etc.
+ * This polyfill ensures all these variations are available globally.
+ */
+
+/**
  * CRITICAL POLYFILLS - MUST RUN FIRST
  * These polyfills MUST execute synchronously before any other code
  * to prevent temporal dead zone errors with lodash functions

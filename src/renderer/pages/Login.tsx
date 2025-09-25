@@ -3,6 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/pages/Login
+ *
+ * Login page component for authenticating with the Datalayer platform.
+ * Handles credential validation, secure storage, and initial user data fetching.
+ */
+
 import React, { useState, useCallback } from 'react';
 import { Box } from '@primer/react';
 import { useDatalayerAPI } from '../hooks/useDatalayerAPI';
@@ -19,6 +26,14 @@ interface LoginProps {
   onUserDataFetched?: (userData: Record<string, unknown>) => void;
 }
 
+/**
+ * Login page component.
+ * Provides a form for users to authenticate with the Datalayer platform using API credentials.
+ *
+ * @param props - Component props
+ * @param props.onUserDataFetched - Callback invoked when user data is successfully fetched
+ * @returns The login page component
+ */
 const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
   const [formData, setFormData] = useState<LoginFormData>({
     runUrl: 'https://prod1.datalayer.run',

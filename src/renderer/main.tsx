@@ -5,7 +5,8 @@
 
 /**
  * @module renderer/main
- * @description Main entry point for the Electron renderer process.
+ *
+ * Main entry point for the Electron renderer process.
  * Handles polyfills, Prism.js configuration, and React application initialization.
  */
 
@@ -224,6 +225,7 @@ window.addEventListener('unhandledrejection', event => {
 /**
  * Get Datalayer configuration from environment.
  * Loads configuration from Electron environment variables.
+ *
  * @returns Promise that resolves when configuration is loaded
  */
 const loadDatalayerConfig = async () => {
@@ -242,6 +244,7 @@ const loadDatalayerConfig = async () => {
 /**
  * Initialize and render the React application.
  * Loads configuration and mounts the app to the DOM.
+ *
  * @returns Promise that resolves when app is initialized
  */
 const init = async () => {

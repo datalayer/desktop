@@ -3,6 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/vite-env
+ *
+ * Vite client type definitions.
+ * Provides TypeScript support for Vite-specific imports and environment variables.
+ */
+
 /// <reference types="vite/client" />
 
 declare module '*.png' {

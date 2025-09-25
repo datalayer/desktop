@@ -4,8 +4,10 @@
  */
 
 /**
- * @module LoadingSpinner
- * @description Reusable loading spinner component with multiple variants and customization options
+ * @module renderer/components/LoadingSpinner
+ *
+ * Reusable loading spinner component with multiple variants and customization options.
+ * Provides consistent loading states throughout the application.
  */
 
 import React from 'react';

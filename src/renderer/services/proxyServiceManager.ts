@@ -4,15 +4,23 @@
  */
 
 /**
- * Proxy ServiceManager for Electron
- * Proxies all HTTP and WebSocket traffic through IPC
+ * @module renderer/services/proxyServiceManager
+ *
+ * Proxy ServiceManager implementation for Electron.
+ * Routes all HTTP and WebSocket traffic through IPC to the main process
+ * to bypass browser security restrictions.
  */
 
 import { proxyLogger } from '../utils/logger';
 import { loadServiceManager } from './serviceManagerLoader';
 
 /**
- * Custom fetch function that proxies HTTP requests through IPC
+ * Custom fetch function that proxies HTTP requests through IPC.
+ * Blocks requests to terminated runtimes to prevent errors.
+ *
+ * @param request - The request to proxy
+ * @param init - Request initialization options
+ * @returns Promise resolving to the HTTP response
  */
 async function proxyFetch(
   request: RequestInfo,
@@ -106,7 +114,9 @@ async function proxyFetch(
 }
 
 /**
- * Custom WebSocket class that proxies through IPC
+ * Custom WebSocket class that proxies through IPC.
+ * Implements the standard WebSocket API while routing traffic through
+ * Electron's main process for secure communication.
  */
 export class ProxyWebSocket extends EventTarget {
   static readonly CONNECTING = 0;
@@ -414,7 +424,13 @@ export class ProxyWebSocket extends EventTarget {
 }
 
 /**
- * Create a ServiceManager that uses proxy connections
+ * Create a ServiceManager instance that uses proxy connections.
+ * All HTTP and WebSocket traffic will be routed through IPC.
+ *
+ * @param baseUrl - The base URL for the Jupyter server
+ * @param token - Authentication token for the server
+ * @param runtimeId - Optional runtime identifier for connection tracking
+ * @returns Promise resolving to a configured ServiceManager instance
  */
 export async function createProxyServiceManager(
   baseUrl: string,

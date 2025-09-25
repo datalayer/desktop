@@ -5,8 +5,18 @@
 
 /**
  * @module renderer/stores/runtimeStore
- * @description Zustand store for managing compute runtime state.
- * Handles runtime creation, termination, and lifecycle management.
+ *
+ * Zustand store for managing compute runtime state and lifecycle.
+ * Handles runtime creation, termination, ServiceManager instances, and cleanup.
+ * Implements runtime-aware cleanup to prevent connection attempts to terminated runtimes.
+ *
+ * Features:
+ * - Runtime creation with deduplication via global promises
+ * - ServiceManager lifecycle management per runtime
+ * - Comprehensive cleanup on termination (timers, connections, services)
+ * - Global cleanup registry to track terminated runtimes
+ * - Integration with WebSocket proxy for connection management
+ * - Automatic cleanup of collaboration providers
  */
 
 import { create } from 'zustand';

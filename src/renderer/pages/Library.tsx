@@ -3,6 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/pages/Library
+ *
+ * Library page component for managing documents and notebooks.
+ * Provides document browsing, space selection, and runtime management functionality.
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
@@ -25,6 +32,15 @@ import ErrorMessage from '../components/library/ErrorMessage';
 import LibrarySection from '../components/library/LibrarySection';
 import DeleteConfirmationDialog from '../components/library/DeleteConfirmationDialog';
 
+/**
+ * Documents library page component.
+ * Manages the display and interaction with user documents and notebooks.
+ *
+ * @param props - Component props
+ * @param props.onNotebookSelect - Callback invoked when a notebook is selected
+ * @param props.onDocumentSelect - Callback invoked when a document is selected
+ * @returns The documents library page component
+ */
 const Documents: React.FC<DocumentsListProps> = ({
   onNotebookSelect,
   onDocumentSelect,

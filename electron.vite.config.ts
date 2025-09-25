@@ -2317,7 +2317,6 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer'),
-        '@datalayer/core': resolve(__dirname, '../core'),
         '@primer/css': resolve(__dirname, 'node_modules/@primer/css'),
         '@datalayer/jupyter-react': resolve(
           __dirname,

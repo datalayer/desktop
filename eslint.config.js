@@ -3,33 +3,98 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Electron example specific ESLint config - more permissive for debugging
-// Using an async function to import ES modules in CommonJS context
-module.exports = (async () => {
-  const parentConfig = await import('../../eslint.config.js');
+const js = require('@eslint/js');
+const typescript = require('@typescript-eslint/eslint-plugin');
+const typescriptParser = require('@typescript-eslint/parser');
+const react = require('eslint-plugin-react');
+const reactHooks = require('eslint-plugin-react-hooks');
+const prettier = require('eslint-plugin-prettier');
+const jsxA11y = require('eslint-plugin-jsx-a11y');
 
-  return [
-    ...(parentConfig.default || parentConfig),
-    {
-      files: ['src/**/*.{ts,tsx,js,jsx}'],
-      rules: {
-        // Allow console.log for debugging in Electron example
-        'no-console': 'off',
-
-        // More permissive rules for example code
-        '@typescript-eslint/no-explicit-any': 'off',
-        '@typescript-eslint/no-unused-vars': 'off',
-        '@typescript-eslint/no-non-null-assertion': 'off',
-
-        // Allow unescaped entities in JSX for example content
-        'react/no-unescaped-entities': 'off',
-
-        // Relax React hook dependency warnings for complex example code
-        'react-hooks/exhaustive-deps': 'off',
-
-        // Keep prettier warnings but don't fail builds
-        'prettier/prettier': 'warn',
+module.exports = [
+  js.configs.recommended,
+  {
+    files: ['src/**/*.{ts,tsx,js,jsx}'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        global: 'readonly',
+        globalThis: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setImmediate: 'readonly',
+        clearImmediate: 'readonly',
+        Promise: 'readonly',
       },
     },
-  ];
-})();
+    plugins: {
+      '@typescript-eslint': typescript,
+      react: react,
+      'react-hooks': reactHooks,
+      prettier: prettier,
+      'jsx-a11y': jsxA11y,
+    },
+    rules: {
+      // TypeScript rules
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+
+      // React rules
+      'react/react-in-jsx-scope': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/prop-types': 'off',
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'off',
+
+      // General rules
+      'no-console': 'off',
+      'no-unused-vars': 'off',
+      'no-undef': 'off',
+      'no-empty': 'off',
+      'no-constant-condition': 'off',
+
+      // Prettier
+      'prettier/prettier': 'warn',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+  {
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'dist-electron/**',
+      'build/**',
+      '.vite/**',
+      '*.config.js',
+      '*.config.ts',
+      'scripts/**',
+    ],
+  },
+];

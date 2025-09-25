@@ -3,6 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/pages/DocumentEditor
+ *
+ * Document editor page component using Lexical editor framework.
+ * Provides document editing with Jupyter kernel integration for code execution.
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box } from '@primer/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -56,7 +63,13 @@ const initialConfig = {
   ],
 };
 
-// LexicalProvider component that provides LexicalComposer context
+/**
+ * Provides Lexical editor context to child components.
+ *
+ * @param props - Component props
+ * @param props.children - Child components to wrap with Lexical context
+ * @returns The Lexical context provider component
+ */
 const LexicalProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -65,6 +78,15 @@ const LexicalProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+/**
+ * Document editor page component.
+ * Wraps the editor content with Lexical composer for context management.
+ *
+ * @param props - Component props
+ * @param props.selectedDocument - The document to edit
+ * @param props.onClose - Callback invoked when the editor closes
+ * @returns The document editor component
+ */
 const DocumentEditor: React.FC<DocumentViewProps> = ({
   selectedDocument,
   onClose,
@@ -79,6 +101,15 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({
   );
 };
 
+/**
+ * Main document editor content component.
+ * Handles runtime management, service manager initialization, and document rendering.
+ *
+ * @param props - Component props
+ * @param props.selectedDocument - The document being edited
+ * @param props.onClose - Callback invoked when closing the editor
+ * @returns The document editor content component
+ */
 const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   selectedDocument,
   onClose,

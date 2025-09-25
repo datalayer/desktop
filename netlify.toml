@@ -1,0 +1,84 @@
+# Netlify configuration file for Datalayer Desktop Documentation
+# https://docs.netlify.com/build/configure-builds/file-based-configuration/
+
+[build]
+  # Directory to run the build command in
+  base = "/"
+
+  # Build command to generate documentation
+  command = "npm ci && npm run docs"
+
+  # Directory that contains the built documentation files
+  publish = "docs/"
+
+[build.environment]
+  # Node.js version for the build environment
+  NODE_VERSION = "22"
+  # Ensure production dependencies are installed
+  NPM_FLAGS = "--production=false"
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Cache control for static assets
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirects
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# Single Page Application support for TypeDoc
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Deploy contexts
+[context.production]
+  command = "npm ci && npm run docs"
+
+[context.deploy-preview]
+  command = "npm ci && npm run docs"
+
+[context.branch-deploy]
+  command = "npm ci && npm run docs"
+
+# Plugins (optional - uncomment if needed)
+# [[plugins]]
+#   package = "@netlify/plugin-lighthouse"
+#   [plugins.inputs]
+#     output_path = "reports/lighthouse.html"

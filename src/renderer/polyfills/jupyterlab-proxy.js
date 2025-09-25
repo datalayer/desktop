@@ -4,6 +4,14 @@
  */
 
 /**
+ * @module renderer/polyfills/jupyterlab-proxy
+ *
+ * JupyterLab services proxy module.
+ * Handles CommonJS/ESM module resolution issues and provides
+ * proper exports for @jupyterlab/services in production builds.
+ */
+
+/**
  * Proxy module for @jupyterlab/services
  * Properly handles CommonJS/ESM interop
  */

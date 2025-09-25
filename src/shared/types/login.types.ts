@@ -3,6 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module shared/types/login
+ *
+ * Type definitions for the authentication and login system.
+ * Includes interfaces for login forms, state management, and component props.
+ */
+
+/**
+ * Data structure for login form submission.
+ */
 export interface LoginFormData {
   runUrl: string;
   token: string;

@@ -1,22 +1,16 @@
-name: Desktop - Build
+name: Build
 
 on:
   push:
     branches: [ main ]
     tags:
-      - 'desktop-v*'
+      - 'v*'
     paths:
-      - 'examples/electron/**'
-      - 'src/**'
-      - 'package.json'
-      - '.github/workflows/desktop-build.yml'
+      - '**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'examples/electron/**'
-      - 'src/**'
-      - 'package.json'
-      - '.github/workflows/desktop-build.yml'
+      - '**'
   workflow_dispatch:
     inputs:
       build_type:
@@ -29,12 +23,12 @@ on:
           - dev-prod
 
 concurrency:
-  group: desktop-build-${{ github.workflow }}-${{ github.ref }}
+  group: build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  desktop-build:
-    name: Desktop - Build ${{ matrix.platform }} (${{ matrix.arch }})
+  build:
+    name: Build ${{ matrix.platform }} (${{ matrix.arch }})
     strategy:
       fail-fast: false
       matrix:
@@ -73,25 +67,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Install root dependencies
-        run: npm install
-
-      - name: Build core library
-        run: npm run build:lib
-        env:
-          DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
-          DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.DATALAYER_TEST_TOKEN != '' && 'true' || 'false' }}
-
-      - name: Install Electron app dependencies
-        working-directory: examples/electron
+      - name: Install dependencies
         run: npm install
 
       # Linux Build
-      - name: Desktop - Build for Linux
+      - name: Build for Linux
         if: matrix.platform == 'linux'
-        working-directory: examples/electron
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
             npm run dist:dev-prod:linux
@@ -102,22 +85,21 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Desktop - Upload Linux artifacts
+      - name: Upload Linux artifacts
         if: matrix.platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           name: datalayer-desktop-linux-${{ matrix.arch }}
           path: |
-            examples/electron/dist-electron/*.AppImage
-            examples/electron/dist-electron/*.deb
-            examples/electron/dist-electron/*.rpm
-            examples/electron/dist-electron/*.snap
+            dist-electron/*.AppImage
+            dist-electron/*.deb
+            dist-electron/*.rpm
+            dist-electron/*.snap
           retention-days: 30
 
       # Windows Build
-      - name: Desktop - Build for Windows
+      - name: Build for Windows
         if: matrix.platform == 'win'
-        working-directory: examples/electron
         shell: bash
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
@@ -129,30 +111,24 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Desktop - Upload Windows artifacts
+      - name: Upload Windows artifacts
         if: matrix.platform == 'win'
         uses: actions/upload-artifact@v4
         with:
           name: datalayer-desktop-win-${{ matrix.arch }}
           path: |
-            examples/electron/dist-electron/*.exe
-            examples/electron/dist-electron/*.msi
+            dist-electron/*.exe
+            dist-electron/*.msi
           retention-days: 30
 
       # macOS Build
-      - name: Desktop - Build for macOS
+      - name: Build for macOS
         if: matrix.platform == 'mac'
-        working-directory: examples/electron
         run: |
-          # Import certificates if available (for signing)
-          if [ -n "${{ secrets.MACOS_CERTIFICATE }}" ]; then
-            echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
-            security create-keychain -p actions build.keychain
-            security default-keychain -s build.keychain
-            security unlock-keychain -p actions build.keychain
-            security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PWD }}" -T /usr/bin/codesign
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-            rm certificate.p12
+          # Skip code signing if certificates aren't available
+          if [ -z "${{ secrets.MACOS_CERTIFICATE }}" ]; then
+            echo "No code signing certificates available, building unsigned app"
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
 
           # Build based on architecture and build type
@@ -170,37 +146,34 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Desktop - Upload macOS artifacts
+      - name: Upload macOS artifacts
         if: matrix.platform == 'mac'
         uses: actions/upload-artifact@v4
         with:
           name: datalayer-desktop-mac-${{ matrix.arch }}
           path: |
-            examples/electron/dist-electron/*.dmg
-            examples/electron/dist-electron/*.zip
-            examples/electron/dist-electron/*.pkg
+            dist-electron/*.dmg
+            dist-electron/*.zip
+            dist-electron/*.pkg
           retention-days: 30
 
       # Upload build logs on failure
-      - name: Desktop - Upload build logs on failure
+      - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-build-logs-${{ matrix.platform }}-${{ matrix.arch }}
+          name: build-logs-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            examples/electron/npm-debug.log
-            examples/electron/dist-electron/builder-debug.yml
-            examples/electron/dist-electron/builder-effective-config.yaml
+            npm-debug.log
+            dist-electron/builder-debug.yml
+            dist-electron/builder-effective-config.yaml
           retention-days: 7
 
-  desktop-test-artifacts:
-    name: Desktop - Test Artifacts
-    needs: desktop-build
+  test-artifacts:
+    name: Test Artifacts
+    needs: build
     runs-on: ubuntu-latest
     if: success()
     
@@ -212,10 +185,10 @@ jobs:
 
       - name: List artifacts structure
         run: |
-          echo "Desktop - Artifact Structure:"
+          echo "Artifact Structure:"
           find artifacts -type f -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" | head -20
 
       - name: Check artifact sizes
         run: |
-          echo "Desktop - Artifact Sizes:"
+          echo "Artifact Sizes:"
           find artifacts -type f \( -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -exec ls -lh {} \;

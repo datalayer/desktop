@@ -5,7 +5,8 @@
 
 /**
  * @module renderer/App
- * @description Main React application component for the Datalayer Electron app.
+ *
+ * Main React application component for the Datalayer Electron app.
  * Manages authentication, view navigation, and component orchestration.
  */
 
@@ -47,8 +48,8 @@ const Library = lazy(() => import('./pages/Library'));
 /**
  * Main application component.
  * Handles authentication flow, view routing, and global state management.
- * @component
- * @returns The rendered application
+ *
+ * @returns The rendered application with authentication and routing logic
  */
 const App: React.FC = () => {
   // Filter out noisy Jupyter React config logging

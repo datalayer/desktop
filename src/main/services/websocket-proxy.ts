@@ -5,8 +5,17 @@
 
 /**
  * @module main/services/websocket-proxy
- * @description WebSocket proxy service for handling WebSocket connections in the main process.
- * Manages WebSocket connections for Jupyter kernel communication.
+ *
+ * WebSocket proxy service for handling WebSocket connections in the main process.
+ * Manages WebSocket connections for Jupyter kernel communication and collaboration.
+ * Implements runtime-aware connection management with automatic cleanup on termination.
+ *
+ * Features:
+ * - WebSocket connection proxying between renderer and main process
+ * - Runtime-aware connection tracking and cleanup
+ * - Prevention of connections to terminated runtimes
+ * - Window-based connection lifecycle management
+ * - Binary and text message support for Jupyter protocols
  */
 
 import { BrowserWindow } from 'electron';

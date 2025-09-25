@@ -5,8 +5,17 @@
 
 /**
  * @module main/services/api-service
- * @description Service for handling Datalayer API communication in the main process.
- * Provides secure credential storage and API request methods.
+ *
+ * Service for handling Datalayer API communication in the main process.
+ * Provides secure credential storage, authentication management, and API request proxying.
+ * Uses Electron's net module to bypass CORS restrictions and electron-store for secure credential persistence.
+ *
+ * Features:
+ * - Secure credential storage with encryption
+ * - Domain whitelisting for security
+ * - Comprehensive API methods for runtime, notebook, and space management
+ * - GitHub API integration
+ * - Error handling and logging
  */
 
 import { net } from 'electron';

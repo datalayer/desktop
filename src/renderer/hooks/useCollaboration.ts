@@ -4,8 +4,17 @@
  */
 
 /**
- * @module useCollaboration
- * @description React hook for managing collaboration provider lifecycle and real-time collaboration features in Electron
+ * @module renderer/hooks/useCollaboration
+ *
+ * React hook for managing collaboration provider lifecycle and real-time collaboration features.
+ * Handles creation, disposal, and cleanup of collaboration instances based on runtime state.
+ *
+ * Features:
+ * - Automatic collaboration provider creation and disposal
+ * - Runtime termination awareness to prevent connection attempts
+ * - WebSocket connection management via Electron IPC
+ * - Cleanup registry integration for proper resource management
+ * - Version tracking to prevent stale provider usage
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';

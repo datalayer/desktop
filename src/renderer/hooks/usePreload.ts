@@ -4,8 +4,10 @@
  */
 
 /**
- * @module usePreload
- * @description React hooks for managing component preloading operations with parallel coordination support
+ * @module renderer/hooks/usePreload
+ *
+ * React hooks for managing component preloading operations with parallel coordination support.
+ * Enables performance optimization through strategic component preloading.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';

@@ -4,9 +4,14 @@
  */
 
 /**
- * Symbol Polyfill
- * This MUST be loaded before React or any other library that uses Symbol.for
- * Provides a complete Symbol implementation for production builds
+ * @module renderer/polyfills/symbol
+ *
+ * Symbol polyfill for production builds.
+ * Provides a complete Symbol implementation including Symbol.for and Symbol.keyFor.
+ *
+ * @remarks
+ * This MUST be loaded before React or any other library that uses Symbol.for.
+ * The polyfill includes all well-known symbols and global registry support.
  */
 
 (function () {

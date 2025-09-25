@@ -4,8 +4,11 @@
  */
 
 /**
- * About dialog functionality
+ * @module main/about
+ *
+ * About dialog functionality.
  * This script runs in the renderer context with context isolation enabled
+ * and handles UI interactions for the about dialog window.
  */
 
 // DOM loaded event

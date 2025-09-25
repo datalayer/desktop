@@ -14,7 +14,7 @@
     "**/jupyterlab-services-proxy.js"
   ],
   "tsconfig": "./tsconfig.json",
-  "name": "Datalayer Electron Application",
+  "name": "Datalayer Desktop",
   "readme": "./README.md",
   "theme": "default",
   "includeVersion": true,
@@ -46,7 +46,7 @@
     "Other"
   ],
   "navigationLinks": {
-    "GitHub": "https://github.com/datalayer/core",
+    "GitHub": "https://github.com/datalayer/desktop",
     "Datalayer": "https://datalayer.io"
   },
   "excludeTags": ["@internal"],

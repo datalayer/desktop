@@ -4,8 +4,16 @@
  */
 
 /**
- * @module TerminateRuntimeDialog
- * @description Modal dialog component for confirming runtime termination with keyboard shortcuts and error handling
+ * @module renderer/components/TerminateRuntimeDialog
+ *
+ * Modal dialog component for confirming runtime termination with keyboard shortcuts and error handling.
+ * Provides user confirmation UI before terminating compute runtimes associated with notebooks or documents.
+ *
+ * Features:
+ * - Keyboard shortcuts (Ctrl+Enter to confirm, Esc to cancel)
+ * - Loading state during termination
+ * - Error display with retry capability
+ * - Accessibility support with ARIA labels
  */
 
 import React, { useEffect } from 'react';

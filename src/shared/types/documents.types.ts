@@ -3,6 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module shared/types/documents
+ *
+ * Type definitions for document and notebook management in the library view.
+ * Includes interfaces for notebooks, documents, and grouped document structures.
+ */
+
+/**
+ * Represents a notebook item in the library.
+ */
 export interface NotebookItem {
   id: string;
   uid?: string;
