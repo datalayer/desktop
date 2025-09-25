@@ -1,13 +1,9 @@
 [![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
-
 [![Build](https://github.com/datalayer/desktop/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/datalayer/desktop/actions/workflows/build.yml)
-
 [![Code Quality](https://github.com/datalayer/desktop/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/datalayer/desktop/actions/workflows/code-quality.yml)
-
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c4c2d128-ca43-4bcd-8f74-e64b00ca59ba/deploy-status)](https://app.netlify.com/sites/datalayer-desktop/deploys)
-
 [![Documentation](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://datalayer-desktop.netlify.app)
 
 # 🖥️ Datalayer Desktop

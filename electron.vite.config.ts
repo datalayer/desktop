@@ -81,8 +81,6 @@ export default defineConfig({
           index: resolve(__dirname, 'src/renderer/index.html'),
         },
         external: [
-          'next/navigation',
-          'next/router',
           'next/link',
           '@react-navigation/native',
           '@react-navigation/stack',
@@ -193,6 +191,25 @@ export default defineConfig({
           if (id === 'source-map-js') {
             return { id: '\0virtual:source-map-js-stub', external: false };
           }
+          // Intercept Next.js imports for Electron compatibility
+          if (id === 'next/navigation') {
+            return { id: '\0virtual:next-navigation-stub', external: false };
+          }
+          if (id === 'next/router') {
+            return { id: '\0virtual:next-router-stub', external: false };
+          }
+          // Intercept react-router-dom for Electron compatibility
+          if (id === 'react-router-dom') {
+            return { id: '\0virtual:react-router-dom-stub', external: false };
+          }
+          // Intercept typestyle for compatibility issues
+          if (id === 'typestyle' || id.includes('typestyle/lib')) {
+            return { id: '\0virtual:typestyle-stub', external: false };
+          }
+          // Intercept jsonpointer for compatibility issues
+          if (id === 'jsonpointer') {
+            return { id: '\0virtual:jsonpointer-stub', external: false };
+          }
           return null;
         },
         load(id) {
@@ -217,6 +234,273 @@ export default defineConfig({
                 toString() { return ''; }
               }
               export default { SourceMapConsumer, SourceMapGenerator };
+            `;
+          }
+          if (id === '\0virtual:next-navigation-stub') {
+            // Provide Next.js navigation stubs for Electron compatibility
+            return `
+              // Mock Next.js navigation hooks for Electron
+              export function useRouter() {
+                return {
+                  push: (path) => console.warn('[Electron] useRouter.push() called with:', path),
+                  replace: (path) => console.warn('[Electron] useRouter.replace() called with:', path),
+                  back: () => console.warn('[Electron] useRouter.back() called'),
+                  forward: () => console.warn('[Electron] useRouter.forward() called'),
+                  refresh: () => console.warn('[Electron] useRouter.refresh() called'),
+                  pathname: '/',
+                  query: {},
+                  asPath: '/',
+                };
+              }
+
+              export function usePathname() {
+                return '/';
+              }
+
+              export function useSearchParams() {
+                return new URLSearchParams();
+              }
+
+              export function redirect(path) {
+                console.warn('[Electron] redirect() called with:', path);
+              }
+
+              export function notFound() {
+                console.warn('[Electron] notFound() called');
+              }
+            `;
+          }
+          if (id === '\0virtual:next-router-stub') {
+            // Provide Next.js router stubs for Electron compatibility
+            return `
+              // Mock Next.js Router for Electron
+              export default {
+                push: (path) => console.warn('[Electron] Router.push() called with:', path),
+                replace: (path) => console.warn('[Electron] Router.replace() called with:', path),
+                back: () => console.warn('[Electron] Router.back() called'),
+                forward: () => console.warn('[Electron] Router.forward() called'),
+                reload: () => console.warn('[Electron] Router.reload() called'),
+                pathname: '/',
+                query: {},
+                asPath: '/',
+                events: {
+                  on: () => {},
+                  off: () => {},
+                  emit: () => {},
+                },
+              };
+
+              export function withRouter(Component) {
+                return Component;
+              }
+            `;
+          }
+          if (id === '\0virtual:react-router-dom-stub') {
+            // Provide react-router-dom stubs for Electron compatibility
+            return `
+              // Mock react-router-dom for Electron
+              export function BrowserRouter({ children }) {
+                return children;
+              }
+
+              export function Routes({ children }) {
+                return children;
+              }
+
+              export function Route({ children, element }) {
+                return element || children;
+              }
+
+              export function Link({ to, children, ...props }) {
+                return React.createElement('a', { href: to, ...props }, children);
+              }
+
+              export function NavLink({ to, children, ...props }) {
+                return React.createElement('a', { href: to, ...props }, children);
+              }
+
+              export function Navigate({ to }) {
+                console.warn('[Electron] Navigate called with:', to);
+                return null;
+              }
+
+              export function Outlet() {
+                return null;
+              }
+
+              export function useNavigate() {
+                return (path) => console.warn('[Electron] useNavigate() called with:', path);
+              }
+
+              export function useParams() {
+                return {};
+              }
+
+              export function useLocation() {
+                return {
+                  pathname: '/',
+                  search: '',
+                  hash: '',
+                  state: null,
+                  key: 'default'
+                };
+              }
+
+              export function useSearchParams() {
+                return [new URLSearchParams(), () => {}];
+              }
+
+              export function createBrowserRouter(routes) {
+                return { routes };
+              }
+
+              export function RouterProvider({ router }) {
+                return null;
+              }
+
+              // Legacy router compatibility
+              export function Router({ children }) {
+                return children;
+              }
+
+              export function Switch({ children }) {
+                return children;
+              }
+
+              export function Redirect({ to }) {
+                console.warn('[Electron] Redirect called with:', to);
+                return null;
+              }
+
+              export function useHistory() {
+                return {
+                  push: (path) => console.warn('[Electron] history.push() called with:', path),
+                  replace: (path) => console.warn('[Electron] history.replace() called with:', path),
+                  go: (n) => console.warn('[Electron] history.go() called with:', n),
+                  goBack: () => console.warn('[Electron] history.goBack() called'),
+                  goForward: () => console.warn('[Electron] history.goForward() called'),
+                  location: { pathname: '/', search: '', hash: '', state: null },
+                };
+              }
+
+              export function useRouteMatch() {
+                return {
+                  params: {},
+                  isExact: true,
+                  path: '/',
+                  url: '/'
+                };
+              }
+            `;
+          }
+          if (id === '\0virtual:typestyle-stub') {
+            // Provide typestyle stubs for compatibility
+            return `
+              // Mock typestyle for compatibility
+              export function style(...args) {
+                // Simple CSS class name generator
+                const hash = Math.random().toString(36).substr(2, 9);
+                return 'css-' + hash;
+              }
+
+              export function classes(...args) {
+                return args.filter(Boolean).join(' ');
+              }
+
+              export function media(query, ...styles) {
+                return {};
+              }
+
+              export function keyframes(frames) {
+                const hash = Math.random().toString(36).substr(2, 9);
+                return 'keyframes-' + hash;
+              }
+
+              export function cssRule(selector, ...styles) {
+                return {};
+              }
+
+              export function forceRenderStyles() {
+                // No-op in Electron
+              }
+
+              export function getStyles() {
+                return '';
+              }
+
+              export function reinit() {
+                // No-op in Electron
+              }
+
+              // Legacy/compatibility exports
+              export const stylesheet = {
+                style,
+                classes,
+                media,
+                keyframes,
+                cssRule
+              };
+
+              export default {
+                style,
+                classes,
+                media,
+                keyframes,
+                cssRule,
+                forceRenderStyles,
+                getStyles,
+                reinit
+              };
+            `;
+          }
+          if (id === '\0virtual:jsonpointer-stub') {
+            // Provide jsonpointer stubs for compatibility
+            return `
+              // Mock jsonpointer for compatibility
+              export function get(obj, pointer) {
+                if (!pointer || pointer === '') return obj;
+                const parts = pointer.split('/').slice(1);
+                let result = obj;
+                for (const part of parts) {
+                  if (result == null) return undefined;
+                  result = result[part];
+                }
+                return result;
+              }
+
+              export function set(obj, pointer, value) {
+                if (!pointer || pointer === '') return obj;
+                const parts = pointer.split('/').slice(1);
+                let current = obj;
+                for (let i = 0; i < parts.length - 1; i++) {
+                  const part = parts[i];
+                  if (!(part in current)) current[part] = {};
+                  current = current[part];
+                }
+                current[parts[parts.length - 1]] = value;
+                return obj;
+              }
+
+              export function has(obj, pointer) {
+                return get(obj, pointer) !== undefined;
+              }
+
+              export function remove(obj, pointer) {
+                if (!pointer || pointer === '') return obj;
+                const parts = pointer.split('/').slice(1);
+                let current = obj;
+                for (let i = 0; i < parts.length - 1; i++) {
+                  const part = parts[i];
+                  if (!(part in current)) return obj;
+                  current = current[part];
+                }
+                delete current[parts[parts.length - 1]];
+                return obj;
+              }
+
+              // Default export for compatibility
+              const jsonpointer = { get, set, has, remove };
+              export default jsonpointer;
             `;
           }
           return null;
@@ -2370,8 +2654,11 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
         '@datalayer/lexical-loro',
       ],
       exclude: [
+        'react-router-dom',
         'next/navigation',
         'next/router',
+        'typestyle',
+        'jsonpointer',
         '@react-navigation/native',
         '@jupyterlite/pyodide-kernel',
         '@jupyterlab/apputils-extension',
