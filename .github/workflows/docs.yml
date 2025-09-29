@@ -20,18 +20,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: enh/sdk-updates
+          path: datalayer/core
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Skip core repository postinstall scripts
+        working-directory: datalayer/core
+        run: |
+          if [ -f package.json ]; then
+            echo "Removing problematic scripts from core package.json"
+            cp package.json package.json.backup
+            node -e "const pkg = require('./package.json'); delete pkg.scripts?.postinstall; delete pkg.scripts?.prepare; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          fi
+        shell: bash
+
+      - name: Install core repository dependencies and build
+        working-directory: datalayer/core
+        run: |
+          echo "Installing core dependencies..."
+          npm install --ignore-scripts
+          echo "Building core SDK lib..."
+          npm run build:lib
+          echo "Building core full with increased memory..."
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build
+        shell: bash
+
+      - name: Install desktop dependencies
+        working-directory: datalayer/desktop
+        run: npm install
 
       - name: Generate TypeDoc documentation
+        working-directory: datalayer/desktop
         run: |
           echo "Generating TypeDoc documentation..."
           npm run docs
@@ -40,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: docs/
+          path: datalayer/desktop/docs/
           retention-days: 30
 
       - name: Deploy to GitHub Pages
@@ -48,5 +85,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: ./datalayer/desktop/docs
           cname: datalayer-desktop.netlify.app

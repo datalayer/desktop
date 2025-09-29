@@ -61,20 +61,67 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: enh/sdk-updates
+          path: datalayer/core
+
+      - name: Debug directory structure
+        run: |
+          echo "=== Current working directory ==="
+          pwd
+          echo "=== Directory structure ==="
+          find datalayer -type d -maxdepth 3
+          echo "=== Core lib contents ==="
+          ls -la datalayer/core/lib/ || echo "No core lib found"
+        shell: bash
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
+      - name: Skip core repository postinstall scripts
+        working-directory: datalayer/core
+        run: |
+          if [ -f package.json ]; then
+            echo "Removing problematic scripts from core package.json"
+            cp package.json package.json.backup
+            node -e "const pkg = require('./package.json'); delete pkg.scripts?.postinstall; delete pkg.scripts?.prepare; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          fi
+        shell: bash
+
+      - name: Install core repository dependencies and build
+        working-directory: datalayer/core
+        run: |
+          echo "Installing core dependencies..."
+          npm install --ignore-scripts
+          echo "Building core SDK lib..."
+          npm run build:lib
+          echo "Building core full with increased memory..."
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build
+        shell: bash
+
+      - name: Install desktop dependencies
+        working-directory: datalayer/desktop
         run: npm install
 
       # Linux Build
       - name: Build for Linux
         if: matrix.platform == 'linux'
+        working-directory: datalayer/desktop
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
             npm run dist:dev-prod:linux
@@ -91,15 +138,16 @@ jobs:
         with:
           name: datalayer-desktop-linux-${{ matrix.arch }}
           path: |
-            dist-electron/*.AppImage
-            dist-electron/*.deb
-            dist-electron/*.rpm
-            dist-electron/*.snap
+            datalayer/desktop/dist-electron/*.AppImage
+            datalayer/desktop/dist-electron/*.deb
+            datalayer/desktop/dist-electron/*.rpm
+            datalayer/desktop/dist-electron/*.snap
           retention-days: 30
 
       # Windows Build
       - name: Build for Windows
         if: matrix.platform == 'win'
+        working-directory: datalayer/desktop
         shell: bash
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
@@ -117,13 +165,14 @@ jobs:
         with:
           name: datalayer-desktop-win-${{ matrix.arch }}
           path: |
-            dist-electron/*.exe
-            dist-electron/*.msi
+            datalayer/desktop/dist-electron/*.exe
+            datalayer/desktop/dist-electron/*.msi
           retention-days: 30
 
       # macOS Build
       - name: Build for macOS
         if: matrix.platform == 'mac'
+        working-directory: datalayer/desktop
         run: |
           # Skip code signing if certificates aren't available
           if [ -z "${{ secrets.MACOS_CERTIFICATE }}" ]; then
@@ -154,9 +203,9 @@ jobs:
         with:
           name: datalayer-desktop-mac-${{ matrix.arch }}
           path: |
-            dist-electron/*.dmg
-            dist-electron/*.zip
-            dist-electron/*.pkg
+            datalayer/desktop/dist-electron/*.dmg
+            datalayer/desktop/dist-electron/*.zip
+            datalayer/desktop/dist-electron/*.pkg
           retention-days: 30
 
       # Upload build logs on failure
@@ -166,9 +215,9 @@ jobs:
         with:
           name: build-logs-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            npm-debug.log
-            dist-electron/builder-debug.yml
-            dist-electron/builder-effective-config.yaml
+            datalayer/desktop/npm-debug.log
+            datalayer/desktop/dist-electron/builder-debug.yml
+            datalayer/desktop/dist-electron/builder-effective-config.yaml
           retention-days: 7
 
   test-artifacts:

@@ -19,20 +19,57 @@ jobs:
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: enh/sdk-updates
+          path: datalayer/core
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
+      - name: Skip core repository postinstall scripts
+        working-directory: datalayer/core
+        run: |
+          if [ -f package.json ]; then
+            echo "Removing problematic scripts from core package.json"
+            cp package.json package.json.backup
+            node -e "const pkg = require('./package.json'); delete pkg.scripts?.postinstall; delete pkg.scripts?.prepare; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          fi
+        shell: bash
+
+      - name: Install core repository dependencies and build
+        working-directory: datalayer/core
+        run: |
+          echo "Installing core dependencies..."
+          npm install --ignore-scripts
+          echo "Building core SDK lib..."
+          npm run build:lib
+          echo "Building core full with increased memory..."
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build
+        shell: bash
+
+      - name: Install desktop dependencies
+        working-directory: datalayer/desktop
         run: npm install
 
       - name: Check code formatting
+        working-directory: datalayer/desktop
         run: |
           echo "Checking code formatting..."
           npm run format:check
@@ -53,26 +90,64 @@ jobs:
   lint-check:
     name: Lint Check
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: enh/sdk-updates
+          path: datalayer/core
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Skip core repository postinstall scripts
+        working-directory: datalayer/core
+        run: |
+          if [ -f package.json ]; then
+            echo "Removing problematic scripts from core package.json"
+            cp package.json package.json.backup
+            node -e "const pkg = require('./package.json'); delete pkg.scripts?.postinstall; delete pkg.scripts?.prepare; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          fi
+        shell: bash
+
+      - name: Install core repository dependencies and build
+        working-directory: datalayer/core
+        run: |
+          echo "Installing core dependencies..."
+          npm install --ignore-scripts
+          echo "Building core SDK lib..."
+          npm run build:lib
+          echo "Building core full with increased memory..."
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build
+        shell: bash
+
+      - name: Install desktop dependencies
+        working-directory: datalayer/desktop
+        run: npm install
 
       - name: Run ESLint
+        working-directory: datalayer/desktop
         run: |
           echo "Running ESLint..."
           npm run lint -- --max-warnings 0
           
       - name: Report lint issues
         if: failure()
+        working-directory: datalayer/desktop
         run: |
           echo "::error::Linting issues detected. Please run 'npm run lint:fix' to fix auto-fixable issues."
           echo "# Lint Check Failed ❌" >> $GITHUB_STEP_SUMMARY
@@ -89,26 +164,64 @@ jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: enh/sdk-updates
+          path: datalayer/core
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Skip core repository postinstall scripts
+        working-directory: datalayer/core
+        run: |
+          if [ -f package.json ]; then
+            echo "Removing problematic scripts from core package.json"
+            cp package.json package.json.backup
+            node -e "const pkg = require('./package.json'); delete pkg.scripts?.postinstall; delete pkg.scripts?.prepare; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          fi
+        shell: bash
+
+      - name: Install core repository dependencies and build
+        working-directory: datalayer/core
+        run: |
+          echo "Installing core dependencies..."
+          npm install --ignore-scripts
+          echo "Building core SDK lib..."
+          npm run build:lib
+          echo "Building core full with increased memory..."
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build
+        shell: bash
+
+      - name: Install desktop dependencies
+        working-directory: datalayer/desktop
+        run: npm install
 
       - name: Run TypeScript type checking
+        working-directory: datalayer/desktop
         run: |
           echo "Running TypeScript type checking..."
           npm run type-check
           
       - name: Report type errors
         if: failure()
+        working-directory: datalayer/desktop
         run: |
           echo "::error::TypeScript type errors detected. Please fix the type errors."
           echo "# Type Check Failed ❌" >> $GITHUB_STEP_SUMMARY
