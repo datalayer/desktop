@@ -43,7 +43,7 @@ import { logger } from './utils/logger';
  */
 const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
-const Library = lazy(() => import('./pages/Library'));
+const Library = lazy(() => import('./pages/Spaces'));
 
 /**
  * Main application component.

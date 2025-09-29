@@ -54,7 +54,7 @@ const Header: React.FC<HeaderProps> = ({
       >
         <Box>
           <Heading as="h2" sx={{ mb: 1 }}>
-            Documents
+            Space Documents
           </Heading>
           <Text sx={{ color: 'fg.subtle' }}>
             Manage your documents and notebooks in the cloud

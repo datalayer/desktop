@@ -4,9 +4,9 @@
  */
 
 /**
- * @module renderer/pages/Library
+ * @module renderer/pages/Spaces
  *
- * Library page component for managing documents and notebooks.
+ * Spaces page component for managing documents and notebooks.
  * Provides document browsing, space selection, and runtime management functionality.
  */
 

@@ -41,7 +41,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
       />
 
       <NavigationTab
-        label="Documents"
+        label="Spaces"
         icon={BookIcon}
         isActive={currentView === 'notebooks'}
         onClick={() => onViewChange('notebooks')}
