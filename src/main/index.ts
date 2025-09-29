@@ -29,26 +29,10 @@ log.transports.file.level = 'info';
 log.transports.console.level =
   process.env.NODE_ENV === 'development' ? 'debug' : false;
 
-/**
- * Stores the original console.log function before overriding.
- * Used for fallback logging when electron-log fails.
- * @internal
- */
-const originalConsoleLog = console.log;
-
-/**
- * Stores the original console.error function before overriding.
- * Used for fallback logging when electron-log fails.
- * @internal
- */
-const originalConsoleError = console.error;
-
-/**
- * Stores the original console.warn function before overriding.
- * Used for fallback logging when electron-log fails.
- * @internal
- */
-const originalConsoleWarn = console.warn;
+// Original console functions are preserved for potential future use
+// const _originalConsoleLog = console.log;
+// const _originalConsoleError = console.error;
+// const _originalConsoleWarn = console.warn;
 
 /**
  * Override console.log to use electron-log to prevent EPIPE errors.
@@ -60,9 +44,6 @@ console.log = (...args: any[]) => {
     log.info(...args);
   } catch (e: any) {
     // Silently ignore EPIPE errors
-    if (e?.code !== 'EPIPE') {
-      originalConsoleLog('Log error:', e);
-    }
   }
 };
 
@@ -75,9 +56,6 @@ console.error = (...args: any[]) => {
     log.error(...args);
   } catch (e: any) {
     // Silently ignore EPIPE errors
-    if (e?.code !== 'EPIPE') {
-      originalConsoleError('Log error:', e);
-    }
   }
 };
 
@@ -90,9 +68,6 @@ console.warn = (...args: any[]) => {
     log.warn(...args);
   } catch (e: any) {
     // Silently ignore EPIPE errors
-    if (e?.code !== 'EPIPE') {
-      originalConsoleWarn('Log error:', e);
-    }
   }
 };
 
@@ -542,12 +517,7 @@ ipcMain.handle('datalayer:get-environments', async () => {
 });
 
 ipcMain.handle('datalayer:create-runtime', async (_, options) => {
-  log.info(
-    '🎯 [IPC] Received datalayer:create-runtime request with options:',
-    options
-  );
   const result = await apiService.createRuntime(options);
-  log.info('🎯 [IPC] datalayer:create-runtime result:', result);
   return result;
 });
 
@@ -577,39 +547,14 @@ ipcMain.handle('datalayer:list-notebooks', async () => {
 ipcMain.handle(
   'datalayer:create-notebook',
   async (_, { spaceId, name, description }) => {
-    log.info(`[IPC] createNotebook handler called with:`, {
-      spaceId,
-      name,
-      description,
-    });
-    try {
-      const result = await apiService.createNotebook(
-        spaceId,
-        name,
-        description
-      );
-      log.info(`[IPC] createNotebook result:`, result);
-      return result;
-    } catch (error) {
-      log.error(`[IPC] createNotebook error:`, error);
-      throw error;
-    }
+    const result = await apiService.createNotebook(spaceId, name, description);
+    return result;
   }
 );
 
 ipcMain.handle('datalayer:delete-notebook', async (_, { spaceId, itemId }) => {
-  log.info(`[IPC] deleteNotebook handler called with:`, {
-    spaceId,
-    itemId,
-  });
-  try {
-    const result = await apiService.deleteNotebook(spaceId, itemId);
-    log.info(`[IPC] deleteNotebook result:`, result);
-    return result;
-  } catch (error) {
-    log.error(`[IPC] deleteNotebook error:`, error);
-    throw error;
-  }
+  const result = await apiService.deleteNotebook(spaceId, itemId);
+  return result;
 });
 
 ipcMain.handle('datalayer:get-user-spaces', async () => {
@@ -643,64 +588,57 @@ ipcMain.handle('datalayer:github-user', async (_, githubId: number) => {
 ipcMain.handle(
   'proxy:http-request',
   async (_, { url, method, headers, body }) => {
-    try {
-      log.debug(`[HTTP Proxy] ${method} ${url}`);
+    const requestOptions: RequestInit = {
+      method: method || 'GET',
+      headers: headers || {},
+    };
 
-      const requestOptions: RequestInit = {
-        method: method || 'GET',
-        headers: headers || {},
-      };
-
-      // Add body if present and method supports it
-      if (body && !['GET', 'HEAD'].includes(method)) {
-        if (body instanceof ArrayBuffer) {
-          requestOptions.body = Buffer.from(new Uint8Array(body));
-        } else if (body instanceof Uint8Array) {
-          requestOptions.body = Buffer.from(body);
-        } else if (typeof body === 'object') {
-          requestOptions.body = JSON.stringify(body);
-          requestOptions.headers = {
-            ...requestOptions.headers,
-            'Content-Type': 'application/json',
-          };
-        } else {
-          requestOptions.body = body;
-        }
-      }
-
-      const response = await fetch(url, requestOptions);
-
-      // Get response headers as plain object
-      const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
-
-      // Get response body
-      let responseBody: unknown;
-      const contentType = response.headers.get('content-type');
-
-      if (!method || method === 'DELETE') {
-        responseBody = undefined;
-      } else if (contentType?.includes('application/json')) {
-        responseBody = await response.json();
-      } else if (contentType?.includes('text')) {
-        responseBody = await response.text();
+    // Add body if present and method supports it
+    if (body && !['GET', 'HEAD'].includes(method)) {
+      if (body instanceof ArrayBuffer) {
+        requestOptions.body = Buffer.from(new Uint8Array(body));
+      } else if (body instanceof Uint8Array) {
+        requestOptions.body = Buffer.from(body);
+      } else if (typeof body === 'object') {
+        requestOptions.body = JSON.stringify(body);
+        requestOptions.headers = {
+          ...requestOptions.headers,
+          'Content-Type': 'application/json',
+        };
       } else {
-        const buffer = await response.arrayBuffer();
-        responseBody = Array.from(new Uint8Array(buffer));
+        requestOptions.body = body;
       }
-
-      return {
-        status: response.status,
-        statusText: response.statusText,
-        headers: responseHeaders,
-        body: responseBody,
-      };
-    } catch (error: unknown) {
-      log.error('[HTTP Proxy] Request failed:', error);
-      throw error;
     }
+
+    const response = await fetch(url, requestOptions);
+
+    // Get response headers as plain object
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+
+    // Get response body
+    let responseBody: unknown;
+    const contentType = response.headers.get('content-type');
+
+    if (!method || method === 'DELETE') {
+      responseBody = undefined;
+    } else if (contentType?.includes('application/json')) {
+      responseBody = await response.json();
+    } else if (contentType?.includes('text')) {
+      responseBody = await response.text();
+    } else {
+      const buffer = await response.arrayBuffer();
+      responseBody = Array.from(new Uint8Array(buffer));
+    }
+
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+      body: responseBody,
+    };
   }
 );
 
@@ -712,36 +650,21 @@ ipcMain.handle(
       throw new Error('Main window not available');
     }
 
-    try {
-      const result = websocketProxy.open(
-        mainWindow,
-        url,
-        protocol,
-        headers,
-        runtimeId
-      );
+    const result = websocketProxy.open(
+      mainWindow,
+      url,
+      protocol,
+      headers,
+      runtimeId
+    );
 
-      // Check if the connection was blocked
-      if ('blocked' in result && result.blocked) {
-        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
-        // Throw error to maintain compatibility with existing error handling
-        throw new Error(result.reason);
-      }
-
-      return result;
-    } catch (error: unknown) {
-      // Only log as error if it's not a terminated runtime error
-      const errorStr = String(error);
-      if (
-        errorStr.includes('terminated') ||
-        errorStr.includes('no new connections allowed')
-      ) {
-        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
-      } else {
-        log.error('[WebSocket Proxy] Failed to open connection:', error);
-      }
-      throw error;
+    // Check if the connection was blocked
+    if ('blocked' in result && result.blocked) {
+      // Throw error to maintain compatibility with existing error handling
+      throw new Error(result.reason);
     }
+
+    return result;
   }
 );
 
@@ -770,21 +693,11 @@ ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
   const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
   cleanupRegistry.set(runtimeId, { terminated: true });
 
-  log.debug(
-    `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
-  );
-
   // CRITICAL: Close all WebSocket connections for this runtime
   try {
     websocketProxy.closeConnectionsForRuntime(runtimeId);
-    log.debug(
-      `[Runtime Cleanup] ✅ Closed all WebSocket connections for runtime ${runtimeId}`
-    );
   } catch (error) {
-    log.error(
-      `[Runtime Cleanup] ❌ Error closing WebSocket connections for runtime ${runtimeId}:`,
-      error
-    );
+    // Error closing WebSocket connections
   }
 
   return { success: true };

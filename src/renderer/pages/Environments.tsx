@@ -44,7 +44,7 @@ const Environments: React.FC = () => {
     try {
       // Check if user is authenticated
       if (!configuration?.token) {
-        console.info('Please login to view available environments');
+        // Please login to view available environments
         return;
       }
 
@@ -59,7 +59,7 @@ const Environments: React.FC = () => {
         setSelectedEnv(environments[0].name);
       }
     } catch (err) {
-      console.error('Failed to fetch environments:', err);
+      // Failed to fetch environments
       // Error is handled by the store
     }
   }, [

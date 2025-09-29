@@ -106,9 +106,7 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
       const notebook = notebookRef.current;
 
       if (manager && !manager.isDisposed) {
-        console.info(
-          '[NotebookEditor] Component unmounting - scheduling cleanup'
-        );
+        // Component unmounting - scheduling cleanup
 
         // Schedule cleanup after current render cycle to avoid React warning
         setTimeout(() => {
@@ -123,20 +121,15 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
                     session.path === notebook.path ||
                     session.name === notebook.name
                   ) {
-                    console.info(
-                      `[NotebookEditor] Shutting down session: ${session.id}`
-                    );
-                    sessions.shutdown(session.id).catch(err => {
-                      console.warn(
-                        '[NotebookEditor] Error shutting down session:',
-                        err
-                      );
+                    // Shutting down session
+                    sessions.shutdown(session.id).catch(() => {
+                      // Error shutting down session
                     });
                   }
                 });
               }
-            } catch (error) {
-              console.warn('[NotebookEditor] Error during cleanup:', error);
+            } catch {
+              // Error during cleanup
             }
           }
         }, 0);
@@ -145,8 +138,8 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
   }, []);
 
   // Handle notebook component errors
-  const handleNotebookError = (error: Error) => {
-    console.error('[NotebookViewer] Notebook component error:', error);
+  const handleNotebookError = (_error: Error) => {
+    // Notebook component error
     setNotebookError(true);
   };
 
@@ -171,7 +164,7 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error('[NotebookViewer] Error terminating runtime:', error);
+      // Error terminating runtime
       // Error is handled by the useRuntimeManagement hook
     }
   };

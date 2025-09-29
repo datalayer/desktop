@@ -22,10 +22,6 @@ export const parseNotebookContent = (responseBody: any): INotebookContent => {
     try {
       content = JSON.parse(responseBody);
     } catch (parseError) {
-      console.error(
-        'Failed to parse response as JSON:',
-        responseBody.substring(0, 200)
-      );
       throw new Error('Invalid JSON response from server');
     }
   } else if (
@@ -37,7 +33,6 @@ export const parseNotebookContent = (responseBody: any): INotebookContent => {
       const jsonString = String.fromCharCode(...responseBody);
       content = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error('Failed to parse byte array as JSON:', parseError);
       throw new Error('Failed to parse notebook content from byte array');
     }
   } else {
@@ -60,8 +55,6 @@ export const validateNotebookContent = (content: any): boolean => {
     return true;
   }
 
-  console.error('Invalid notebook content structure. Content:', content);
-  console.error('Expected: object with cells (array) and nbformat properties');
   return false;
 };
 
@@ -170,7 +163,7 @@ export const safelyDisposeServiceManager = (manager: any): void => {
       manager.dispose();
     }
   } catch (e) {
-    console.warn('Error disposing service manager:', e);
+    // Error disposing service manager
   }
 };
 
@@ -218,30 +211,10 @@ export const createNotebookProps = (
  * Log notebook component information
  */
 export const logNotebookInfo = (
-  serviceManager: any,
-  notebookContent: INotebookContent | null,
-  collaborationProvider: any,
-  notebookId?: string
+  _serviceManager: any,
+  _notebookContent: INotebookContent | null,
+  _collaborationProvider: any,
+  _notebookId?: string
 ) => {
-  console.info('[NotebookView] Creating notebook props:', {
-    hasServiceManager: !!serviceManager,
-    hasNotebookContent: !!notebookContent,
-    hasCells: notebookContent?.cells
-      ? Array.isArray(notebookContent.cells)
-      : false,
-    cellsCount: notebookContent?.cells?.length,
-    hasCollaborationProvider: !!collaborationProvider,
-    notebookId: notebookId,
-  });
-
-  if (serviceManager) {
-    console.info(
-      '[NotebookView] ServiceManager isReady:',
-      serviceManager.isReady
-    );
-    console.info(
-      '[NotebookView] ServiceManager isDisposed:',
-      serviceManager.isDisposed
-    );
-  }
+  // Notebook component information logging function (logging removed)
 };

@@ -24,51 +24,39 @@ import * as servicesModule from '@jupyterlab/services/lib/index.js';
 // Handle the fact that Vite may wrap CommonJS modules
 let services = servicesModule;
 
-// Debug: log what we actually got
-console.log('=== jupyterlab-services-proxy initial ===');
-console.log('servicesModule type:', typeof servicesModule);
-console.log('servicesModule keys:', Object.keys(servicesModule || {}));
+// Debug: check what we actually got
 
 // If there's only one key, it might be the default export wrapper
 if (Object.keys(servicesModule).length === 1) {
   const key = Object.keys(servicesModule)[0];
-  console.log('Single key found:', key);
-  console.log('Value type:', typeof servicesModule[key]);
+  // Single key found
 
   // Handle __require wrapper (Vite's CommonJS interop)
   if (key === '__require' && typeof servicesModule[key] === 'function') {
-    console.log('Found __require wrapper, trying to load module...');
+    // Found __require wrapper, trying to load module
     try {
       // Try to use the __require function to load the actual module
       const actualModule = servicesModule.__require(
         '@jupyterlab/services/lib/index.js'
       );
-      console.log('__require result type:', typeof actualModule);
-      console.log(
-        '__require result keys:',
-        actualModule ? Object.keys(actualModule) : 'null'
-      );
-      console.log(
-        '__require result has ServiceManager?:',
-        actualModule?.ServiceManager !== undefined
-      );
+      // Check __require result
 
       if (actualModule && actualModule.ServiceManager) {
-        console.log('Found ServiceManager via __require');
+        // Found ServiceManager via __require
         services = actualModule;
       }
     } catch (e) {
-      console.error('Failed to use __require:', e);
+      // Failed to use __require
     }
   }
   // Check if it's 'default' or another wrapper
   else if (key === 'default' || typeof servicesModule[key] === 'object') {
     const candidate = servicesModule[key];
-    console.log('Candidate keys:', Object.keys(candidate || {}));
+    // Check candidate keys
 
     // Check if this has what we need
     if (candidate && candidate.ServiceManager) {
-      console.log('Found ServiceManager in wrapped module');
+      // Found ServiceManager in wrapped module
       services = candidate;
     }
   }
@@ -80,7 +68,7 @@ if (
   servicesModule.default &&
   typeof servicesModule.default === 'object'
 ) {
-  console.log('Trying default export from servicesModule');
+  // Trying default export from servicesModule
   services = servicesModule.default;
 }
 
@@ -151,7 +139,7 @@ if (services && services.ServiceManager) {
   RestContentProvider = services.RestContentProvider;
 } else {
   // If that didn't work, try importing individual modules directly
-  console.log('Services module not properly loaded, trying direct imports');
+  // Services module not properly loaded, trying direct imports
 
   // Import individual manager modules - use dynamic imports in async IIFE
   (async () => {
@@ -166,33 +154,25 @@ if (services && services.ServiceManager) {
       '@jupyterlab/services/lib/connectionstatus.js'
     );
 
-    console.log('managerModule type:', typeof managerModule);
-    console.log(
-      'managerModule keys:',
-      managerModule ? Object.keys(managerModule) : 'null'
-    );
+    // Check managerModule
 
     // Handle __require wrapper for individual modules
     if (
       managerModule.__require &&
       typeof managerModule.__require === 'function'
     ) {
-      console.log('Using __require for manager.js');
+      // Using __require for manager.js
       try {
         const actualManager = managerModule.__require(
           '@jupyterlab/services/lib/manager.js'
         );
-        console.log('actualManager type:', typeof actualManager);
-        console.log(
-          'actualManager keys:',
-          actualManager ? Object.keys(actualManager) : 'null'
-        );
+        // Check actualManager
         ServiceManager =
           actualManager?.ServiceManager ||
           actualManager?.default ||
           actualManager;
       } catch (e) {
-        console.error('Failed to __require manager.js:', e);
+        // Failed to __require manager.js
       }
     } else {
       // Extract from modules (handle both named and default exports)
@@ -216,7 +196,7 @@ if (services && services.ServiceManager) {
           actualServerConnection?.default ||
           actualServerConnection;
       } catch (e) {
-        console.error('Failed to __require serverconnection.js:', e);
+        // Failed to __require serverconnection.js
       }
     } else {
       ServerConnection =
@@ -236,7 +216,7 @@ if (services && services.ServiceManager) {
           actualBaseManager?.default ||
           actualBaseManager;
       } catch (e) {
-        console.error('Failed to __require basemanager.js:', e);
+        // Failed to __require basemanager.js
       }
     } else {
       BaseManager =
@@ -255,7 +235,7 @@ if (services && services.ServiceManager) {
           actualConnectionStatus?.default ||
           actualConnectionStatus;
       } catch (e) {
-        console.error('Failed to __require connectionstatus.js:', e);
+        // Failed to __require connectionstatus.js
       }
     } else {
       ConnectionStatus =
@@ -287,34 +267,11 @@ if (services && services.ServiceManager) {
   })();
 }
 
-// Log what we imported for debugging (safely)
-console.log('=== jupyterlab-services-proxy final ===');
-console.log('ServiceManager type:', typeof ServiceManager);
-console.log(
-  'ServiceManager is function?:',
-  typeof ServiceManager === 'function'
-);
-console.log(
-  'ServiceManager constructor name:',
-  ServiceManager?.constructor?.name || 'N/A'
-);
-console.log('ServerConnection type:', typeof ServerConnection);
-console.log(
-  'ServerConnection has makeSettings?:',
-  typeof ServerConnection?.makeSettings === 'function'
-);
-console.log('KernelManager type:', typeof KernelManager);
+// Check what we imported for debugging
 
 // Verify critical imports
 if (!ServiceManager) {
-  console.error('ServiceManager not found!');
-  console.error('servicesModule type:', typeof servicesModule);
-  console.error(
-    'servicesModule keys:',
-    servicesModule ? Object.keys(servicesModule) : 'null'
-  );
-  console.error('services type:', typeof services);
-  console.error('services keys:', services ? Object.keys(services) : 'null');
+  // ServiceManager not found
   throw new Error('Failed to import ServiceManager from @jupyterlab/services');
 }
 
@@ -361,4 +318,4 @@ export {
   KernelSpecAPI,
 };
 
-console.log('=== Proxy setup complete ===');
+// Proxy setup complete

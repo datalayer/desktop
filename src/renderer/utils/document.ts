@@ -87,8 +87,8 @@ export async function waitForRuntimeReady(
  * Logs editor errors to console for debugging.
  * @param error - The error that occurred in the Lexical editor
  */
-export function onLexicalError(error: Error): void {
-  console.error('Lexical error:', error);
+export function onLexicalError(_error: Error): void {
+  // Lexical error handling (logging removed)
 }
 
 /**

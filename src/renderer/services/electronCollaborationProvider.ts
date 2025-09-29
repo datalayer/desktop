@@ -90,7 +90,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
     options?: Record<string, unknown>
   ): Promise<void> {
     if (this.isConnected) {
-      console.info('Already connected to Datalayer collaboration service');
+      // Already connected to Datalayer collaboration service
       return;
     }
 
@@ -106,10 +106,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
           cleanupRegistry.has(runtimeId) &&
           cleanupRegistry.get(runtimeId).terminated
         ) {
-          console.info(
-            '[ElectronCollaborationProvider] 🛑 RACE CONDITION PREVENTION: Blocking collaboration WebSocket for terminated runtime:',
-            runtimeId
-          );
+          // RACE CONDITION PREVENTION: Blocking collaboration WebSocket for terminated runtime
           throw new Error(
             `Runtime ${runtimeId} has been terminated - no new collaboration connections allowed`
           );
@@ -140,10 +137,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
             configToken = undefined;
           }
         } catch (error) {
-          console.error(
-            '[ElectronCollaborationProvider] Error getting collaboration token:',
-            error
-          );
+          // Error getting collaboration token
           configToken = undefined;
         }
       }
@@ -215,10 +209,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
           cleanupRegistry.has(runtimeId) &&
           cleanupRegistry.get(runtimeId).terminated
         ) {
-          console.info(
-            '[ElectronCollaborationProvider] 🛑 FINAL CHECK: Runtime terminated during connection setup, aborting:',
-            runtimeId
-          );
+          // FINAL CHECK: Runtime terminated during connection setup, aborting
           throw new Error(
             `Runtime ${runtimeId} has been terminated during collaboration setup - no new connections allowed`
           );
@@ -284,9 +275,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
     // Handle session expiration (code 4002)
     if (event.code === 4002) {
-      console.info(
-        '[ElectronCollaborationProvider] Collaboration session expired'
-      );
+      // Collaboration session expired
       // Attempt to reconnect could be implemented here
     }
   }

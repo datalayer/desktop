@@ -49,7 +49,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       chromeVersionElement.textContent = versions.chrome;
     }
   } catch (error) {
-    console.error('Failed to get version information:', error);
     // Fallback to process versions if available
     if (electronVersionElement) {
       electronVersionElement.textContent =

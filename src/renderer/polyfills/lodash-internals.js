@@ -411,24 +411,17 @@ function safeExtend(destination, ...sources) {
 
 // CRITICAL: Bulletproof extend function that handles ALL edge cases
 function bulletproofExtend(object, ...sources) {
-  console.log('[BulletproofExtend] Called with:', { object, sources });
-
   // Handle undefined/null/non-object destination - create safe target
   let target;
   if (object && typeof object === 'object') {
     target = object;
   } else {
-    console.warn(
-      '[BulletproofExtend] Target was undefined/null, creating new object:',
-      object
-    );
     target = {};
   }
 
   // Process each source
   sources.forEach((source, index) => {
     if (source != null && typeof source === 'object') {
-      console.log(`[BulletproofExtend] Processing source ${index}:`, source);
       for (const key in source) {
         if (
           source.hasOwnProperty &&
@@ -436,27 +429,17 @@ function bulletproofExtend(object, ...sources) {
         ) {
           // Fix 'class-name' -> 'className' during assignment
           const finalKey = key === 'class-name' ? 'className' : key;
-          console.log(`[BulletproofExtend] Setting ${finalKey}:`, source[key]);
           target[finalKey] = source[key];
         }
       }
-    } else {
-      console.log(
-        `[BulletproofExtend] Skipping invalid source ${index}:`,
-        source
-      );
     }
   });
 
-  console.log('[BulletproofExtend] Result:', target);
   return target;
 }
 
 // CRITICAL: Remove Object.assign interception to avoid class inheritance conflicts
 // The real fix needs to be in ensuring Prism languages are properly defined
-console.log(
-  '[Lodash Polyfills] Skipping Object.assign interception to avoid class conflicts'
-);
 
 // Make bulletproofExtend available for ALL numbered variations the bundler might create
 globalThis.safeExtend = bulletproofExtend;
@@ -613,7 +596,3 @@ if (typeof window !== 'undefined' && window.Symbol) {
     };
   }
 }
-
-console.log(
-  '[Lodash Polyfills] Applied successfully with comprehensive function polyfills'
-);

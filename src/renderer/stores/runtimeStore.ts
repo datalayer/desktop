@@ -182,14 +182,8 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         cleanupRegistry.get(existingRuntime.runtime.uid)?.terminated;
 
       if (isTerminated) {
-        console.info(
-          `⚠️ [Runtime Check] Existing runtime ${existingRuntime.runtime.uid} for notebook ${notebookId} has been terminated, creating new one`
-        );
+        // Existing runtime has been terminated, creating new one
       } else {
-        console.info(
-          `Reusing existing runtime for notebook ${notebookId}:`,
-          existingRuntime.runtime.uid
-        );
         return existingRuntime.runtime;
       }
     }
@@ -203,9 +197,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     const existingPromise =
       globalThis.__runtimeCreationPromises.get(notebookId);
     if (existingPromise) {
-      console.info(
-        `🔄 [Race Condition Protection] Runtime creation already in progress for notebook ${notebookId}, waiting for existing request...`
-      );
       return existingPromise;
     }
 
@@ -236,11 +227,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     setRuntimeError(null);
 
     try {
-      console.info(
-        `Creating new runtime for notebook ${notebookId} with options:`,
-        options
-      );
-
       // Add timestamp to ensure unique runtime names
       const timestamp = Date.now().toString(36); // Convert to base36 for shorter string
       const createRuntimeParams = {
@@ -250,50 +236,14 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
       };
 
       // Check authentication state before API call
-      const authState = await (window as any).datalayerAPI.getCredentials();
-      console.info('[RUNTIME DEBUG] Authentication state:', {
-        isAuthenticated: authState.isAuthenticated,
-        runUrl: authState.runUrl,
-        hasToken: !!authState.token,
-      });
-
-      console.info(
-        '[RUNTIME DEBUG] Calling createRuntime with params:',
-        createRuntimeParams
-      );
-
-      // DEBUG: Check if datalayerAPI is available
-      console.info(
-        '[RUNTIME DEBUG] datalayerAPI exists:',
-        !!(window as any).datalayerAPI
-      );
-      console.info(
-        '[RUNTIME DEBUG] createRuntime method exists:',
-        typeof (window as any).datalayerAPI?.createRuntime
-      );
-      console.info(
-        '[RUNTIME DEBUG] datalayerAPI keys:',
-        Object.keys((window as any).datalayerAPI || {})
-      );
+      await (window as any).datalayerAPI.getCredentials();
 
       const result = await (window as any).datalayerAPI.createRuntime(
         createRuntimeParams
       );
-      console.info('[RUNTIME DEBUG] createRuntime response:', {
-        success: result.success,
-        hasData: !!result.data,
-        error: result.error,
-        fullResult: result,
-      });
 
       if (result.success && result.data?.runtime) {
         const runtime = result.data.runtime;
-
-        // Log the complete runtime object to understand its structure
-        console.info(
-          '🔍 Complete runtime object structure:',
-          JSON.stringify(runtime, null, 2)
-        );
 
         // Store the runtime for this notebook
         const newRuntimes = new Map(notebookRuntimes);
@@ -307,10 +257,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         // Save to storage for persistence
         get().saveRuntimesToStorage();
 
-        console.info(
-          `Runtime created successfully for notebook ${notebookId}:`,
-          runtime.uid
-        );
         return runtime;
       } else {
         throw new Error(result.error || 'Failed to create runtime');
@@ -318,7 +264,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to create runtime';
-      console.error('Error creating runtime:', errorMessage);
       setRuntimeError(errorMessage);
       return null;
     } finally {
@@ -359,7 +304,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         const notebookRuntime = notebookRuntimes.get(notebookId);
 
         if (!notebookRuntime) {
-          console.info(`No runtime to terminate for notebook ${notebookId}`);
           resolved = true;
           resolve();
           return;
@@ -369,18 +313,10 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         setRuntimeError(null);
 
         try {
-          console.info(
-            `Terminating runtime for notebook ${notebookId}:`,
-            notebookRuntime.runtime.uid
-          );
-
           // CRITICAL: Clear cached creation promise for this notebook
           // This ensures new requests create fresh runtimes instead of reusing terminated ones
           if (globalThis.__runtimeCreationPromises) {
             if (globalThis.__runtimeCreationPromises.has(notebookId)) {
-              console.info(
-                `🔄 [Race Condition Protection] Clearing cached promise for terminated runtime ${notebookId}`
-              );
               globalThis.__runtimeCreationPromises.delete(notebookId);
             }
           }
@@ -390,8 +326,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
             notebookRuntime.serviceManager &&
             !notebookRuntime.serviceManager.isDisposed
           ) {
-            console.info('📋 [Step 1] Shutting down sessions and kernels...');
-
             try {
               const serviceManager = notebookRuntime.serviceManager;
 
@@ -403,10 +337,9 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 );
                 for (const session of runningSessions) {
                   try {
-                    console.info(`  Shutting down session: ${session.id}`);
                     await serviceManager.sessions.shutdown(session.id);
-                  } catch (err) {
-                    console.warn('  Error shutting down session:', err);
+                  } catch {
+                    // Error shutting down session
                   }
                 }
               }
@@ -419,35 +352,19 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 );
                 for (const kernel of runningKernels) {
                   try {
-                    console.info(`  Shutting down kernel: ${kernel.id}`);
                     await serviceManager.kernels.shutdown(kernel.id);
-                  } catch (err) {
+                  } catch {
                     // Ignore 200 response errors - these are actually successful shutdowns
-                    const errStr = String(err);
-                    if (
-                      errStr.includes('Invalid response: 200') ||
-                      errStr.includes('ResponseError')
-                    ) {
-                      console.info(
-                        `  Kernel ${kernel.id} shutdown completed (200 response)`
-                      );
-                    } else {
-                      console.warn('  Error shutting down kernel:', err);
-                    }
                   }
                 }
               }
-            } catch (error) {
-              console.warn('Error during session/kernel shutdown:', error);
+            } catch {
+              // Error during session/kernel shutdown
             }
           }
 
           // STEP 2: Clean up collaboration provider
           try {
-            console.info(
-              `🤝 [Step 2] Cleaning up collaboration provider for runtime: ${notebookRuntime.runtime.uid}`
-            );
-
             // Emit a global event that NotebookView components can listen to
             const collaborationCleanupEvent = new CustomEvent(
               'runtime-collaboration-cleanup',
@@ -459,30 +376,17 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
               }
             );
             window.dispatchEvent(collaborationCleanupEvent);
-
-            console.info(
-              `🤝 Collaboration cleanup event dispatched for runtime: ${notebookRuntime.runtime.uid}`
-            );
-          } catch (error) {
-            console.error(
-              '🤝 Failed to dispatch collaboration cleanup event:',
-              error
-            );
+          } catch {
+            // Failed to dispatch collaboration cleanup event
           }
 
           // STEP 3: Close WebSocket connections for this runtime
           try {
-            console.info(
-              `🔴 [Step 3] Closing WebSocket connections for runtime: ${notebookRuntime.runtime.uid}`
-            );
-            const result = await (window as any).proxyAPI.websocketCloseRuntime(
-              {
-                runtimeId: notebookRuntime.runtime.uid,
-              }
-            );
-            console.info(`🔴 WebSocket cleanup result:`, result);
-          } catch (error) {
-            console.error('🔴 Failed to close WebSocket connections:', error);
+            await (window as any).proxyAPI.websocketCloseRuntime({
+              runtimeId: notebookRuntime.runtime.uid,
+            });
+          } catch {
+            // Failed to close WebSocket connections
           }
 
           // STEP 4: Dispose service manager
@@ -490,8 +394,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
             notebookRuntime.serviceManager &&
             !notebookRuntime.serviceManager.isDisposed
           ) {
-            console.info('♻️ [Step 4] Disposing service manager...');
-
             // Aggressive cleanup: Force stop any kernel polling/requests
             try {
               const serviceManager = notebookRuntime.serviceManager as any;
@@ -502,9 +404,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 typeof serviceManager.kernels.dispose === 'function' &&
                 !serviceManager.kernels.isDisposed
               ) {
-                console.info(
-                  '🛑 [Aggressive Cleanup] Disposing kernel manager'
-                );
                 try {
                   const disposeResult = serviceManager.kernels.dispose();
                   // Handle both sync and async disposal
@@ -512,27 +411,12 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                     disposeResult &&
                     typeof disposeResult.catch === 'function'
                   ) {
-                    disposeResult.catch((err: any) => {
+                    disposeResult.catch(() => {
                       // Ignore Poll disposal errors - these are expected during cleanup
-                      if (
-                        !String(err).includes('Poll') &&
-                        !String(err).includes('disposed')
-                      ) {
-                        console.warn(
-                          'Error disposing kernel manager (async):',
-                          err
-                        );
-                      }
                     });
                   }
-                } catch (err) {
+                } catch {
                   // Ignore Poll disposal errors - these are expected during cleanup
-                  if (
-                    !String(err).includes('Poll') &&
-                    !String(err).includes('disposed')
-                  ) {
-                    console.warn('Error disposing kernel manager (sync):', err);
-                  }
                 }
               }
 
@@ -542,9 +426,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 typeof serviceManager.sessions.dispose === 'function' &&
                 !serviceManager.sessions.isDisposed
               ) {
-                console.info(
-                  '🛑 [Aggressive Cleanup] Disposing session manager'
-                );
                 try {
                   const disposeResult = serviceManager.sessions.dispose();
                   // Handle both sync and async disposal
@@ -552,30 +433,12 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                     disposeResult &&
                     typeof disposeResult.catch === 'function'
                   ) {
-                    disposeResult.catch((err: any) => {
+                    disposeResult.catch(() => {
                       // Ignore Poll disposal errors - these are expected during cleanup
-                      if (
-                        !String(err).includes('Poll') &&
-                        !String(err).includes('disposed')
-                      ) {
-                        console.warn(
-                          'Error disposing session manager (async):',
-                          err
-                        );
-                      }
                     });
                   }
-                } catch (err) {
+                } catch {
                   // Ignore Poll disposal errors - these are expected during cleanup
-                  if (
-                    !String(err).includes('Poll') &&
-                    !String(err).includes('disposed')
-                  ) {
-                    console.warn(
-                      'Error disposing session manager (sync):',
-                      err
-                    );
-                  }
                 }
               }
 
@@ -584,7 +447,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 serviceManager._kernelManager &&
                 serviceManager._kernelManager._models
               ) {
-                console.info('🛑 [Aggressive Cleanup] Clearing kernel models');
                 serviceManager._kernelManager._models.clear();
               }
 
@@ -592,43 +454,24 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                 serviceManager._sessionManager &&
                 serviceManager._sessionManager._models
               ) {
-                console.info('🛑 [Aggressive Cleanup] Clearing session models');
                 serviceManager._sessionManager._models.clear();
               }
-            } catch (error) {
-              console.warn(
-                '🛑 [Aggressive Cleanup] Error during aggressive cleanup:',
-                error
-              );
+            } catch {
+              // Error during aggressive cleanup
             }
 
             try {
               notebookRuntime.serviceManager.dispose();
-            } catch (err) {
+            } catch {
               // Ignore Poll disposal errors - these are expected during cleanup
-              if (
-                !String(err).includes('Poll') &&
-                !String(err).includes('disposed')
-              ) {
-                console.warn('Error disposing service manager:', err);
-              }
             }
           }
 
           // Additional cleanup: Stop any kernel/session polling specifically for this runtime
           try {
-            console.info(
-              '🛑 [Targeted Cleanup] Stopping polling for runtime:',
-              notebookRuntime.runtime.uid
-            );
-
             // Instead of clearing ALL timers, let's be more targeted
             // Force abort any pending fetch requests to this specific runtime
-            const runtimeUrl = `${notebookRuntime.runtime.jupyter_server_url}`;
-            console.info(
-              '🛑 [Targeted Cleanup] Runtime URL to clean:',
-              runtimeUrl
-            );
+            // const _runtimeUrl = `${notebookRuntime.runtime.jupyter_server_url}`;
 
             // Store reference to track and clean up runtime-specific timers
             // We'll use a global registry for runtime-specific cleanup
@@ -642,25 +485,14 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
             // Mark this runtime as terminated to prevent new timers
             cleanupRegistry.set(runtimeId, { terminated: true });
 
-            console.info(
-              '🛑 [Targeted Cleanup] Marked runtime as terminated:',
-              runtimeId
-            );
-
             // Notify main process to update its cleanup registry for WebSocket blocking
             try {
               (window as any).electronAPI?.notifyRuntimeTerminated?.(runtimeId);
-            } catch (error) {
-              console.warn(
-                '🛑 [Targeted Cleanup] Error notifying main process:',
-                error
-              );
+            } catch {
+              // Error notifying main process
             }
-          } catch (error) {
-            console.warn(
-              '🛑 [Targeted Cleanup] Error during targeted cleanup:',
-              error
-            );
+          } catch {
+            // Error during targeted cleanup
           }
 
           // Clear cached service manager if any
@@ -670,44 +502,23 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
           }
 
           // Call API to delete runtime on server
-          console.info(
-            `🗑️  Attempting to delete runtime: ${notebookRuntime.runtime.uid}`
-          );
-          console.info(
-            `🗑️  Complete runtime object for deletion:`,
-            JSON.stringify(notebookRuntime.runtime, null, 2)
-          );
 
           // Use pod_name for deletion (API requires pod name, not UID)
           const podNameToDelete = notebookRuntime.runtime.pod_name;
 
           if (!podNameToDelete) {
-            console.error(
-              `🗑️  ERROR: No pod_name found in runtime object! Cannot delete runtime.`
-            );
             setRuntimeError('Cannot delete runtime - no pod name available');
             resolved = true;
             resolve();
             return;
           }
 
-          console.info(`🗑️  Using pod name for deletion: ${podNameToDelete}`);
-
           const deleteResult = await (window as any).datalayerAPI.deleteRuntime(
             podNameToDelete
           );
 
-          console.info(`🗑️  Delete API response:`, deleteResult);
-
           if (!deleteResult.success) {
-            console.error(
-              'Failed to delete runtime on server:',
-              deleteResult.error
-            );
-          } else {
-            console.info(
-              `✅ Successfully deleted runtime: ${notebookRuntime.runtime.uid}`
-            );
+            // Failed to delete runtime on server
           }
 
           // Remove from map
@@ -728,9 +539,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
           // Update storage
           get().saveRuntimesToStorage();
 
-          console.info(
-            `Runtime terminated successfully for notebook ${notebookId}`
-          );
           resolved = true;
           resolve();
         } catch (error) {
@@ -744,13 +552,9 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
             String(error).includes('Poll') &&
             String(error).includes('disposed')
           ) {
-            console.debug(
-              'Ignoring expected Poll disposal error during cleanup'
-            );
             resolved = true;
             resolve(); // Don't treat Poll disposal as a real error
           } else {
-            console.error('Error terminating runtime:', errorMessage);
             setRuntimeError(errorMessage);
             resolved = true;
             reject(error); // Reject with the error for real failures
@@ -860,13 +664,10 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
   // Reconnect to existing active runtimes on startup
   reconnectToExistingRuntimes: async () => {
-    console.info('[RuntimeStore] Checking for existing active runtimes...');
-
     try {
       // Get stored runtime info
       const storedData = sessionStorage.getItem('datalayer-runtimes');
       if (!storedData) {
-        console.info('[RuntimeStore] No stored runtime data found');
         return;
       }
 
@@ -879,10 +680,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         const podName = (info.runtime as any)?.pod_name as string;
 
         if (podName) {
-          console.info(
-            `[RuntimeStore] Checking runtime ${podName} for notebook ${notebookId}`
-          );
-
           // Check if runtime is still active
           const statusResponse = await (
             window as any
@@ -893,10 +690,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
             statusResponse.isActive &&
             statusResponse.runtime
           ) {
-            console.info(
-              `[RuntimeStore] Runtime ${podName} is still active, attempting reconnection`
-            );
-
             try {
               // Recreate the service manager with existing runtime
               const serviceManager =
@@ -923,29 +716,19 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
                   activeNotebookId: notebookId, // Set as active if successfully reconnected
                 }));
 
-                console.info(
-                  `[RuntimeStore] Successfully reconnected to runtime ${podName}`
-                );
                 get().saveRuntimesToStorage();
               }
-            } catch (error) {
-              console.error(
-                `[RuntimeStore] Failed to reconnect to runtime ${podName}:`,
-                error
-              );
+            } catch {
               // Remove invalid runtime from storage
               get().removeRuntimeFromStorage(notebookId);
             }
           } else {
-            console.info(
-              `[RuntimeStore] Runtime ${podName} is no longer active, removing from storage`
-            );
             get().removeRuntimeFromStorage(notebookId);
           }
         }
       }
     } catch (error) {
-      console.error('[RuntimeStore] Error during runtime reconnection:', error);
+      // Error during runtime reconnection
     }
   },
 
@@ -964,10 +747,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
           cleanupRegistry.has(runtimeUid) &&
           cleanupRegistry.get(runtimeUid).terminated
         ) {
-          console.info(
-            '[RuntimeStore] 🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation for terminated runtime:',
-            runtimeUid
-          );
           return null;
         }
       }
@@ -975,9 +754,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
       // Check if we're currently terminating any runtime
       const { isTerminatingRuntime } = get();
       if (isTerminatingRuntime) {
-        console.info(
-          '[RuntimeStore] 🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation during termination'
-        );
         return null;
       }
 
@@ -992,11 +768,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         uid: runtime.uid as string,
       };
 
-      console.info(
-        `[RuntimeStore] Creating service manager for existing runtime:`,
-        runtimeData
-      );
-
       const serviceManager = await createProxyServiceManager(
         runtimeData.ingress,
         runtimeData.token,
@@ -1005,10 +776,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
       return serviceManager;
     } catch (error) {
-      console.error(
-        '[RuntimeStore] Failed to create service manager from runtime:',
-        error
-      );
       return null;
     }
   },
@@ -1030,10 +797,7 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
           );
         }
       } catch (error) {
-        console.error(
-          '[RuntimeStore] Error removing runtime from storage:',
-          error
-        );
+        // Error removing runtime from storage
       }
     }
   },
@@ -1056,7 +820,7 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
       set({ notebookRuntimes: newRuntimes });
     } catch (error) {
-      console.error('Failed to load runtimes from storage:', error);
+      // Failed to load runtimes from storage
     }
   },
 

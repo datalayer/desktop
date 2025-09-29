@@ -21,7 +21,7 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
     "check": "npm run format:check && npm run lint && npm run type-check",
     "check:fix": "npm run format && npm run lint:fix && npm run type-check",
-    "start": "electron-vite dev",
+    "start": "rm -rf node_modules/.vite dist .electron-vite && electron-vite dev",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac --universal",
     "dist:mac-universal": "npm run build && electron-builder --mac --universal",

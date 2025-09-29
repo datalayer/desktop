@@ -49,10 +49,7 @@ try {
     window.lodash.extend = bulletproofExtend;
   }
 } catch (e) {
-  console.warn(
-    '[Lodash Globals] Could not override extend functions:',
-    e.message
-  );
+  // Could not override extend functions
 }
 
 // Make Backbone available globally for widgets
@@ -62,4 +59,4 @@ window.Backbone = Backbone;
 export { lodash, Backbone };
 export default lodash;
 
-console.log('[Lodash Globals] ✅ Lodash and Backbone loaded globally');
+// Lodash and Backbone loaded globally

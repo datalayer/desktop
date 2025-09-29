@@ -23,8 +23,6 @@ const moduleRegistry = new Map();
 
 // Define a minimal RequireJS-compatible loader
 window.requirejs = function (deps, callback) {
-  console.log('RequireJS shim: Loading', deps);
-
   if (typeof deps === 'string') {
     // Single module request
     return moduleRegistry.get(deps);
@@ -42,7 +40,6 @@ window.require = window.requirejs;
 
 // RequireJS configuration
 window.requirejs.config = function (config) {
-  console.log('RequireJS shim: Config', config);
   // Store config but don't process it - we handle modules directly
 };
 
@@ -101,13 +98,11 @@ if (window._ || window.lodash) {
   const lodashModule = window._ || window.lodash;
   moduleRegistry.set('underscore', lodashModule);
   moduleRegistry.set('lodash', lodashModule);
-  console.log('RequireJS shim: Pre-registered underscore/lodash');
 }
 
 // Pre-register Backbone if available
 if (window.Backbone) {
   moduleRegistry.set('backbone', window.Backbone);
-  console.log('RequireJS shim: Pre-registered Backbone');
 }
 
 // Pre-register Jupyter widget modules that are already loaded
@@ -136,10 +131,8 @@ async function registerJupyterModules() {
         ErrorWidgetView: base.ErrorWidgetView,
       });
     }
-
-    console.log('RequireJS shim: Registered Jupyter widget modules');
   } catch (error) {
-    console.error('RequireJS shim: Failed to register modules', error);
+    // Failed to register modules
   }
 }
 
@@ -148,5 +141,3 @@ registerJupyterModules();
 
 // Export for debugging
 window.__requireRegistry = moduleRegistry;
-
-console.log('RequireJS shim loaded');

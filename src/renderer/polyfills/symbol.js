@@ -23,11 +23,8 @@
     typeof Symbol.for === 'function' &&
     typeof Symbol.keyFor === 'function'
   ) {
-    console.log('[Symbol Polyfill] Native Symbol detected, skipping polyfill');
     return;
   }
-
-  console.log('[Symbol Polyfill] Installing Symbol polyfill...');
 
   // Internal registry for Symbol.for and Symbol.keyFor
   const globalSymbolRegistry = {};
@@ -150,14 +147,4 @@
       window[varName] = SymbolPolyfill;
     }
   }
-
-  console.log('[Symbol Polyfill] ✅ Symbol polyfill installed successfully');
-  console.log(
-    '[Symbol Polyfill] Symbol.for available:',
-    typeof SymbolPolyfill.for === 'function'
-  );
-  console.log(
-    '[Symbol Polyfill] Symbol.keyFor available:',
-    typeof SymbolPolyfill.keyFor === 'function'
-  );
 })();

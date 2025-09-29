@@ -97,17 +97,11 @@ export const useRuntimeManagement = ({
 
       // PRIORITY CHECK: Don't create resources if runtime was terminated
       if (terminated) {
-        console.info(
-          '[useRuntimeManagement] Skipping resource creation - runtime was terminated'
-        );
         return;
       }
 
       // Check if this notebook's runtime was just terminated
       if (isRuntimeTerminated(selectedNotebook.id)) {
-        console.info(
-          '[useRuntimeManagement] Skipping resource creation - runtime marked as terminated'
-        );
         return;
       }
 
@@ -118,19 +112,12 @@ export const useRuntimeManagement = ({
           cleanupRegistry.has(runtime.uid) &&
           cleanupRegistry.get(runtime.uid).terminated
         ) {
-          console.info(
-            '[useRuntimeManagement] 🛑 RACE CONDITION PREVENTION: Blocking resource creation for terminated runtime:',
-            runtime.uid
-          );
           return;
         }
       }
 
       // TERMINATING STATE CHECK: Don't create resources if currently terminating
       if (isTerminatingRuntime) {
-        console.info(
-          '[useRuntimeManagement] 🛑 RACE CONDITION PREVENTION: Blocking resource creation during termination'
-        );
         return;
       }
 
@@ -149,10 +136,6 @@ export const useRuntimeManagement = ({
         setCreating(true);
 
         try {
-          console.info(
-            '[useRuntimeManagement] Creating runtime with Datalayer service...'
-          );
-
           // Check if this notebook was just terminated
           if (isRuntimeTerminated(selectedNotebook.id)) {
             clearRuntimeTerminationFlag(selectedNotebook.id);
@@ -180,11 +163,6 @@ export const useRuntimeManagement = ({
               throw new Error(runtimeError || 'Failed to create runtime');
             }
             currentRuntime = newRuntime;
-          } else {
-            console.info(
-              `[useRuntimeManagement] Reusing existing runtime for notebook ${selectedNotebook.id}:`,
-              currentRuntime.uid
-            );
           }
 
           const jupyterServerUrl = currentRuntime?.ingress;
@@ -195,10 +173,6 @@ export const useRuntimeManagement = ({
           }
 
           const jupyterToken = currentRuntime?.token || configuration.token;
-          console.info(
-            '[useRuntimeManagement] Connecting to Jupyter server:',
-            jupyterServerUrl
-          );
 
           if (cancelled || !mountedRef.current) return;
 
@@ -206,10 +180,6 @@ export const useRuntimeManagement = ({
           let manager = getCachedServiceManager(currentRuntime.uid);
 
           if (!manager) {
-            console.info(
-              '[useRuntimeManagement] Creating new ServiceManager for runtime:',
-              currentRuntime.uid
-            );
             manager = await createProxyServiceManager(
               jupyterServerUrl,
               jupyterToken,
@@ -233,10 +203,6 @@ export const useRuntimeManagement = ({
             if (manager && typeof (manager as any).dispose === 'function') {
               const originalDispose = (manager as any).dispose.bind(manager);
               (manager as any).dispose = function () {
-                console.info(
-                  '[useRuntimeManagement] Disposing ServiceManager for runtime:',
-                  currentRuntime.uid
-                );
                 removeCachedServiceManager(currentRuntime.uid);
                 try {
                   // Check if the manager is still valid and not disposed
@@ -249,29 +215,12 @@ export const useRuntimeManagement = ({
                   }
                 } catch (e) {
                   // Ignore disposal errors as they're expected during cleanup
-                  if (
-                    !String(e).includes('Poll') &&
-                    !String(e).includes('disposed')
-                  ) {
-                    console.error(
-                      '[useRuntimeManagement] Error in original dispose:',
-                      e
-                    );
-                  }
                 }
               }.bind(manager);
             }
           } else {
-            console.info(
-              '[useRuntimeManagement] Reusing existing ServiceManager for runtime:',
-              currentRuntime.uid
-            );
-
             // Verify the manager is still valid
             if ((manager as any).isDisposed) {
-              console.info(
-                '[useRuntimeManagement] Cached ServiceManager was disposed, creating new one'
-              );
               removeCachedServiceManager(currentRuntime.uid);
               manager = await createProxyServiceManager(
                 jupyterServerUrl,
@@ -299,14 +248,7 @@ export const useRuntimeManagement = ({
             setServiceManagerForNotebook(selectedNotebook.id, manager);
             setServiceManager(manager);
           }
-          console.info(
-            '[useRuntimeManagement] ServiceManager ready with runtime Jupyter server'
-          );
         } catch (initError) {
-          console.error(
-            '[useRuntimeManagement] Failed to create ProxyServiceManager:',
-            initError
-          );
           if (!cancelled) {
             const errorMessage = formatErrorMessage(initError as Error);
             setError(errorMessage);
@@ -315,9 +257,6 @@ export const useRuntimeManagement = ({
           setCreating(false);
         }
       } else if (!configuration?.token || !configuration?.runUrl) {
-        console.info(
-          '[useRuntimeManagement] No Datalayer credentials configured'
-        );
         setServiceManager(null);
         setError(null);
       } else if (hasExistingServiceManager) {
@@ -362,13 +301,7 @@ export const useRuntimeManagement = ({
 
       // Clear the active notebook from the store
       setActiveNotebook(null);
-
-      console.info('[useRuntimeManagement] Runtime terminated successfully');
     } catch (terminateError) {
-      console.error(
-        '[useRuntimeManagement] Error terminating runtime:',
-        terminateError
-      );
       // Don't set error state here - let the parent component handle it
     } finally {
       setTerminating(false);

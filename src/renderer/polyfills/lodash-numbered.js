@@ -77,10 +77,6 @@
     globalThis.defineProperty = globalThis.defineProperty$1;
   }
 
-  console.log(
-    '[Critical Polyfills] ✅ Applied baseGetTag$1-$10, base$1-$10, defineProperty$1-$10'
-  );
-
   // CRITICAL: Override Object.defineProperty to handle non-extensible objects gracefully
   const originalDefineProperty = Object.defineProperty;
   Object.defineProperty = function (obj, prop, descriptor) {
@@ -97,11 +93,6 @@
             obj[prop] = descriptor.value;
             return obj;
           } catch (e2) {
-            console.warn(
-              '[Critical Polyfills] Could not add property',
-              prop,
-              'to non-extensible object, ignoring'
-            );
             return obj;
           }
         }
@@ -109,8 +100,4 @@
       throw e;
     }
   };
-
-  console.log(
-    '[Critical Polyfills] ✅ Patched Object.defineProperty for non-extensible objects'
-  );
 })();

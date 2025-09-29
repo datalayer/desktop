@@ -60,25 +60,17 @@ export const useCollaboration = ({
   useEffect(() => {
     // Don't create collaboration if notebook is null or runtime is terminated
     if (!selectedNotebook) {
-      console.info('[useCollaboration] Skipping - no selected notebook');
       return;
     }
 
     if (configuration?.runUrl && configuration?.token && !runtimeTerminated) {
       // PRIORITY CHECK: Verify runtime hasn't been marked as terminated in global registry
       if (runtimeId && isRuntimeInCleanupRegistry(runtimeId)) {
-        console.info(
-          '🛑 [useCollaboration] Blocking collaboration provider creation for terminated runtime:',
-          runtimeId
-        );
         return;
       }
 
       // Check if the notebook's runtime was terminated
       if (selectedNotebook?.id && isRuntimeTerminated(selectedNotebook.id)) {
-        console.info(
-          '🛑 [useCollaboration] Blocking collaboration provider creation - notebook runtime was terminated'
-        );
         return;
       }
 
@@ -89,10 +81,6 @@ export const useCollaboration = ({
           cleanupRegistry.has(runtimeId) &&
           cleanupRegistry.get(runtimeId).terminated
         ) {
-          console.info(
-            '[useCollaboration] 🛑 RACE CONDITION PREVENTION: Blocking collaboration provider creation for terminated runtime:',
-            runtimeId
-          );
           return;
         }
       }
@@ -102,17 +90,10 @@ export const useCollaboration = ({
         const { isTerminatingRuntime: storeTerminating } =
           useRuntimeStore.getState();
         if (storeTerminating) {
-          console.info(
-            '[useCollaboration] 🛑 RACE CONDITION PREVENTION: Blocking collaboration provider creation during termination'
-          );
           return;
         }
       } catch (error) {
         // If we can't check the store, err on the side of caution
-        console.warn(
-          '[useCollaboration] Could not check terminating state:',
-          error
-        );
       }
 
       // Dispose existing provider
@@ -137,15 +118,6 @@ export const useCollaboration = ({
           collaborationProviderRef.current.dispose();
         } catch (error) {
           // Suppress Yjs "Invalid access" errors which are expected during cleanup
-          if (
-            !String(error).includes('Invalid access') &&
-            !String(error).includes('Yjs')
-          ) {
-            console.warn(
-              '[useCollaboration] Error disposing existing provider:',
-              error
-            );
-          }
         }
         collaborationProviderRef.current = null;
         setCollaborationProvider(null);
@@ -153,22 +125,6 @@ export const useCollaboration = ({
       }
 
       collaborationVersionRef.current++;
-      console.info(
-        '[useCollaboration] Creating Electron collaboration provider v' +
-          collaborationVersionRef.current
-      );
-      console.info(
-        '[useCollaboration] Configuration token:',
-        configuration.token?.substring(0, 10) + '...'
-      );
-      console.info(
-        '[useCollaboration] Configuration runUrl:',
-        configuration.runUrl
-      );
-      console.info(
-        '[useCollaboration] Runtime ID for collaboration:',
-        runtimeId || 'NONE'
-      );
 
       try {
         const provider = new ElectronCollaborationProvider({
@@ -178,11 +134,7 @@ export const useCollaboration = ({
         });
 
         // Listen for collaboration errors but don't let them break the notebook
-        provider.events.errorOccurred.connect((_sender, error) => {
-          console.error(
-            '[useCollaboration] Collaboration error (non-fatal):',
-            error
-          );
+        provider.events.errorOccurred.connect((_sender, _error) => {
           setCollaborationReady(false);
         });
 
@@ -191,9 +143,6 @@ export const useCollaboration = ({
           const readyEvent = provider.events.ready as any;
           if (readyEvent && typeof readyEvent.connect === 'function') {
             readyEvent.connect(() => {
-              console.info(
-                '[useCollaboration] Collaboration provider is ready'
-              );
               setCollaborationReady(true);
             });
           }
@@ -201,15 +150,7 @@ export const useCollaboration = ({
 
         collaborationProviderRef.current = provider;
         setCollaborationProvider(provider);
-
-        console.info(
-          '[useCollaboration] Collaboration provider created successfully'
-        );
       } catch (error) {
-        console.error(
-          '[useCollaboration] Error creating collaboration provider:',
-          error
-        );
         setCollaborationProvider(null);
         setCollaborationReady(false);
       }
@@ -219,21 +160,12 @@ export const useCollaboration = ({
         try {
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn(
-            '[useCollaboration] Error disposing provider on cleanup:',
-            error
-          );
+          // Error disposing provider on cleanup
         }
         collaborationProviderRef.current = null;
       }
       setCollaborationProvider(null);
       setCollaborationReady(false);
-
-      if (runtimeTerminated) {
-        console.info(
-          '[useCollaboration] Runtime terminated, clearing collaboration provider'
-        );
-      }
     }
   }, [
     configuration?.runUrl,
@@ -246,32 +178,20 @@ export const useCollaboration = ({
   // Listen for runtime collaboration cleanup events
   useEffect(() => {
     const handleCollaborationCleanup = (event: CustomEvent) => {
-      const { runtimeId: cleanupRuntimeId, notebookId } = event.detail;
-      console.info(
-        `🤝 [useCollaboration] Received collaboration cleanup event for runtime: ${cleanupRuntimeId}, notebook: ${notebookId}`
-      );
+      const { runtimeId: _cleanupRuntimeId, notebookId } = event.detail;
 
       // Check if this cleanup event is for our current notebook
       if (
         notebookId === selectedNotebook?.id &&
         collaborationProviderRef.current
       ) {
-        console.info(
-          `🤝 [useCollaboration] Disposing collaboration provider for notebook: ${notebookId}`
-        );
         try {
           collaborationProviderRef.current.dispose();
           collaborationProviderRef.current = null;
           setCollaborationProvider(null);
           setCollaborationReady(false);
-          console.info(
-            `🤝 [useCollaboration] Collaboration provider disposed successfully`
-          );
         } catch (error) {
-          console.error(
-            '🤝 [useCollaboration] Error disposing collaboration provider:',
-            error
-          );
+          // Error disposing collaboration provider
         }
       }
     };
@@ -298,10 +218,7 @@ export const useCollaboration = ({
         try {
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn(
-            '[useCollaboration] Error disposing provider on unmount:',
-            error
-          );
+          // Error disposing provider on unmount
         }
       }
     };
@@ -317,14 +234,8 @@ export const useCollaboration = ({
         collaborationProviderRef.current = null;
         setCollaborationProvider(null);
         setCollaborationReady(false);
-        console.info(
-          '[useCollaboration] Collaboration provider disposed manually'
-        );
       } catch (error) {
-        console.error(
-          '[useCollaboration] Error disposing collaboration provider:',
-          error
-        );
+        // Error disposing collaboration provider
       }
     }
   }, []);

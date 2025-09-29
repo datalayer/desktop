@@ -50,36 +50,20 @@ class ErrorBoundary extends React.Component<
    * @param error - The error that was thrown
    * @param errorInfo - Additional error information from React
    */
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(
-      '[NotebookErrorBoundary] Caught notebook error:',
-      error,
-      errorInfo
-    );
-
-    // Log specific error types for better debugging
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
+    // Handle specific error types
     if (error.message.includes('Disposed')) {
-      console.info(
-        '[NotebookErrorBoundary] SessionContext disposal error - likely component lifecycle issue'
-      );
+      // SessionContext disposal error - likely component lifecycle issue
     } else if (error.message.includes('Widget is not attached')) {
-      console.info(
-        '[NotebookErrorBoundary] Widget detachment error - expected during cleanup'
-      );
+      // Widget detachment error - expected during cleanup
       // Don't propagate widget detachment errors as they're expected during cleanup
       return;
     } else if (error.message.includes('removeChild')) {
-      console.info(
-        '[NotebookErrorBoundary] DOM manipulation error - component mounting/unmounting conflict'
-      );
+      // DOM manipulation error - component mounting/unmounting conflict
     } else if (error.message.includes('MathJax')) {
-      console.info(
-        '[NotebookErrorBoundary] MathJax rendering conflict detected'
-      );
+      // MathJax rendering conflict detected
     } else if (error.message.includes('collaboration')) {
-      console.info(
-        '[NotebookErrorBoundary] Collaboration provider error detected'
-      );
+      // Collaboration provider error detected
     }
 
     this.props.onError(error);

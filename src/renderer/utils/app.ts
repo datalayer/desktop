@@ -80,11 +80,9 @@ export const fetchGitHubUserData = async (
       logger.debug('GitHub user data:', userData);
       return userData;
     } else {
-      console.warn('Failed to fetch GitHub user:', response.error);
       return createFallbackGitHubUser(githubId);
     }
   } catch (error) {
-    console.error('Failed to fetch GitHub user:', error);
     return createFallbackGitHubUser(githubId);
   }
 };

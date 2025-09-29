@@ -86,17 +86,10 @@ export function getEnvironmentMode(): EnvironmentMode {
  * Log the current environment configuration
  */
 export function logEnvironmentConfig(): void {
-  const mode = getEnvironmentMode();
-  const devToolsEnabled = shouldEnableDevTools();
-  const productionSecurity = shouldUseProductionSecurity();
-
-  console.log(`[Environment] Mode: ${mode}`);
-  console.log(
-    `[Environment] Dev Tools: ${devToolsEnabled ? 'enabled' : 'disabled'}`
-  );
-  console.log(
-    `[Environment] Production Security: ${productionSecurity ? 'enabled' : 'disabled'}`
-  );
+  // Environment configuration logging function (logging removed)
+  // const _mode = getEnvironmentMode();
+  // const _devToolsEnabled = shouldEnableDevTools();
+  // const _productionSecurity = shouldUseProductionSecurity();
 }
 
 // ============================================================================

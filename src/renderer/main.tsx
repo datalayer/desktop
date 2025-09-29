@@ -188,9 +188,6 @@ window.addEventListener('error', event => {
     errorStr.includes('NotebookWindowedLayout') ||
     errorStr.includes('detachWidget')
   ) {
-    console.debug(
-      '[Global Error Handler] Suppressing widget detachment error during cleanup'
-    );
     event.preventDefault();
     return;
   }
@@ -204,9 +201,6 @@ window.addEventListener('unhandledrejection', event => {
     errorStr.includes('NotebookWindowedLayout') ||
     errorStr.includes('detachWidget')
   ) {
-    console.debug(
-      '[Global Error Handler] Suppressing widget promise rejection during cleanup'
-    );
     event.preventDefault();
     return;
   }

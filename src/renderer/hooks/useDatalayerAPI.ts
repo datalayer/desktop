@@ -96,7 +96,7 @@ export function useDatalayerAPI() {
           try {
             await iamLogin(token);
           } catch (error) {
-            console.warn('IAM login failed, but continuing:', error);
+            // IAM login failed, but continuing
           }
 
           // Fetch current user data after successful login
@@ -106,7 +106,7 @@ export function useDatalayerAPI() {
               return { ...result, userData: userResponse.data };
             }
           } catch (error) {
-            console.error('Failed to fetch user data after login:', error);
+            // Failed to fetch user data after login
           }
         } else {
           setError(result.message || 'Login failed');
@@ -142,7 +142,6 @@ export function useDatalayerAPI() {
 
       return result;
     } catch (err) {
-      console.error('Logout error:', err);
       return { success: false };
     }
   }, [setConfiguration]);
@@ -174,17 +173,13 @@ export function useDatalayerAPI() {
           try {
             await iamLogin(credentials.token);
           } catch (error) {
-            console.warn(
-              'IAM login failed during auth check, but continuing:',
-              error
-            );
+            // IAM login failed during auth check, but continuing
           }
         }
       }
 
       return credentials;
     } catch (err) {
-      console.error('Auth check error:', err);
       return { isAuthenticated: false };
     }
   }, [setConfiguration, iamLogin]);

@@ -23,7 +23,7 @@
  * 7. JupyterLab proxy - Must be last as it depends on other polyfills
  */
 
-console.log('[Polyfills] Starting polyfill loading sequence...');
+// Starting polyfill loading sequence...
 
 // 1. CRITICAL: Symbol must be first - React uses Symbol.for immediately
 import './symbol';
@@ -53,7 +53,7 @@ if (typeof global === 'undefined') {
   (window as any).global = window;
 }
 
-console.log('[Polyfills] ✅ All polyfills loaded successfully');
+// All polyfills loaded successfully
 
 // Export for convenience
 // @ts-expect-error - Importing JS file

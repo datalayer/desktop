@@ -206,7 +206,6 @@ const nodeModules = (function () {
   window.require = function (id) {
     // Handle Node.js built-ins with our polyfills
     if (modules[id]) {
-      console.log('Polyfilling module:', id);
       return modules[id];
     }
 
@@ -221,16 +220,10 @@ const nodeModules = (function () {
 
     // Handle relative and absolute paths
     if (id.startsWith('./') || id.startsWith('../') || id.startsWith('/')) {
-      console.warn(
-        'require() called for local module:',
-        id,
-        '- not supported in browser'
-      );
       throw new Error('Local module imports not supported: ' + id);
     }
 
     // For unknown modules, provide a helpful error
-    console.warn('require() called for unknown module:', id);
     throw new Error(
       'Module not found: ' +
         id +
@@ -251,13 +244,9 @@ const nodeModules = (function () {
     window.__filename = '/index.js';
   }
 
-  console.log('Enhanced require polyfill injected with Node.js built-ins');
-
   // Return the modules object to make it available as nodeModules
   return modules;
 })();
-
-console.log('Node.js polyfills loaded successfully');
 
 // Make nodeModules available globally for the bundler
 window.nodeModules = nodeModules;

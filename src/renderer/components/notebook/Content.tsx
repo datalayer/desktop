@@ -70,11 +70,7 @@ const Content: React.FC<NotebookContentProps> = ({
         .then(() => {
           setServiceManagerReady(true);
         })
-        .catch((error: any) => {
-          console.error(
-            '[NotebookContent] Service manager failed to become ready:',
-            error
-          );
+        .catch(() => {
           setServiceManagerReady(false);
         });
     }
@@ -108,17 +104,14 @@ const Content: React.FC<NotebookContentProps> = ({
       notebookExtensions
     );
 
-    // Log kernelspecs only once for new notebook instances
+    // Kernelspecs readiness check
     if (serviceManager && !notebookComponentRef.current) {
       serviceManager.kernelspecs.ready
         .then(() => {
-          console.info(
-            '[NotebookContent] Available kernelspecs:',
-            serviceManager.kernelspecs.specs
-          );
+          // Kernelspecs ready
         })
-        .catch((error: any) => {
-          console.error('[NotebookContent] Error getting kernelspecs:', error);
+        .catch(() => {
+          // Error getting kernelspecs
         });
     }
 

@@ -118,9 +118,7 @@ const Documents: React.FC<DocumentsListProps> = ({
           case 'N':
             if (event.ctrlKey || event.metaKey) {
               event.preventDefault();
-              console.log(
-                '🚀 [Accessibility] Create new notebook shortcut activated'
-              );
+              // Create new notebook shortcut activated
             }
             break;
           case 'F5':
@@ -139,20 +137,16 @@ const Documents: React.FC<DocumentsListProps> = ({
 
   const fetchUserSpaces = async () => {
     try {
-      console.log('🔍 [DEBUG] Fetching user spaces...');
+      // Fetching user spaces...
       const spacesResponse = await window.datalayerAPI.getUserSpaces();
-      console.log('🔍 [DEBUG] Spaces response:', spacesResponse);
+      // Check spaces response
 
       if (
         spacesResponse.success &&
         spacesResponse.spaces &&
         spacesResponse.spaces.length > 0
       ) {
-        console.log(
-          '🔍 [DEBUG] Processing',
-          spacesResponse.spaces.length,
-          'spaces'
-        );
+        // Processing spaces
         const spaces: SpaceInfo[] = spacesResponse.spaces.map(
           (space: Record<string, unknown>) => ({
             id: String(space.id || space.uid || ''),
@@ -189,14 +183,14 @@ const Documents: React.FC<DocumentsListProps> = ({
         setSelectedSpace(defaultSpace);
         setSpaceId(defaultSpace.uid || defaultSpace.id);
 
-        console.log('🔍 [DEBUG] Default space found:', defaultSpace);
+        // Default space found
         return { defaultSpace, spacesData: spacesResponse.spaces };
       }
 
-      console.log('🔍 [DEBUG] No spaces found or spaces response failed');
+      // No spaces found or spaces response failed
       return null;
     } catch (error) {
-      console.error('🔍 [DEBUG] Error fetching user spaces:', error);
+      // Error fetching user spaces
       setError('Failed to load user spaces');
       return null;
     }
@@ -218,8 +212,7 @@ const Documents: React.FC<DocumentsListProps> = ({
     spacesData: any[]
   ) => {
     try {
-      console.log('🔍 [DEBUG] Processing documents for space:', currentSpaceId);
-      console.log('🔍 [DEBUG] Spaces data:', spacesData);
+      // Processing documents for space
 
       setLoading(true);
       setError(null);
@@ -228,24 +221,19 @@ const Documents: React.FC<DocumentsListProps> = ({
         (space: any) => (space.uid || space.id) === currentSpaceId
       );
 
-      console.log('🔍 [DEBUG] Found current space:', currentSpace);
+      // Found current space
 
       if (currentSpace && currentSpace.items) {
         const items = currentSpace.items;
-        console.log('🔍 [DEBUG] Processing', items.length, 'items:', items);
+        // Processing items
 
         const documentItems: DocumentItem[] = items.map(
           mapApiItemToDocumentItem
         );
-        console.log('🔍 [DEBUG] Mapped document items:', documentItems);
+        // Mapped document items
 
         const groupedResults = groupDocumentsByType(documentItems);
-        console.log(
-          '🔍 [DEBUG] Grouped results - Notebooks:',
-          groupedResults.notebooks.length,
-          'Documents:',
-          groupedResults.documents.length
-        );
+        // Grouped results processed
 
         // Update previous counts for skeleton loading
         setPreviousNotebookCount(groupedResults.notebooks.length);
@@ -259,7 +247,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         setError('No items found in the selected space');
       }
     } catch (err) {
-      console.error('Failed to process documents:', err);
+      // Failed to process documents
       setError('Failed to load documents. Please try again.');
     } finally {
       setLoading(false);
@@ -279,7 +267,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         setError(spacesResponse.error || 'Failed to load documents');
       }
     } catch (err) {
-      console.error('Failed to fetch documents:', err);
+      // Failed to fetch documents
       setError('Failed to load documents. Please try again.');
     }
   };
@@ -312,7 +300,7 @@ const Documents: React.FC<DocumentsListProps> = ({
           const newDataHash = createDataHash(currentSpace.items);
 
           if (newDataHash !== lastDataHash) {
-            console.log('📋 Documents data changed, auto-refreshing...');
+            // Documents data changed, auto-refreshing...
             await processDocuments(
               selectedSpace.uid || selectedSpace.id,
               spacesResponse.spaces
@@ -321,7 +309,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         }
       }
     } catch (error) {
-      console.error('Auto-refresh check failed:', error);
+      // Auto-refresh check failed
     }
   };
 
@@ -330,10 +318,10 @@ const Documents: React.FC<DocumentsListProps> = ({
 
     setIsRefreshing(true);
     try {
-      console.log('🔄 Manual refresh triggered');
+      // Manual refresh triggered
       await fetchDocuments(selectedSpace.uid || selectedSpace.id);
     } catch (error) {
-      console.error('Manual refresh failed:', error);
+      // Manual refresh failed
       setError('Failed to refresh documents');
     } finally {
       setIsRefreshing(false);
@@ -354,7 +342,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleOpenNotebook = (notebook: DocumentItem) => {
-    console.info('Opening notebook:', notebook.name);
+    // Opening notebook
 
     const canOpen = canOpenNotebook(notebook.id);
 
@@ -366,10 +354,7 @@ const Documents: React.FC<DocumentsListProps> = ({
 
     const existingRuntime = getRuntimeForNotebook(notebook.id);
     if (existingRuntime) {
-      console.info(
-        'Reconnecting to existing runtime for notebook:',
-        notebook.name
-      );
+      // Reconnecting to existing runtime for notebook
     }
 
     setSelectedNotebook(notebook.id);
@@ -387,7 +372,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleOpenDocument = (document: DocumentItem) => {
-    console.info('Opening document:', document.name);
+    // Opening document
 
     setSelectedNotebook(document.id);
 
@@ -403,10 +388,10 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleDownloadItem = async (item: DocumentItem) => {
-    console.info('Downloading item:', item.name);
+    // Downloading item
 
     if (!item.cdnUrl) {
-      console.error('No CDN URL available for item');
+      // No CDN URL available for item
       setError('Cannot download item - no download URL available');
       return;
     }
@@ -445,12 +430,12 @@ const Documents: React.FC<DocumentsListProps> = ({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        console.info('Item downloaded successfully');
+        // Item downloaded successfully
       } else {
         throw new Error('Failed to fetch item content');
       }
     } catch (error) {
-      console.error('Failed to download item:', error);
+      // Failed to download item
       setError('Failed to download item');
       setTimeout(() => setError(null), 5000);
     }
@@ -479,11 +464,7 @@ const Documents: React.FC<DocumentsListProps> = ({
       setIsDeleting(true);
       setError(null);
 
-      console.info('Deleting item:', {
-        spaceId,
-        itemId: itemToDelete.id,
-        name: itemToDelete.name,
-      });
+      // Deleting item
 
       const result = await window.datalayerAPI.deleteNotebook(
         spaceId,
@@ -493,14 +474,14 @@ const Documents: React.FC<DocumentsListProps> = ({
       if (result.success) {
         await fetchDocuments(spaceId);
         handleCancelDelete();
-        console.info('Item deleted successfully');
+        // Item deleted successfully
       } else {
         const errorMessage = result.error || 'Failed to delete item';
-        console.error('Delete item failed:', errorMessage);
+        // Delete item failed
         setError(errorMessage);
       }
     } catch (err) {
-      console.error('Failed to delete item:', err);
+      // Failed to delete item
       const errorMessage =
         err instanceof Error
           ? err.message
