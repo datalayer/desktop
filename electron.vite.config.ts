@@ -24,12 +24,12 @@ export default defineConfig({
             mkdirSync(resolve(__dirname, 'dist/main'), { recursive: true });
             // Copy about.html to dist/main
             copyFileSync(
-              resolve(__dirname, 'src/main/about.html'),
+              resolve(__dirname, 'src/main/dialogs/about/about.html'),
               resolve(__dirname, 'dist/main/about.html')
             );
             // Copy about.js to dist/main
             copyFileSync(
-              resolve(__dirname, 'src/main/about.js'),
+              resolve(__dirname, 'src/main/dialogs/about/about.js'),
               resolve(__dirname, 'dist/main/about.js')
             );
           } catch (err) {

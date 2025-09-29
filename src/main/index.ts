@@ -6,595 +6,171 @@
 /**
  * @module main/index
  *
- * Main process entry point for the Datalayer Desktop Electron application.
- * Manages the application lifecycle, window creation, menu configuration,
- * security policies, and IPC communication with renderer processes.
+ * Clean main process entry point for the Datalayer Desktop Electron application.
+ * Coordinates initialization of all application components and services.
  *
- * Key responsibilities:
- * - Application window creation and management
- * - Menu bar configuration for different platforms
- * - Security configuration (CSP, DevTools control, context isolation)
- * - IPC handlers for API operations and WebSocket proxying
- * - Runtime lifecycle management and cleanup
- * - Logging configuration and EPIPE error handling
+ * Architecture:
+ * - Logging configuration and console overrides
+ * - Application lifecycle management
+ * - IPC handler registration
+ * - Service initialization
  */
 
-// Initialize electron-log FIRST, before any other imports
-import log from 'electron-log/main';
+// Initialize logging FIRST
+import { initializeLogging, setupConsoleOverrides } from './config/logging';
 
-// Configure electron-log for main process immediately
-log.initialize();
-log.transports.file.level = 'info';
-// Disable console transport in production to avoid EPIPE errors
-log.transports.console.level =
-  process.env.NODE_ENV === 'development' ? 'debug' : false;
+// Initialize logging immediately
+initializeLogging();
+setupConsoleOverrides();
 
-// Original console functions are preserved for potential future use
-// const _originalConsoleLog = console.log;
-// const _originalConsoleError = console.error;
-// const _originalConsoleWarn = console.warn;
+// Core Electron imports
+import { ipcMain, shell } from 'electron';
 
-/**
- * Override console.log to use electron-log to prevent EPIPE errors.
- * EPIPE errors occur when the console output pipe is broken in production.
- * @param args - Arguments to log
- */
-console.log = (...args: any[]) => {
-  try {
-    log.info(...args);
-  } catch (e: any) {
-    // Silently ignore EPIPE errors
-  }
-};
+// Application components
+import { Application } from './app/application';
 
-/**
- * Override console.error to use electron-log to prevent EPIPE errors.
- * @param args - Arguments to log as errors
- */
-console.error = (...args: any[]) => {
-  try {
-    log.error(...args);
-  } catch (e: any) {
-    // Silently ignore EPIPE errors
-  }
-};
-
-/**
- * Override console.warn to use electron-log to prevent EPIPE errors.
- * @param args - Arguments to log as warnings
- */
-console.warn = (...args: any[]) => {
-  try {
-    log.warn(...args);
-  } catch (e: any) {
-    // Silently ignore EPIPE errors
-  }
-};
-
-import { app, BrowserWindow, Menu, ipcMain, shell, session } from 'electron';
-import { join } from 'path';
+// Services
 import { apiService } from './services/api-service';
 import { websocketProxy } from './services/websocket-proxy';
+import { getMainWindow } from './app/window-manager';
+
+// Types
+import type {
+  VersionInfo,
+  EnvironmentVars,
+  HTTPRequestConfig,
+  WebSocketConfig,
+} from './types/api-types';
 
 /**
- * Checks if the application is running in development mode.
- * @returns True if NODE_ENV is 'development', false otherwise
+ * Register all IPC handlers for the application
  */
-function isDevelopment(): boolean {
-  return process.env.NODE_ENV === 'development';
-}
-
-/**
- * Determines whether DevTools should be enabled.
- * Currently always returns true for debugging purposes.
- * @returns True to enable DevTools
- */
-function shouldEnableDevTools(): boolean {
-  // Always enable DevTools on all builds
-  return true;
-}
-
-/**
- * Determines whether production security features should be enabled.
- * @returns True if running in production mode
- */
-function shouldUseProductionSecurity(): boolean {
-  return !isDevelopment();
-}
-
-/**
- * The main application window instance.
- * Set to null when the window is closed.
- */
-let mainWindow: BrowserWindow | null = null;
-
-/**
- * Creates the main application window with security configurations.
- * Sets up window properties, content security policy, and event handlers.
- * @returns void
- */
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      webSecurity: true,
-      devTools: shouldEnableDevTools(), // Disable DevTools in pure production
-    },
-    icon: join(__dirname, '../../resources/icon.png'),
-    titleBarStyle: 'default',
-    show: false,
-  });
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
-  });
-
-  // Set Content Security Policy
-  // In development, we need 'unsafe-eval' for hot reload, but in production it should be removed
-  if (shouldUseProductionSecurity()) {
-    // Production CSP - stricter
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [
-            "default-src 'self'; " +
-              "script-src 'self' 'unsafe-eval'; " +
-              "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' data: https:; " +
-              "connect-src 'self' https://prod1.datalayer.run https://*.datalayer.io wss://*.datalayer.run; " +
-              "font-src 'self' data:;",
-          ],
-        },
-      });
-    });
-  }
-
-  // Load the app
-  if (process.env.ELECTRON_RENDERER_URL) {
-    // Development mode
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
-    // Only open DevTools if allowed by environment settings
-    if (shouldEnableDevTools()) {
-      mainWindow.webContents.openDevTools();
-    }
-  } else {
-    // Production mode
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
-  }
-
-  // Handle window closed
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  // Handle external links
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+function registerIPCHandlers(): void {
+  // System handlers
+  ipcMain.on('open-external', (_, url) => {
     shell.openExternal(url);
-    return { action: 'deny' };
   });
 
-  // Disable DevTools keyboard shortcuts in production
-  if (!shouldEnableDevTools()) {
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-      // Disable common DevTools shortcuts
-      if (
-        ((input.control || input.meta) &&
-          input.shift &&
-          input.key.toLowerCase() === 'i') || // Ctrl/Cmd+Shift+I
-        (input.shift && input.key.toLowerCase() === 'c') || // Ctrl/Cmd+Shift+C
-        (input.shift && input.key.toLowerCase() === 'j') || // Ctrl/Cmd+Shift+J
-        input.key === 'F12'
-      ) {
-        event.preventDefault();
-      }
-    });
-  }
+  ipcMain.handle('get-version', (): VersionInfo => {
+    const { app } = require('electron');
+    return {
+      electron: process.versions.electron,
+      node: process.versions.node,
+      chrome: process.versions.chrome,
+      app: app.getVersion(),
+    };
+  });
 
-  // Disable right-click context menu in production
-  if (!shouldEnableDevTools()) {
-    mainWindow.webContents.on('context-menu', event => {
-      event.preventDefault();
-    });
-  }
-}
+  ipcMain.handle('get-env', (): EnvironmentVars => {
+    return {
+      DATALAYER_RUN_URL: process.env.DATALAYER_RUN_URL || '',
+      DATALAYER_TOKEN: process.env.DATALAYER_TOKEN || '',
+    };
+  });
 
-/**
- * Creates the application menu bar.
- * Different menu structures for macOS and non-macOS platforms.
- * Includes File, Edit, View, Window, and Help menus with appropriate items.
- * @returns void
- */
-function createMenu() {
-  if (process.platform === 'darwin') {
-    // macOS: Create menu with app name, Edit, and Help
-    const template: Electron.MenuItemConstructorOptions[] = [
-      {
-        label: app.getName(),
-        submenu: [
-          {
-            label: 'About ' + app.getName(),
-            click: () => {
-              const aboutWindow = new BrowserWindow({
-                width: 450,
-                height: 600,
-                resizable: false,
-                minimizable: false,
-                maximizable: false,
-                show: false,
-                webPreferences: {
-                  preload: join(__dirname, '../preload/about.js'),
-                  nodeIntegration: false,
-                  contextIsolation: true,
-                  webSecurity: true,
-                  devTools: shouldEnableDevTools(), // Disable DevTools in production
-                },
-                parent: mainWindow || undefined,
-                modal: true,
-              });
+  // Authentication handlers
+  ipcMain.handle('datalayer:login', async (_, { runUrl, token }) => {
+    return apiService.login(runUrl, token);
+  });
 
-              aboutWindow.once('ready-to-show', () => {
-                aboutWindow.show();
-              });
+  ipcMain.handle('datalayer:logout', async () => {
+    return apiService.logout();
+  });
 
-              // Load the custom about page
-              aboutWindow.loadFile(join(__dirname, 'about.html'));
+  ipcMain.handle('datalayer:get-credentials', async () => {
+    return await apiService.getCredentialsWithToken();
+  });
 
-              // Remove menu from about window
-              aboutWindow.setMenu(null);
+  // Environment and runtime handlers
+  ipcMain.handle('datalayer:get-environments', async () => {
+    return apiService.getEnvironments();
+  });
 
-              // Create named handlers for proper cleanup
-              const escapeHandler = (
-                _event: Electron.Event,
-                input: Electron.Input
-              ) => {
-                if (input.key === 'Escape') {
-                  aboutWindow.close();
-                }
-              };
+  ipcMain.handle('datalayer:create-runtime', async (_, options) => {
+    return apiService.createRuntime(options);
+  });
 
-              const closeHandler = () => {
-                if (aboutWindow && !aboutWindow.isDestroyed()) {
-                  aboutWindow.close();
-                }
-              };
+  ipcMain.handle('datalayer:delete-runtime', async (_, podName) => {
+    return apiService.deleteRuntime(podName);
+  });
 
-              // Allow closing with ESC key
-              aboutWindow.webContents.on('before-input-event', escapeHandler);
+  ipcMain.handle('datalayer:get-runtime-details', async (_, runtimeId) => {
+    return apiService.getRuntimeDetails(runtimeId);
+  });
 
-              // Handle close button click from renderer
-              ipcMain.on('close-about-window', closeHandler);
+  ipcMain.handle('datalayer:is-runtime-active', async (_, podName) => {
+    return apiService.isRuntimeActive(podName);
+  });
 
-              // Clean up all event listeners when window is closed
-              aboutWindow.on('closed', () => {
-                // Remove the before-input-event listener
-                if (
-                  aboutWindow.webContents &&
-                  !aboutWindow.webContents.isDestroyed()
-                ) {
-                  aboutWindow.webContents.removeListener(
-                    'before-input-event',
-                    escapeHandler
-                  );
-                }
-                // Remove the IPC listener
-                ipcMain.removeListener('close-about-window', closeHandler);
-              });
-            },
-          },
-          { type: 'separator' },
-          { role: 'services', submenu: [] },
-          { type: 'separator' },
-          { label: 'Hide ' + app.getName(), role: 'hide' },
-          { role: 'hideOthers' },
-          { role: 'unhide' },
-          { type: 'separator' },
-          {
-            label: 'Quit',
-            accelerator: 'Command+Q',
-            click: () => {
-              app.quit();
-            },
-          },
-        ],
-      },
-      {
-        label: 'Edit',
-        submenu: [
-          { label: 'Undo', role: 'undo' },
-          { label: 'Redo', role: 'redo' },
-          { type: 'separator' },
-          { label: 'Cut', role: 'cut' },
-          { label: 'Copy', role: 'copy' },
-          { label: 'Paste', role: 'paste' },
-          { label: 'Paste and Match Style', role: 'pasteAndMatchStyle' },
-          { label: 'Delete', role: 'delete' },
-          { label: 'Select All', role: 'selectAll' },
-          { type: 'separator' },
-          {
-            label: 'Speech',
-            submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }],
-          },
-        ],
-      },
-      {
-        label: 'View',
-        submenu: [
-          { label: 'Reload', role: 'reload' },
-          { label: 'Force Reload', role: 'forceReload' },
-          ...(shouldEnableDevTools()
-            ? [
-                {
-                  label: 'Toggle Developer Tools',
-                  role: 'toggleDevTools' as const,
-                },
-                { type: 'separator' as const },
-              ]
-            : []),
-          { label: 'Actual Size', role: 'resetZoom' },
-          { label: 'Zoom In', role: 'zoomIn' },
-          { label: 'Zoom Out', role: 'zoomOut' },
-          { type: 'separator' },
-          { label: 'Toggle Fullscreen', role: 'togglefullscreen' },
-        ],
-      },
-      {
-        label: 'Window',
-        submenu: [
-          { label: 'Minimize', role: 'minimize' },
-          { label: 'Close', role: 'close' },
-          { type: 'separator' },
-          { label: 'Bring All to Front', role: 'front' },
-        ],
-      },
-      {
-        label: 'Help',
-        submenu: [
-          {
-            label: 'Learn More',
-            click: () => {
-              shell.openExternal('https://datalayer.io');
-            },
-          },
-          {
-            label: 'Documentation',
-            click: () => {
-              shell.openExternal('https://docs.datalayer.io');
-            },
-          },
-          {
-            label: 'GitHub',
-            click: () => {
-              shell.openExternal('https://github.com/datalayer/core');
-            },
-          },
-        ],
-      },
-    ];
+  ipcMain.handle('datalayer:list-user-runtimes', async () => {
+    return apiService.listUserRuntimes();
+  });
 
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-  } else {
-    // Non-macOS: Show File, Edit, View, and Help menus
-    const template: Electron.MenuItemConstructorOptions[] = [
-      {
-        label: 'File',
-        submenu: [
-          {
-            label: 'Quit',
-            accelerator: 'Ctrl+Q',
-            click: () => {
-              app.quit();
-            },
-          },
-        ],
-      },
-      {
-        label: 'Edit',
-        submenu: [
-          { label: 'Undo', role: 'undo' },
-          { label: 'Redo', role: 'redo' },
-          { type: 'separator' },
-          { label: 'Cut', role: 'cut' },
-          { label: 'Copy', role: 'copy' },
-          { label: 'Paste', role: 'paste' },
-          { label: 'Delete', role: 'delete' },
-          { label: 'Select All', role: 'selectAll' },
-        ],
-      },
-      {
-        label: 'View',
-        submenu: [
-          { label: 'Reload', role: 'reload' },
-          { label: 'Force Reload', role: 'forceReload' },
-          ...(shouldEnableDevTools()
-            ? [
-                {
-                  label: 'Toggle Developer Tools',
-                  role: 'toggleDevTools' as const,
-                },
-                { type: 'separator' as const },
-              ]
-            : []),
-          { label: 'Actual Size', role: 'resetZoom' },
-          { label: 'Zoom In', role: 'zoomIn' },
-          { label: 'Zoom Out', role: 'zoomOut' },
-          { type: 'separator' },
-          { label: 'Toggle Fullscreen', role: 'togglefullscreen' },
-        ],
-      },
-      {
-        label: 'Help',
-        submenu: [
-          {
-            label: 'Learn More',
-            click: () => {
-              shell.openExternal('https://datalayer.io');
-            },
-          },
-          {
-            label: 'Documentation',
-            click: () => {
-              shell.openExternal('https://docs.datalayer.io');
-            },
-          },
-          {
-            label: 'GitHub',
-            click: () => {
-              shell.openExternal('https://github.com/datalayer/core');
-            },
-          },
-        ],
-      },
-    ];
+  // Notebook and document handlers
+  ipcMain.handle('datalayer:list-notebooks', async () => {
+    return apiService.listNotebooks();
+  });
 
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-  }
-}
+  ipcMain.handle(
+    'datalayer:create-notebook',
+    async (_, { spaceId, name, description }) => {
+      return apiService.createNotebook(spaceId, name, description);
+    }
+  );
 
-/**
- * IPC handler for opening external links in the default browser.
- * @param url - The URL to open externally
- */
-ipcMain.on('open-external', (_, url) => {
-  shell.openExternal(url);
-});
+  ipcMain.handle(
+    'datalayer:delete-notebook',
+    async (_, { spaceId, itemId }) => {
+      return apiService.deleteNotebook(spaceId, itemId);
+    }
+  );
 
-/**
- * IPC handler to get version information.
- * @returns Object containing Electron, Node, Chrome, and app versions
- */
-ipcMain.handle('get-version', () => {
-  return {
-    electron: process.versions.electron,
-    node: process.versions.node,
-    chrome: process.versions.chrome,
-    app: app.getVersion(),
-  };
-});
+  // Space handlers
+  ipcMain.handle('datalayer:get-user-spaces', async () => {
+    return apiService.getUserSpaces();
+  });
 
-/**
- * IPC handler to get environment variables.
- * @returns Object containing DATALAYER_RUN_URL and DATALAYER_TOKEN
- */
-ipcMain.handle('get-env', () => {
-  return {
-    DATALAYER_RUN_URL: process.env.DATALAYER_RUN_URL || '',
-    DATALAYER_TOKEN: process.env.DATALAYER_TOKEN || '',
-  };
-});
+  ipcMain.handle('datalayer:get-space-items', async (_, spaceId: string) => {
+    return apiService.getSpaceItems(spaceId);
+  });
 
-/**
- * IPC handler for Datalayer login.
- * @param runUrl - The Datalayer API URL
- * @param token - Authentication token
- * @returns Login result from API service
- */
-ipcMain.handle('datalayer:login', async (_, { runUrl, token }) => {
-  return apiService.login(runUrl, token);
-});
+  // Collaboration handlers
+  ipcMain.handle(
+    'datalayer:get-collaboration-session',
+    async (_, documentId) => {
+      return apiService.getCollaborationSessionId(documentId);
+    }
+  );
 
-ipcMain.handle('datalayer:logout', async () => {
-  return apiService.logout();
-});
+  ipcMain.handle('datalayer:get-collaboration-token', async () => {
+    return apiService.getCredentialsWithToken();
+  });
 
-ipcMain.handle('datalayer:get-credentials', async () => {
-  return await apiService.getCredentialsWithToken();
-});
+  // User and GitHub handlers
+  ipcMain.handle('datalayer:current-user', async () => {
+    return apiService.getCurrentUser();
+  });
 
-// About dialog handlers
-ipcMain.on('open-external', (_, url) => {
-  shell.openExternal(url);
-});
+  ipcMain.handle('datalayer:github-user', async (_, githubId: number) => {
+    return apiService.getGitHubUser(githubId);
+  });
 
-ipcMain.handle('datalayer:get-environments', async () => {
-  return apiService.getEnvironments();
-});
+  // Generic API request handler
+  ipcMain.handle('datalayer:request', async (_, { endpoint, options }) => {
+    return apiService.makeRequest(endpoint, options);
+  });
 
-ipcMain.handle('datalayer:create-runtime', async (_, options) => {
-  const result = await apiService.createRuntime(options);
-  return result;
-});
+  // HTTP proxy handlers
+  ipcMain.handle('proxy:http-request', async (_, config: HTTPRequestConfig) => {
+    const { url, method, headers, body } = config;
 
-ipcMain.handle('datalayer:delete-runtime', async (_, podName) => {
-  return apiService.deleteRuntime(podName);
-});
-ipcMain.handle('datalayer:get-runtime-details', async (_, runtimeId) => {
-  return apiService.getRuntimeDetails(runtimeId);
-});
-
-ipcMain.handle('datalayer:is-runtime-active', async (_, podName) => {
-  return apiService.isRuntimeActive(podName);
-});
-
-ipcMain.handle('datalayer:list-user-runtimes', async () => {
-  return apiService.listUserRuntimes();
-});
-
-ipcMain.handle('datalayer:request', async (_, { endpoint, options }) => {
-  return apiService.makeRequest(endpoint, options);
-});
-
-ipcMain.handle('datalayer:list-notebooks', async () => {
-  return apiService.listNotebooks();
-});
-
-ipcMain.handle(
-  'datalayer:create-notebook',
-  async (_, { spaceId, name, description }) => {
-    const result = await apiService.createNotebook(spaceId, name, description);
-    return result;
-  }
-);
-
-ipcMain.handle('datalayer:delete-notebook', async (_, { spaceId, itemId }) => {
-  const result = await apiService.deleteNotebook(spaceId, itemId);
-  return result;
-});
-
-ipcMain.handle('datalayer:get-user-spaces', async () => {
-  return apiService.getUserSpaces();
-});
-
-ipcMain.handle('datalayer:get-space-items', async (_, spaceId: string) => {
-  return apiService.getSpaceItems(spaceId);
-});
-
-ipcMain.handle('datalayer:get-collaboration-session', async (_, documentId) => {
-  return apiService.getCollaborationSessionId(documentId);
-});
-
-ipcMain.handle('datalayer:get-collaboration-token', async () => {
-  // Return the real token for collaboration WebSocket authentication
-  const credentials = apiService.getCredentialsWithToken();
-  return credentials;
-});
-
-// User and GitHub API IPC handlers
-ipcMain.handle('datalayer:current-user', async () => {
-  return apiService.getCurrentUser();
-});
-
-ipcMain.handle('datalayer:github-user', async (_, githubId: number) => {
-  return apiService.getGitHubUser(githubId);
-});
-
-// HTTP Proxy IPC handlers
-ipcMain.handle(
-  'proxy:http-request',
-  async (_, { url, method, headers, body }) => {
     const requestOptions: RequestInit = {
       method: method || 'GET',
       headers: headers || {},
     };
 
     // Add body if present and method supports it
-    if (body && !['GET', 'HEAD'].includes(method)) {
+    if (body && !['GET', 'HEAD'].includes(method || 'GET')) {
       if (body instanceof ArrayBuffer) {
         requestOptions.body = Buffer.from(new Uint8Array(body));
       } else if (body instanceof Uint8Array) {
@@ -639,17 +215,16 @@ ipcMain.handle(
       headers: responseHeaders,
       body: responseBody,
     };
-  }
-);
+  });
 
-// WebSocket Proxy IPC handlers
-ipcMain.handle(
-  'proxy:websocket-open',
-  async (_, { url, protocol, headers, runtimeId }) => {
+  // WebSocket proxy handlers
+  ipcMain.handle('proxy:websocket-open', async (_, config: WebSocketConfig) => {
+    const mainWindow = getMainWindow();
     if (!mainWindow) {
       throw new Error('Main window not available');
     }
 
+    const { url, protocol, headers, runtimeId } = config;
     const result = websocketProxy.open(
       mainWindow,
       url,
@@ -660,96 +235,68 @@ ipcMain.handle(
 
     // Check if the connection was blocked
     if ('blocked' in result && result.blocked) {
-      // Throw error to maintain compatibility with existing error handling
       throw new Error(result.reason);
     }
 
     return result;
-  }
-);
+  });
 
-ipcMain.handle('proxy:websocket-send', async (_, { id, data }) => {
-  websocketProxy.send(id, data);
-  return { success: true };
-});
+  ipcMain.handle('proxy:websocket-send', async (_, { id, data }) => {
+    websocketProxy.send(id, data);
+    return { success: true };
+  });
 
-ipcMain.handle('proxy:websocket-close', async (_, { id, code, reason }) => {
-  websocketProxy.close(id, code, reason);
-  return { success: true };
-});
+  ipcMain.handle('proxy:websocket-close', async (_, { id, code, reason }) => {
+    websocketProxy.close(id, code, reason);
+    return { success: true };
+  });
 
-ipcMain.handle('proxy:websocket-close-runtime', async (_, { runtimeId }) => {
-  websocketProxy.closeConnectionsForRuntime(runtimeId);
-  return { success: true };
-});
-
-// Runtime termination notification handler
-ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
-  // Initialize global cleanup registry in main process
-  if (!(global as any).__datalayerRuntimeCleanup) {
-    (global as any).__datalayerRuntimeCleanup = new Map();
-  }
-
-  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
-  cleanupRegistry.set(runtimeId, { terminated: true });
-
-  // CRITICAL: Close all WebSocket connections for this runtime
-  try {
+  ipcMain.handle('proxy:websocket-close-runtime', async (_, { runtimeId }) => {
     websocketProxy.closeConnectionsForRuntime(runtimeId);
-  } catch (error) {
-    // Error closing WebSocket connections
-  }
+    return { success: true };
+  });
 
-  return { success: true };
-});
-
-/**
- * Application ready event handler.
- * Sets up the dock icon (macOS), creates the main window and menu.
- */
-app.whenReady().then(() => {
-  // Increase max event listeners to prevent warnings
-  require('events').EventEmitter.defaultMaxListeners = 20;
-
-  // Disable system beep sounds
-  if (process.platform === 'darwin') {
-    // Disable beep sound on macOS
-    app.commandLine.appendSwitch('disable-renderer-accessibility');
-  }
-
-  // Set the dock icon on macOS
-  if (process.platform === 'darwin') {
-    const iconPath = join(__dirname, '../../resources/icon.png');
-    app.dock.setIcon(iconPath);
-  }
-
-  createWindow();
-  createMenu();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+  // Runtime termination notification handler
+  ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
+    // Initialize global cleanup registry in main process
+    if (!(global as any).__datalayerRuntimeCleanup) {
+      (global as any).__datalayerRuntimeCleanup = new Map();
     }
+
+    const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+    cleanupRegistry.set(runtimeId, { terminated: true });
+
+    // Close all WebSocket connections for this runtime
+    try {
+      websocketProxy.closeConnectionsForRuntime(runtimeId);
+    } catch (error) {
+      // Error closing WebSocket connections
+    }
+
+    return { success: true };
   });
-});
+}
 
 /**
- * Window close event handler.
- * Quits the app on non-macOS platforms when all windows are closed.
+ * Main application initialization
  */
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+async function main(): Promise<void> {
+  try {
+    // Register all IPC handlers
+    registerIPCHandlers();
+
+    // Set up application event handlers
+    Application.setupEventHandlers();
+
+    // Initialize the application
+    await Application.initialize();
+
+    console.log('Datalayer Desktop application started successfully');
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
   }
-});
+}
 
-/**
- * Security handler to prevent new window creation.
- * All external links are opened in the default browser instead.
- */
-app.on('web-contents-created', (_, contents) => {
-  contents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: 'deny' };
-  });
-});
+// Start the application
+main();
