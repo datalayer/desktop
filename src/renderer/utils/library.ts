@@ -55,9 +55,7 @@ export const sortByModifiedDate = (
   return new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime();
 };
 
-export const mapApiItemToDocumentItem = (
-  item: Record<string, unknown>
-): DocumentItem => ({
+export const mapApiItemToDocumentItem = (item: any): DocumentItem => ({
   id: String(item.id || item.uid || item.path || ''),
   uid: item.uid as string | undefined,
   name: String(

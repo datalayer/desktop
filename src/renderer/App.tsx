@@ -20,7 +20,6 @@ import React, {
 } from 'react';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/lib/state';
-import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import { useParallelPreload } from './hooks/usePreload';
 import Login from './pages/Login';
 import Environments from './pages/Environments';
@@ -28,13 +27,8 @@ import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
-import {
-  ViewType,
-  GitHubUser,
-  NotebookData,
-  DocumentData,
-} from '../shared/types';
-import { processUserData, setupConsoleFiltering } from './utils/app';
+import { ViewType, User, NotebookData, DocumentData } from '../shared/types';
+import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 
 /**
@@ -61,7 +55,13 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('environments');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [githubUser, setGithubUser] = useState<GitHubUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    user: any | null;
+    token: string | null;
+    runUrl: string;
+  } | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
   );
@@ -72,13 +72,43 @@ const App: React.FC = () => {
   const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   const { configuration } = useCoreStore();
-  const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
 
-  // Handle user data from login
+  // Handle user data from login - update auth state when login succeeds
   const handleUserDataFetched = useCallback(
     async (userData: Record<string, unknown>) => {
-      const githubUser = await processUserData(userData);
-      setGithubUser(githubUser);
+      logger.debug('[Auth] User data received from login:', userData);
+
+      // Since window.electronAPI.onAuthStateChanged may not be available in browser mode,
+      // we need to manually update the auth state after successful login
+      if (userData) {
+        // Get the current auth state from the main process
+        try {
+          if (window.datalayerClient?.getAuthState) {
+            const currentAuthState =
+              await window.datalayerClient.getAuthState();
+            logger.debug(
+              '[Auth] Got auth state after login:',
+              currentAuthState
+            );
+
+            // Update our local auth state
+            if (currentAuthState?.isAuthenticated) {
+              setAuthState(currentAuthState);
+              setIsAuthenticated(true);
+
+              // Use user data directly from SDK
+              if (currentAuthState.user) {
+                const userJson = currentAuthState.user?.toJSON
+                  ? currentAuthState.user.toJSON()
+                  : currentAuthState.user;
+                setUser(userJson);
+              }
+            }
+          }
+        } catch (error) {
+          logger.error('Failed to get auth state after login:', error);
+        }
+      }
     },
     []
   );
@@ -97,19 +127,20 @@ const App: React.FC = () => {
       {
         name: 'environments',
         preloadFn: async () => {
-          // Skip preloading environments if no token
+          // Skip preloading environments if not authenticated
           // This prevents "Server Error" when not authenticated
-          if (!configuration?.token) {
-            logger.debug('Skipping environments preload - no token');
+          if (!authState?.isAuthenticated || !authState?.token) {
+            logger.debug('Skipping environments preload - not authenticated');
             return;
           }
 
           // Preload Environments data in parallel with auth check
           // This way they're ready instantly when auth succeeds
           try {
-            const response = await window.datalayerAPI.getEnvironments();
-            if (response.success) {
-              logger.debug('Environments preloaded:', response.data?.length);
+            if (window.datalayerClient?.listEnvironments) {
+              const environments =
+                await window.datalayerClient.listEnvironments();
+              logger.debug('Environments preloaded:', environments?.length);
             }
           } catch (error) {
             logger.error('Failed to preload environments:', error);
@@ -117,13 +148,42 @@ const App: React.FC = () => {
         },
       },
     ],
-    [configuration?.token]
+    [authState?.token]
   );
 
   const { preloadStates, startAllPreloads, isAllPreloaded } =
     useParallelPreload(preloadConfigs);
 
   useEffect(() => {
+    // Set up auth state change listener
+    const handleAuthStateChange = (newAuthState: {
+      isAuthenticated: boolean;
+      user: any | null;
+      token: string | null;
+      runUrl: string;
+    }) => {
+      logger.debug('[Auth] Auth state changed:', newAuthState);
+      setAuthState(newAuthState);
+      setIsAuthenticated(newAuthState.isAuthenticated);
+
+      if (newAuthState.user) {
+        // Use user data directly from SDK
+        const userJson = newAuthState.user?.toJSON
+          ? newAuthState.user.toJSON()
+          : newAuthState.user;
+        setUser(userJson);
+      } else {
+        setUser(null);
+      }
+    };
+
+    // Listen for auth state changes from main process
+    if (window.electronAPI?.onAuthStateChanged) {
+      window.electronAPI.onAuthStateChanged(handleAuthStateChange);
+    } else {
+      logger.error('[Auth] electronAPI.onAuthStateChanged is not available');
+    }
+
     // Start all operations in parallel for faster startup
     const initializeApp = async () => {
       setIsCheckingAuth(true);
@@ -131,37 +191,33 @@ const App: React.FC = () => {
       // Start preloading components immediately
       const preloadPromise = startAllPreloads();
 
-      // Check authentication in parallel with preloading
+      // Get initial auth state from main process (secure ElectronStorage)
       const authPromise = (async () => {
         try {
-          const credentials = await checkAuth();
-          if (credentials.isAuthenticated) {
-            setIsAuthenticated(true);
-            if ('runUrl' in credentials) {
-              // Authentication successful - credentials available
-            }
-
-            // Fetch current user info to get the actual GitHub ID
-            try {
-              const userResponse = await window.datalayerAPI.getCurrentUser();
-              if (userResponse.success && userResponse.data) {
-                const githubUser = await processUserData(userResponse.data);
-                setGithubUser(githubUser);
-              }
-            } catch (error) {
-              logger.error('Failed to fetch current user:', error);
-            }
-
-            // Runtime reconnection removed from startup - will be done lazily when needed
+          if (window.datalayerClient?.getAuthState) {
+            const initialAuthState =
+              await window.datalayerClient.getAuthState();
+            handleAuthStateChange(initialAuthState);
           } else {
-            // Authentication failed - ensure we show login page
-            setIsAuthenticated(false);
-            setCurrentView('environments'); // Reset to default view
+            logger.error(
+              '[Auth] datalayerClient.getAuthState is not available'
+            );
+            handleAuthStateChange({
+              isAuthenticated: false,
+              user: null,
+              token: null,
+              runUrl: configuration?.runUrl || '',
+            });
           }
         } catch (error) {
-          // Auth check failed - show login page
-          logger.error('Auth check failed:', error);
-          setIsAuthenticated(false);
+          logger.error('Failed to get initial auth state:', error);
+          // Set logged out state
+          handleAuthStateChange({
+            isAuthenticated: false,
+            user: null,
+            token: null,
+            runUrl: '',
+          });
         } finally {
           setIsCheckingAuth(false);
         }
@@ -204,16 +260,10 @@ const App: React.FC = () => {
     return () => {
       if (window.electronAPI) {
         window.electronAPI.removeMenuActionListener();
+        window.electronAPI.removeAuthStateListener();
       }
     };
-  }, [checkAuth, startAllPreloads]);
-
-  // Monitor configuration changes
-  useEffect(() => {
-    if (configuration?.token && configuration?.runUrl) {
-      setIsAuthenticated(true);
-    }
-  }, [configuration]);
+  }, [startAllPreloads]);
 
   // Monitor network connectivity
 
@@ -230,14 +280,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    // Use secure IPC to logout
-    await logoutAPI();
-    setIsAuthenticated(false);
-    setCurrentView('environments');
-    setSelectedNotebook(null);
-    setSelectedDocument(null);
-    setIsNotebookEditorActive(false);
-    setIsDocumentEditorActive(false);
+    try {
+      // Use secure IPC to logout
+      if (window.datalayerClient?.logout) {
+        await window.datalayerClient.logout();
+      }
+      setIsAuthenticated(false);
+      setCurrentView('environments');
+      setSelectedNotebook(null);
+      setSelectedDocument(null);
+      setIsNotebookEditorActive(false);
+      setIsDocumentEditorActive(false);
+    } catch (error) {
+      logger.error('Logout failed:', error);
+    }
   };
 
   const handleNotebookSelect = (notebook: NotebookData) => {
@@ -310,6 +366,7 @@ const App: React.FC = () => {
             <Library
               onNotebookSelect={handleNotebookSelect}
               onDocumentSelect={handleDocumentSelect}
+              isAuthenticated={isAuthenticated}
             />
           </Suspense>
         </Box>
@@ -376,7 +433,7 @@ const App: React.FC = () => {
             isNotebookEditorActive={isNotebookEditorActive}
             isDocumentEditorActive={isDocumentEditorActive}
             isAuthenticated={isAuthenticated}
-            githubUser={githubUser}
+            user={user}
             onViewChange={setCurrentView}
             onLogout={handleLogout}
           />

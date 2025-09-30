@@ -15,7 +15,9 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 export default defineConfig({
   main: {
     plugins: [
-      externalizeDepsPlugin(),
+      externalizeDepsPlugin({
+        exclude: ['@datalayer/core'],
+      }),
       {
         name: 'copy-static-files',
         closeBundle() {
@@ -27,17 +29,37 @@ export default defineConfig({
               resolve(__dirname, 'src/main/dialogs/about/about.html'),
               resolve(__dirname, 'dist/main/about.html')
             );
+            // Copy about.css to dist/main
+            copyFileSync(
+              resolve(__dirname, 'src/main/dialogs/about/about.css'),
+              resolve(__dirname, 'dist/main/about.css')
+            );
             // Copy about.js to dist/main
             copyFileSync(
               resolve(__dirname, 'src/main/dialogs/about/about.js'),
               resolve(__dirname, 'dist/main/about.js')
             );
+            // Ensure resources directory exists in dist
+            mkdirSync(resolve(__dirname, 'dist/resources'), { recursive: true });
+            // Copy icon.png to dist/resources
+            if (existsSync(resolve(__dirname, 'resources/icon.png'))) {
+              copyFileSync(
+                resolve(__dirname, 'resources/icon.png'),
+                resolve(__dirname, 'dist/resources/icon.png')
+              );
+            }
           } catch (err) {
             console.error('Failed to copy static files:', err);
           }
         },
       },
     ],
+    resolve: {
+      alias: {
+        '@datalayer/core': resolve(__dirname, '../core'),
+      },
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
+    },
     build: {
       outDir: 'dist/main',
       rollupOptions: {
@@ -48,7 +70,17 @@ export default defineConfig({
     },
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ['@datalayer/core'],
+      }),
+    ],
+    resolve: {
+      alias: {
+        '@datalayer/core': resolve(__dirname, '../core'),
+      },
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
+    },
     build: {
       outDir: 'dist/preload',
       rollupOptions: {
@@ -2602,6 +2634,7 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
       alias: {
         '@': resolve(__dirname, 'src/renderer'),
         '@primer/css': resolve(__dirname, 'node_modules/@primer/css'),
+        '@datalayer/core': resolve(__dirname, '../core'),
         '@datalayer/jupyter-react': resolve(
           __dirname,
           'node_modules/@datalayer/jupyter-react'
@@ -2616,6 +2649,7 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
           'node_modules/@jupyterlab/services'
         ),
       },
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
     optimizeDeps: {
       include: [

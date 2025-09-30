@@ -120,7 +120,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
         throw new Error('Datalayer runUrl is not configured');
       }
 
-      if (!window.datalayerAPI) {
+      if (!window.datalayerClient) {
         throw new Error(
           'Datalayer API not available - collaboration requires IPC bridge'
         );
@@ -130,7 +130,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       if (configToken === 'secured') {
         try {
           const tokenResponse =
-            await window.datalayerAPI.getCollaborationToken();
+            await window.datalayerClient.getCollaborationToken();
           if (tokenResponse.isAuthenticated && tokenResponse.token) {
             configToken = tokenResponse.token;
           } else {
@@ -149,7 +149,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       const wsUrl = documentURL.replace(/^http/, 'ws');
 
       // Request collaboration session from Datalayer via IPC
-      if (!window.datalayerAPI) {
+      if (!window.datalayerClient) {
         throw new Error(
           'Datalayer API not available - collaboration requires IPC bridge'
         );
@@ -157,33 +157,19 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
       // Request collaboration session from Datalayer via IPC
       // Use the generic request method if the specific collaboration method isn't available yet
-      let sessionResult;
-      if (window.datalayerAPI.getCollaborationSession) {
-        sessionResult =
-          await window.datalayerAPI.getCollaborationSession(documentId);
+      let sessionId;
+      if (window.datalayerClient.getCollaborationSession) {
+        // getCollaborationSession now returns the session ID directly
+        sessionId =
+          await window.datalayerClient.getCollaborationSession(documentId);
       } else {
-        const response = await window.datalayerAPI.request(
-          `/api/spacer/v1/documents/${documentId}`
-        );
-        if (response.success && response.data?.sessionId) {
-          sessionResult = {
-            success: true,
-            sessionId: response.data.sessionId,
-          };
-        } else {
-          sessionResult = {
-            success: false,
-            error: response.error || 'No session ID in response',
-          };
-        }
+        // Fallback: use request method (this would need to be updated too if used)
+        throw new Error('No collaboration session method available');
       }
 
-      if (!sessionResult.success || !sessionResult.sessionId) {
-        const errorMsg = sessionResult.error || 'Unknown error';
-        throw new Error(`Failed to get collaboration session ID: ${errorMsg}`);
+      if (!sessionId) {
+        throw new Error('Failed to get collaboration session ID');
       }
-
-      const sessionId = sessionResult.sessionId;
 
       // Import ProxyWebSocket class dynamically to use with WebsocketProvider
       const { ProxyWebSocket } = await import('./proxyServiceManager');

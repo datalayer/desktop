@@ -8,19 +8,16 @@
  * @description Rich text editor component with Jupyter integration and collaboration support.
  */
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Box, Text } from '@primer/react';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { LoroCollaborativePlugin } from '@datalayer/lexical-loro';
+import {
+  LoroCollaborationPlugin,
+  createWebsocketProvider,
+} from '@datalayer/lexical-loro';
 import {
   JupyterCellPlugin,
   JupyterInputOutputPlugin,
@@ -28,7 +25,6 @@ import {
 import { useJupyter } from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core/lib/state';
 import { CustomLexicalEditorProps } from '../../../shared/types';
-import { buildCollaborationWebSocketUrl } from '../../utils/document';
 import { logger } from '../../utils/logger';
 import EditorInitPlugin from './EditorInitPlugin';
 import type { LexicalEditor as LexicalEditorType } from 'lexical';
@@ -64,8 +60,6 @@ const LexicalEditor: React.FC<CustomLexicalEditorProps> = ({
   });
 
   const [editorRef, setEditorRef] = useState<LexicalEditorType | null>(null);
-  const [lastConnectedTime, setLastConnectedTime] = useState<number>(0);
-  const disconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Placeholder component
   const Placeholder = () => (
@@ -94,91 +88,6 @@ const LexicalEditor: React.FC<CustomLexicalEditorProps> = ({
     [onEditorInit, editorRef]
   );
 
-  // Debounced collaboration status to prevent excessive re-renders
-  const handleConnectionChange = useCallback(
-    (connected: boolean) => {
-      logger.debug('Loro collaboration connection changed:', connected);
-
-      if (connected) {
-        // Immediately show connected state
-        setLastConnectedTime(Date.now());
-        onCollaborationStatusChange('connected');
-
-        // Clear any pending disconnect timeout
-        if (disconnectTimeoutRef.current) {
-          clearTimeout(disconnectTimeoutRef.current);
-          disconnectTimeoutRef.current = null;
-        }
-      } else {
-        // Don't immediately show disconnected - wait to see if it reconnects quickly
-        if (disconnectTimeoutRef.current) {
-          clearTimeout(disconnectTimeoutRef.current);
-        }
-
-        disconnectTimeoutRef.current = setTimeout(() => {
-          // Only show disconnected if we've been disconnected for 3+ seconds
-          const timeSinceLastConnected = Date.now() - lastConnectedTime;
-          if (timeSinceLastConnected > 3000) {
-            onCollaborationStatusChange('disconnected');
-          }
-          disconnectTimeoutRef.current = null;
-        }, 3000);
-      }
-    },
-    [lastConnectedTime, onCollaborationStatusChange]
-  );
-
-  const handlePeerIdChange = useCallback((peerId: string) => {
-    logger.debug('Loro collaboration peer ID changed:', peerId);
-  }, []);
-
-  const handleAwarenessChange = useCallback((awarenessData: any) => {
-    logger.debug('Loro collaboration awareness changed:', awarenessData);
-
-    // Enhanced stale peer cleanup
-    if (awarenessData && awarenessData.states) {
-      const currentTime = Date.now();
-      const staleThreshold = 30000; // 30 seconds
-      const stalePeers: string[] = [];
-
-      // Check for stale peers
-      Object.entries(awarenessData.states).forEach(
-        ([peerId, state]: [string, any]) => {
-          if (state && state.lastSeen && typeof state.lastSeen === 'number') {
-            const timeSinceLastSeen = currentTime - state.lastSeen;
-            if (timeSinceLastSeen > staleThreshold) {
-              stalePeers.push(peerId);
-              logger.debug(
-                `[Awareness Cleanup] Peer ${peerId} is stale (last seen: ${timeSinceLastSeen}ms ago)`
-              );
-            }
-          }
-        }
-      );
-
-      // Log peer count for debugging
-      const activePeerCount =
-        Object.keys(awarenessData.states).length - stalePeers.length;
-      const totalPeers = Object.keys(awarenessData.states).length;
-      logger.debug(
-        `[Awareness State] Active peers: ${activePeerCount}, Total peers: ${totalPeers}, Stale peers: ${stalePeers.length}`
-      );
-
-      // Force cleanup of stale peers if we have more than 2 total peers
-      if (stalePeers.length > 0 && totalPeers > 2) {
-        logger.warn(
-          `[Awareness Cleanup] Found ${stalePeers.length} stale peers, attempting manual cleanup`
-        );
-        stalePeers.forEach(peerId => {
-          logger.debug(
-            `[Awareness Cleanup] Requesting removal of stale peer: ${peerId}`
-          );
-          // The plugin should handle this internally, but we're logging for debugging
-        });
-      }
-    }
-  }, []);
-
   const handleCollaborationInit = useCallback(
     (success: boolean) => {
       logger.debug('Loro collaboration initialization:', {
@@ -187,76 +96,21 @@ const LexicalEditor: React.FC<CustomLexicalEditorProps> = ({
       });
       if (!success) {
         onCollaborationStatusChange('error');
+      } else {
+        onCollaborationStatusChange('connected');
       }
-      // Don't set connected here - let handleConnectionChange handle it
     },
     [selectedDocument.id, onCollaborationStatusChange]
   );
 
-  // Store disconnect function for cleanup
-  const [collaborationDisconnectFn, setCollaborationDisconnectFn] = useState<
-    (() => void) | null
-  >(null);
-
-  const handleDisconnectReady = useCallback((disconnectFn: () => void) => {
-    setCollaborationDisconnectFn(() => disconnectFn);
-    logger.debug('Loro disconnect function ready and stored');
-  }, []);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (disconnectTimeoutRef.current) {
-        clearTimeout(disconnectTimeoutRef.current);
-        disconnectTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleSendMessageReady = useCallback(
-    (sendMessageFn: (message: any) => void) => {
-      // Store sendMessage function for potential future use
-      logger.debug('Loro send message function ready:', typeof sendMessageFn);
-    },
-    []
-  );
-
-  // Cleanup stale connections when component unmounts or document changes
-  useEffect(() => {
-    return () => {
-      // Cleanup function when component unmounts or dependencies change
-      if (collaborationDisconnectFn) {
-        logger.debug(
-          '[Peer Cleanup] Disconnecting collaboration on component cleanup'
-        );
-        try {
-          collaborationDisconnectFn();
-        } catch (error) {
-          logger.warn(
-            '[Peer Cleanup] Error during collaboration disconnect:',
-            error
-          );
-        }
-      }
-
-      // Clear stored functions
-      setCollaborationDisconnectFn(null);
-
-      logger.debug(
-        '[Peer Cleanup] Collaboration cleanup completed for document:',
-        selectedDocument.id
-      );
-    };
-  }, [selectedDocument.id, collaborationDisconnectFn]); // Re-run cleanup when document or disconnect function changes
-
-  // Build WebSocket URL for collaboration with authentication
+  // Build WebSocket URL for collaboration
   const collaborationWebSocketUrl = useMemo(() => {
-    return buildCollaborationWebSocketUrl(
-      configuration?.spacerRunUrl,
-      configuration?.token,
-      selectedDocument.id
-    );
-  }, [configuration?.spacerRunUrl, configuration?.token, selectedDocument.id]);
+    if (!configuration?.spacerRunUrl) return '';
+
+    // Convert http/https to ws/wss and build the path
+    const wsUrl = `${configuration.spacerRunUrl.replace(/^http/, 'ws')}/api/spacer/v1/lexical/ws/${selectedDocument.id}`;
+    return wsUrl;
+  }, [configuration?.spacerRunUrl, selectedDocument.id]);
 
   return (
     <Box
@@ -310,17 +164,14 @@ const LexicalEditor: React.FC<CustomLexicalEditorProps> = ({
           </>
         )}
 
-        {/* Loro Collaborative Plugin - re-enabled with enhanced cleanup */}
+        {/* Loro Collaboration Plugin - uses WebSocket provider */}
         {collaborationEnabled && collaborationWebSocketUrl && editorRef && (
-          <LoroCollaborativePlugin
-            docId={selectedDocument.id}
+          <LoroCollaborationPlugin
+            id={selectedDocument.id}
+            providerFactory={createWebsocketProvider}
+            shouldBootstrap={true}
             websocketUrl={collaborationWebSocketUrl}
-            onConnectionChange={handleConnectionChange}
-            onPeerIdChange={handlePeerIdChange}
-            onAwarenessChange={handleAwarenessChange}
             onInitialization={handleCollaborationInit}
-            onDisconnectReady={handleDisconnectReady}
-            onSendMessageReady={handleSendMessageReady}
           />
         )}
 

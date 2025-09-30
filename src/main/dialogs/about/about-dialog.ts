@@ -30,7 +30,7 @@ export function createAboutDialog(): void {
     maximizable: false,
     show: false,
     webPreferences: {
-      preload: join(__dirname, '../../preload/about.js'),
+      preload: join(__dirname, '../preload/about.js'),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,

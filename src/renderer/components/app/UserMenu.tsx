@@ -15,17 +15,17 @@ import { UserMenuProps } from '../../../shared/types';
 
 /**
  * User menu dropdown component for the application header.
- * Displays GitHub user profile information and provides logout functionality.
+ * Displays user profile information and provides logout functionality.
  * @component
  * @param props - Component props
- * @param props.githubUser - GitHub user information
+ * @param props.user - User information
  * @param props.isOpen - Whether the menu is currently open
  * @param props.onOpenChange - Callback to toggle menu open state
  * @param props.onLogout - Callback when user logs out
  * @returns Rendered user menu dropdown
  */
 const UserMenu: React.FC<UserMenuProps> = ({
-  githubUser,
+  user,
   isOpen,
   onOpenChange,
   onLogout,
@@ -74,7 +74,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
       <Button
         variant="invisible"
         onClick={handleMenuToggle}
-        aria-label={`User menu for ${githubUser.name || githubUser.login}`}
+        aria-label={`User menu for ${user.displayName || user.handle}`}
         aria-describedby="user-menu-description"
         aria-expanded={isOpen}
         sx={{
@@ -90,7 +90,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         }}
       >
         <Avatar
-          src={githubUser.avatar_url}
+          src={user.avatarUrl}
           size={32}
           alt=""
           sx={{
@@ -130,7 +130,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
             }}
           >
             <Avatar
-              src={githubUser.avatar_url}
+              src={user.avatarUrl}
               size={32}
               alt=""
               sx={{
@@ -147,11 +147,20 @@ const UserMenu: React.FC<UserMenuProps> = ({
                   color: 'fg.default',
                 }}
               >
-                {githubUser.name || githubUser.login}
+                {user.displayName}
               </Text>
-              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                @{githubUser.login}
-              </Text>
+              {user.email && (
+                <Text
+                  sx={{
+                    fontSize: 0,
+                    color: 'fg.muted',
+                    display: 'block',
+                    mt: 1,
+                  }}
+                >
+                  {user.email}
+                </Text>
+              )}
             </Box>
           </Box>
 

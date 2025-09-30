@@ -24,7 +24,7 @@ import { AppHeaderProps } from '../../../shared/types';
  * @param props.isNotebookEditorActive - Whether notebook editor is active
  * @param props.isDocumentEditorActive - Whether document editor is active
  * @param props.isAuthenticated - User authentication status
- * @param props.githubUser - GitHub user information
+ * @param props.user - User information
  * @param props.onViewChange - Callback for view navigation
  * @param props.onLogout - Callback for logout action
  * @returns Rendered header component
@@ -34,7 +34,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   isNotebookEditorActive,
   isDocumentEditorActive,
   isAuthenticated,
-  githubUser,
+  user,
   onViewChange,
   onLogout,
 }) => {
@@ -68,9 +68,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         onViewChange={onViewChange}
       />
 
-      {isAuthenticated && githubUser && (
+      {isAuthenticated && user && (
         <UserMenu
-          githubUser={githubUser}
+          user={user}
           isOpen={isUserMenuOpen}
           onOpenChange={setIsUserMenuOpen}
           onLogout={onLogout}

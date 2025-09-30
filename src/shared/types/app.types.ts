@@ -14,24 +14,9 @@
  */
 export type ViewType = 'notebooks' | 'notebook' | 'document' | 'environments';
 
-/**
- * GitHub user information.
- * @interface GitHubUser
- */
-export interface GitHubUser {
-  /** GitHub username */
-  login: string;
-  /** User's display name */
-  name: string;
-  /** URL to user's avatar image */
-  avatar_url: string;
-  /** GitHub user ID */
-  id: number;
-  /** Optional email address */
-  email?: string;
-  /** Optional profile URL */
-  url?: string;
-}
+// User type is imported from core library
+import type { UserJSON } from '@datalayer/core/lib/client';
+export type User = UserJSON;
 
 /**
  * Props for the loading screen component.
@@ -81,8 +66,8 @@ export interface NavigationTabsProps {
  * @interface UserMenuProps
  */
 export interface UserMenuProps {
-  /** GitHub user information */
-  githubUser: GitHubUser;
+  /** User information */
+  user: User;
   /** Whether menu is open */
   isOpen: boolean;
   /** Callback for menu open state changes */
@@ -104,8 +89,8 @@ export interface AppHeaderProps {
   isDocumentEditorActive: boolean;
   /** User authentication status */
   isAuthenticated: boolean;
-  /** GitHub user information if authenticated */
-  githubUser: GitHubUser | null;
+  /** User information if authenticated */
+  user: User | null;
   /** Callback for view changes */
   onViewChange: (view: ViewType) => void;
   /** Logout callback */

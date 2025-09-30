@@ -18,29 +18,50 @@
 
 // Initialize logging FIRST
 import { initializeLogging, setupConsoleOverrides } from './config/logging';
+import log from 'electron-log/main';
 
 // Initialize logging immediately
 initializeLogging();
 setupConsoleOverrides();
 
 // Core Electron imports
-import { ipcMain, shell } from 'electron';
+import * as electron from 'electron';
+const { app, ipcMain, shell } = electron;
+import { getMainWindow } from './app/window-manager';
 
 // Application components
 import { Application } from './app/application';
 
 // Services
-import { apiService } from './services/api-service';
+import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
-import { getMainWindow } from './app/window-manager';
 
-// Types
-import type {
-  VersionInfo,
-  EnvironmentVars,
-  HTTPRequestConfig,
-  WebSocketConfig,
-} from './types/api-types';
+// Type definitions
+interface VersionInfo {
+  electron: string;
+  node: string;
+  chrome: string;
+  app: string;
+}
+
+interface EnvironmentVars {
+  DATALAYER_RUN_URL: string;
+  DATALAYER_TOKEN: string;
+}
+
+interface HTTPRequestConfig {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+  body?: any;
+}
+
+interface WebSocketConfig {
+  url: string;
+  protocol?: string;
+  headers?: Record<string, string>;
+  runtimeId?: string;
+}
 
 /**
  * Register all IPC handlers for the application
@@ -68,97 +89,209 @@ function registerIPCHandlers(): void {
     };
   });
 
-  // Authentication handlers
-  ipcMain.handle('datalayer:login', async (_, { runUrl, token }) => {
-    return apiService.login(runUrl, token);
+  // Auth state broadcasting utility
+  function broadcastAuthState(authState: any) {
+    const mainWindow = getMainWindow();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('auth-state-changed', authState);
+      log.debug('[Auth] Broadcasted auth state change:', {
+        isAuthenticated: authState.isAuthenticated,
+        hasUser: !!authState.user,
+      });
+    }
+  }
+
+  // Authentication handlers - using SDK bridge
+  ipcMain.handle('datalayer:login', async (_, { token }) => {
+    await sdkBridge.call('login', token);
+
+    // Fetch user data and broadcast auth state change
+    const user = await sdkBridge.call('whoami');
+    const config = sdkBridge.getConfig();
+
+    const authState = {
+      isAuthenticated: true,
+      user: user,
+      token: config.token,
+      runUrl: config.iamRunUrl,
+    };
+
+    broadcastAuthState(authState);
+
+    // Return auth state for immediate use in renderer
+    return authState;
   });
 
   ipcMain.handle('datalayer:logout', async () => {
-    return apiService.logout();
+    try {
+      await sdkBridge.call('logout');
+    } catch (error) {
+      // Don't fail logout - silently ignore errors
+    }
+
+    // Broadcast logged out state
+    const authState = {
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      runUrl: '',
+    };
+
+    broadcastAuthState(authState);
+
+    return authState;
   });
 
+  // New method to get current auth state (includes user data)
+  ipcMain.handle('datalayer:get-auth-state', async () => {
+    // Use the SDK bridge's getAuthState which checks stored tokens
+    return sdkBridge.getAuthState();
+  });
+
+  // Legacy credentials method (for backward compatibility)
   ipcMain.handle('datalayer:get-credentials', async () => {
-    return await apiService.getCredentialsWithToken();
+    try {
+      const config = sdkBridge.getConfig();
+      return {
+        runUrl: config.iamRunUrl,
+        token: config.token,
+        isAuthenticated: !!config.token,
+      };
+    } catch (error) {
+      return { runUrl: '', token: '', isAuthenticated: false };
+    }
   });
 
-  // Environment and runtime handlers
-  ipcMain.handle('datalayer:get-environments', async () => {
-    return apiService.getEnvironments();
+  // Environment and runtime handlers - using SDK bridge
+  ipcMain.handle('datalayer:list-environments', async () => {
+    const environments = await sdkBridge.call('list_environments');
+    return environments; // Returns EnvironmentJSON[] directly, throws on error
   });
 
   ipcMain.handle('datalayer:create-runtime', async (_, options) => {
-    return apiService.createRuntime(options);
+    const runtime = await sdkBridge.call(
+      'ensure_runtime',
+      options.environment,
+      options.credits || 100,
+      true, // waitForReady
+      120000, // maxWaitTime
+      true // reuseExisting
+    );
+    return runtime; // Returns RuntimeJSON directly, throws on error
   });
 
   ipcMain.handle('datalayer:delete-runtime', async (_, podName) => {
-    return apiService.deleteRuntime(podName);
+    await sdkBridge.call('delete_runtime', podName);
+    // Returns void on success, throws on error
   });
 
-  ipcMain.handle('datalayer:get-runtime-details', async (_, runtimeId) => {
-    return apiService.getRuntimeDetails(runtimeId);
+  ipcMain.handle('datalayer:get-runtime', async (_, runtimeId) => {
+    const runtime = await sdkBridge.call('get_runtime', runtimeId);
+    return runtime; // Returns RuntimeJSON directly, throws on error
   });
 
   ipcMain.handle('datalayer:is-runtime-active', async (_, podName) => {
-    return apiService.isRuntimeActive(podName);
+    try {
+      const runtime = await sdkBridge.call('get_runtime', podName);
+      // Check if runtime is ready
+      return { isActive: !!runtime, runtime };
+    } catch (error) {
+      // If we can't get the runtime, it's not active
+      return { isActive: false };
+    }
   });
 
-  ipcMain.handle('datalayer:list-user-runtimes', async () => {
-    return apiService.listUserRuntimes();
+  ipcMain.handle('datalayer:list-runtimes', async () => {
+    const runtimes = await sdkBridge.call('list_runtimes');
+    return runtimes; // Returns RuntimeJSON[] directly, throws on error
   });
 
-  // Notebook and document handlers
+  // Notebook and document handlers - using SDK bridge
   ipcMain.handle('datalayer:list-notebooks', async () => {
-    return apiService.listNotebooks();
+    // Get all spaces and their items
+    const spaces = await sdkBridge.call('get_my_spaces');
+    const allNotebooks: any[] = [];
+
+    for (const space of spaces || []) {
+      try {
+        const items = await sdkBridge.call('get_space_items', space.id);
+        const notebooks =
+          items?.filter((item: any) => item.type === 'notebook') || [];
+        allNotebooks.push(...notebooks);
+      } catch (error) {
+        // Continue with other spaces if one fails
+      }
+    }
+
+    return allNotebooks; // Returns NotebookJSON[] directly
   });
 
   ipcMain.handle(
     'datalayer:create-notebook',
     async (_, { spaceId, name, description }) => {
-      return apiService.createNotebook(spaceId, name, description);
+      const notebook = await sdkBridge.call(
+        'create_notebook',
+        spaceId,
+        name,
+        description
+      );
+      return notebook; // Returns NotebookJSON directly, throws on error
     }
   );
 
-  ipcMain.handle(
-    'datalayer:delete-notebook',
-    async (_, { spaceId, itemId }) => {
-      return apiService.deleteNotebook(spaceId, itemId);
-    }
-  );
+  ipcMain.handle('datalayer:delete-space-item', async (_, { itemId }) => {
+    await sdkBridge.call('delete_space_item', itemId);
+    // Returns void on success, throws on error
+  });
 
-  // Space handlers
-  ipcMain.handle('datalayer:get-user-spaces', async () => {
-    return apiService.getUserSpaces();
+  // Space handlers - using SDK bridge
+  ipcMain.handle('datalayer:get-my-spaces', async () => {
+    const spaces = await sdkBridge.call('get_my_spaces');
+    return spaces; // Returns SpaceJSON[] directly, throws on error
   });
 
   ipcMain.handle('datalayer:get-space-items', async (_, spaceId: string) => {
-    return apiService.getSpaceItems(spaceId);
+    const items = await sdkBridge.call('get_space_items', spaceId);
+    return items; // Returns Array<NotebookJSON | LexicalJSON> directly, throws on error
   });
 
   // Collaboration handlers
   ipcMain.handle(
     'datalayer:get-collaboration-session',
     async (_, documentId) => {
-      return apiService.getCollaborationSessionId(documentId);
+      try {
+        // Use the SDK bridge to get collaboration session ID
+        const sessionId = await sdkBridge.call(
+          'getCollaborationSessionId',
+          documentId
+        );
+        return sessionId;
+      } catch (error) {
+        log.error('Failed to get collaboration session ID:', error);
+        // Fallback to document ID
+        return documentId;
+      }
     }
   );
 
   ipcMain.handle('datalayer:get-collaboration-token', async () => {
-    return apiService.getCredentialsWithToken();
+    // Use SDK bridge to get current auth state
+    const authState = sdkBridge.getAuthState();
+    return {
+      runUrl: authState.runUrl,
+      token: authState.token,
+      isAuthenticated: authState.isAuthenticated,
+    };
   });
 
-  // User and GitHub handlers
-  ipcMain.handle('datalayer:current-user', async () => {
-    return apiService.getCurrentUser();
+  // User handlers - using SDK bridge
+  ipcMain.handle('datalayer:whoami', async () => {
+    const user = await sdkBridge.call('whoami');
+    return user; // Returns User directly, throws on error
   });
 
-  ipcMain.handle('datalayer:github-user', async (_, githubId: number) => {
-    return apiService.getGitHubUser(githubId);
-  });
-
-  // Generic API request handler
-  ipcMain.handle('datalayer:request', async (_, { endpoint, options }) => {
-    return apiService.makeRequest(endpoint, options);
-  });
+  // GitHub user handler removed - use whoami instead
+  // Generic request handler removed - use specific SDK methods instead
 
   // HTTP proxy handlers
   ipcMain.handle('proxy:http-request', async (_, config: HTTPRequestConfig) => {
@@ -282,6 +415,12 @@ function registerIPCHandlers(): void {
  */
 async function main(): Promise<void> {
   try {
+    // Wait for app to be ready first
+    await app.whenReady();
+
+    // Initialize SDK bridge AFTER app is ready
+    await sdkBridge.initialize();
+
     // Register all IPC handlers
     registerIPCHandlers();
 
@@ -290,6 +429,22 @@ async function main(): Promise<void> {
 
     // Initialize the application
     await Application.initialize();
+
+    // Check for stored authentication and broadcast if authenticated
+    const authState = sdkBridge.getAuthState();
+    if (authState.isAuthenticated) {
+      log.info(
+        '[Main] Found stored authentication, broadcasting to renderer...'
+      );
+      // Wait a bit for the renderer to be ready
+      setTimeout(() => {
+        const mainWindow = getMainWindow();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('auth-state-changed', authState);
+          log.info('[Main] Broadcasted stored auth state to renderer');
+        }
+      }, 2000); // Wait 2 seconds for renderer to be fully ready
+    }
 
     console.log('Datalayer Desktop application started successfully');
   } catch (error) {

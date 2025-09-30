@@ -11,7 +11,7 @@
  *
  * @example
  * ```typescript
- * import { ViewType, GitHubUser, NotebookData } from '../shared/types';
+ * import { ViewType, User, NotebookData } from '../shared/types';
  * ```
  */
 

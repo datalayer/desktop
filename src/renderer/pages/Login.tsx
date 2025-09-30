@@ -12,7 +12,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { Box } from '@primer/react';
-import { useDatalayerAPI } from '../hooks/useDatalayerAPI';
 import iconImage from '../assets/icon.png';
 import Header from '../components/login/Header';
 import ErrorMessage from '../components/login/ErrorMessage';
@@ -45,8 +44,6 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
     error: '',
   });
 
-  const { login } = useDatalayerAPI();
-
   const handleFormDataChange = useCallback(
     (field: keyof LoginFormData, value: string) => {
       setFormData(prev => ({
@@ -72,19 +69,22 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
       setState(prev => ({ ...prev, loading: true, error: '' }));
 
       // Use secure IPC to login
-      const result = await login(formData.runUrl.trim(), formData.token.trim());
+      await window.datalayerClient.login(formData.token.trim());
 
-      if (!result.success) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error:
-            result.message || 'Failed to login. Please check your credentials.',
-        }));
-      } else if (onUserDataFetched && (result as any).userData) {
-        // Pass user data to parent component if available
-        onUserDataFetched((result as any).userData);
+      // If login succeeds, fetch user data if callback is provided
+      if (onUserDataFetched) {
+        try {
+          const userData = await window.datalayerClient.whoami();
+          // Call the callback which will update auth state in App.tsx
+          await onUserDataFetched(userData as any); // User model will be handled in processUserData
+        } catch (userError) {
+          // Login succeeded but user data fetch failed - not critical
+        }
       }
+
+      // Don't set loading to false here - let the auth state update handle navigation
+      // This prevents the form from briefly re-enabling before navigation
+      // setState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -92,7 +92,7 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
         error: formatLoginError(error),
       }));
     }
-  }, [formData, login, onUserDataFetched]);
+  }, [formData, onUserDataFetched]);
 
   const handleKeyPress = useCallback(
     (event: React.KeyboardEvent) => {

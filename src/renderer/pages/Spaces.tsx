@@ -44,6 +44,7 @@ import DeleteConfirmationDialog from '../components/library/DeleteConfirmationDi
 const Documents: React.FC<DocumentsListProps> = ({
   onNotebookSelect,
   onDocumentSelect,
+  isAuthenticated = false,
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   const autoRefreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!isInitializedRef.current) {
+    if (!isInitializedRef.current && isAuthenticated) {
       isInitializedRef.current = true;
       initializeComponent();
     }
@@ -87,7 +88,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         clearInterval(autoRefreshTimerRef.current);
       }
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -137,32 +138,24 @@ const Documents: React.FC<DocumentsListProps> = ({
 
   const fetchUserSpaces = async () => {
     try {
-      // Fetching user spaces...
-      const spacesResponse = await window.datalayerAPI.getUserSpaces();
-      // Check spaces response
+      const spacesData = await window.datalayerClient.getMySpaces();
 
-      if (
-        spacesResponse.success &&
-        spacesResponse.spaces &&
-        spacesResponse.spaces.length > 0
-      ) {
-        // Processing spaces
-        const spaces: SpaceInfo[] = spacesResponse.spaces.map(
-          (space: Record<string, unknown>) => ({
-            id: String(space.id || space.uid || ''),
-            uid: space.uid as string | undefined,
-            name: String(
-              space.name_t ||
-                space.name ||
-                space.handle_s ||
-                space.handle ||
-                space.title ||
-                space.display_name ||
-                'Unknown Space'
-            ),
-            handle: (space.handle_s || space.handle) as string | undefined,
-          })
-        );
+      if (spacesData && spacesData.length > 0) {
+        // Processing spaces (basic info only)
+        const spaces: SpaceInfo[] = spacesData.map((space: any) => ({
+          id: String(space.id || space.uid || ''),
+          uid: space.uid as string | undefined,
+          name: String(
+            space.name_t ||
+              space.name ||
+              space.handle_s ||
+              space.handle ||
+              space.title ||
+              space.display_name ||
+              'Unknown Space'
+          ),
+          handle: (space.handle_s || space.handle) as string | undefined,
+        }));
 
         setUserSpaces(spaces);
 
@@ -183,57 +176,63 @@ const Documents: React.FC<DocumentsListProps> = ({
         setSelectedSpace(defaultSpace);
         setSpaceId(defaultSpace.uid || defaultSpace.id);
 
-        // Default space found
-        return { defaultSpace, spacesData: spacesResponse.spaces };
+        return { defaultSpace };
       }
 
-      // No spaces found or spaces response failed
       return null;
     } catch (error) {
-      // Error fetching user spaces
       setError('Failed to load user spaces');
       return null;
     }
   };
 
+  const fetchSpaceItems = async (spaceId: string) => {
+    try {
+      const spaceItemsData =
+        await window.datalayerClient.getSpaceItems(spaceId);
+
+      if (spaceItemsData) {
+        // Check if spaceItemsData is an array
+        if (Array.isArray(spaceItemsData)) {
+          // Map the items properly with toJSON serialization
+          const documentItems: DocumentItem[] = spaceItemsData.map(
+            mapApiItemToDocumentItem
+          );
+
+          return documentItems;
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    } catch (error) {
+      setError('Failed to load space items');
+      return [];
+    }
+  };
+
   const initializeComponent = async () => {
     const result = await fetchUserSpaces();
-    if (result?.defaultSpace && result?.spacesData) {
+    if (result?.defaultSpace) {
       const spaceId = result.defaultSpace.uid || result.defaultSpace.id;
-      await processDocuments(spaceId, result.spacesData);
+      await processDocuments(spaceId);
       startAutoRefresh();
     } else {
       setLoading(false);
     }
   };
 
-  const processDocuments = async (
-    currentSpaceId: string,
-    spacesData: any[]
-  ) => {
+  const processDocuments = async (currentSpaceId: string) => {
     try {
-      // Processing documents for space
-
       setLoading(true);
       setError(null);
 
-      const currentSpace = spacesData.find(
-        (space: any) => (space.uid || space.id) === currentSpaceId
-      );
+      // Fetch items for this specific space
+      const documentItems = await fetchSpaceItems(currentSpaceId);
 
-      // Found current space
-
-      if (currentSpace && currentSpace.items) {
-        const items = currentSpace.items;
-        // Processing items
-
-        const documentItems: DocumentItem[] = items.map(
-          mapApiItemToDocumentItem
-        );
-        // Mapped document items
-
+      if (documentItems.length > 0) {
         const groupedResults = groupDocumentsByType(documentItems);
-        // Grouped results processed
 
         // Update previous counts for skeleton loading
         setPreviousNotebookCount(groupedResults.notebooks.length);
@@ -244,10 +243,10 @@ const Documents: React.FC<DocumentsListProps> = ({
         const newDataHash = createDataHash(documentItems);
         setLastDataHash(newDataHash);
       } else {
-        setError('No items found in the selected space');
+        setGroupedDocuments({ notebooks: [], documents: [] });
+        setLastDataHash('');
       }
     } catch (err) {
-      // Failed to process documents
       setError('Failed to load documents. Please try again.');
     } finally {
       setLoading(false);
@@ -256,18 +255,8 @@ const Documents: React.FC<DocumentsListProps> = ({
 
   const fetchDocuments = async (currentSpaceId: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const spacesResponse = await window.datalayerAPI.getUserSpaces();
-
-      if (spacesResponse.success && spacesResponse.spaces) {
-        await processDocuments(currentSpaceId, spacesResponse.spaces);
-      } else {
-        setError(spacesResponse.error || 'Failed to load documents');
-      }
+      await processDocuments(currentSpaceId);
     } catch (err) {
-      // Failed to fetch documents
       setError('Failed to load documents. Please try again.');
     }
   };
@@ -288,29 +277,23 @@ const Documents: React.FC<DocumentsListProps> = ({
     if (!selectedSpace) return;
 
     try {
-      const spacesResponse = await window.datalayerAPI.getUserSpaces();
+      const spaceId = selectedSpace.uid || selectedSpace.id;
 
-      if (spacesResponse.success && spacesResponse.spaces) {
-        const currentSpace = spacesResponse.spaces.find(
-          (space: any) =>
-            (space.uid || space.id) === (selectedSpace.uid || selectedSpace.id)
-        );
+      // Fetch current items for comparison
+      const currentItems = await fetchSpaceItems(spaceId);
+      const newDataHash = createDataHash(currentItems);
 
-        if (currentSpace && currentSpace.items) {
-          const newDataHash = createDataHash(currentSpace.items);
+      if (newDataHash !== lastDataHash) {
+        // Process the documents we already fetched
+        const groupedResults = groupDocumentsByType(currentItems);
 
-          if (newDataHash !== lastDataHash) {
-            // Documents data changed, auto-refreshing...
-            await processDocuments(
-              selectedSpace.uid || selectedSpace.id,
-              spacesResponse.spaces
-            );
-          }
-        }
+        setPreviousNotebookCount(groupedResults.notebooks.length);
+        setPreviousDocumentCount(groupedResults.documents.length);
+        setGroupedDocuments(groupedResults);
+        setLastDataHash(newDataHash);
+      } else {
       }
-    } catch (error) {
-      // Auto-refresh check failed
-    }
+    } catch (error) {}
   };
 
   const handleManualRefresh = async () => {
@@ -466,20 +449,15 @@ const Documents: React.FC<DocumentsListProps> = ({
 
       // Deleting item
 
-      const result = await window.datalayerAPI.deleteNotebook(
+      await window.datalayerClient.deleteSpaceItem(
         spaceId,
         itemToDelete.uid || itemToDelete.id
       );
 
-      if (result.success) {
-        await fetchDocuments(spaceId);
-        handleCancelDelete();
-        // Item deleted successfully
-      } else {
-        const errorMessage = result.error || 'Failed to delete item';
-        // Delete item failed
-        setError(errorMessage);
-      }
+      // If we reach here, deletion was successful (no exception thrown)
+      await fetchDocuments(spaceId);
+      handleCancelDelete();
+      // Item deleted successfully
     } catch (err) {
       // Failed to delete item
       const errorMessage =

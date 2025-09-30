@@ -38,10 +38,10 @@
     "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
   "dependencies": {
-    "@datalayer/core": "^0.0.12",
-    "@datalayer/jupyter-lexical": "^1.0.4",
-    "@datalayer/jupyter-react": "^1.1.0",
-    "@datalayer/lexical-loro": "^0.0.7",
+    "@datalayer/core": "file:../core",
+    "@datalayer/jupyter-lexical": "^1.0.6",
+    "@datalayer/jupyter-react": "^1.1.7",
+    "@datalayer/lexical-loro": "^0.1.0",
     "@jupyterlab/services": "^7.0.0",
     "@lexical/code": "^0.35.0",
     "@lexical/link": "^0.35.0",
@@ -85,7 +85,7 @@
     "cross-env": "^7.0.3",
     "electron": "34.5.8",
     "electron-builder": "^25.1.8",
-    "electron-vite": "^2.3.0",
+    "electron-vite": "^4.0.1",
     "eslint": "^9.36.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.4",

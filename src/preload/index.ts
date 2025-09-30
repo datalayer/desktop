@@ -25,6 +25,16 @@
 import { contextBridge, ipcRenderer } from 'electron';
 // import log from 'electron-log/renderer'; // Uncomment when needed for logging
 
+// Import types from SDK - these are compile-time only
+import type {
+  EnvironmentJSON,
+  RuntimeJSON,
+  NotebookJSON,
+  SpaceJSON,
+  LexicalJSON,
+} from '@datalayer/core/lib/client/models';
+import { User } from '@datalayer/core/lib/client/models/User';
+
 /**
  * Expose Electron API methods to the renderer process.
  * Provides safe access to system information and menu actions.
@@ -56,6 +66,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Runtime termination notification
   notifyRuntimeTerminated: (runtimeId: string) =>
     ipcRenderer.invoke('runtime-terminated', { runtimeId }),
+
+  // Auth state change listener
+  onAuthStateChanged: (
+    callback: (authState: {
+      isAuthenticated: boolean;
+      user: any | null;
+      token: string | null;
+      runUrl: string;
+    }) => void
+  ) => {
+    ipcRenderer.on('auth-state-changed', (_, authState) => callback(authState));
+  },
+
+  // Remove auth state change listener
+  removeAuthStateListener: () => {
+    ipcRenderer.removeAllListeners('auth-state-changed');
+  },
 });
 
 /**
@@ -112,17 +139,19 @@ contextBridge.exposeInMainWorld('proxyAPI', {
  * Expose Datalayer API methods.
  * Provides access to authentication, runtime management, and notebook operations.
  */
-contextBridge.exposeInMainWorld('datalayerAPI', {
-  // Authentication
-  login: (credentials: { runUrl: string; token: string }) =>
-    ipcRenderer.invoke('datalayer:login', credentials),
+contextBridge.exposeInMainWorld('datalayerClient', {
+  // Authentication - SDK only needs token, uses default URLs
+  login: (token: string) => ipcRenderer.invoke('datalayer:login', { token }),
 
   logout: () => ipcRenderer.invoke('datalayer:logout'),
 
   getCredentials: () => ipcRenderer.invoke('datalayer:get-credentials'),
 
+  // Get current auth state with user data
+  getAuthState: () => ipcRenderer.invoke('datalayer:get-auth-state'),
+
   // API calls
-  getEnvironments: () => ipcRenderer.invoke('datalayer:get-environments'),
+  listEnvironments: () => ipcRenderer.invoke('datalayer:list-environments'),
 
   createRuntime: (options: {
     environment: string;
@@ -133,23 +162,13 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
   deleteRuntime: (runtimeId: string) =>
     ipcRenderer.invoke('datalayer:delete-runtime', runtimeId),
 
-  getRuntimeDetails: (runtimeId: string) =>
-    ipcRenderer.invoke('datalayer:get-runtime-details', runtimeId),
+  getRuntime: (runtimeId: string) =>
+    ipcRenderer.invoke('datalayer:get-runtime', runtimeId),
 
   isRuntimeActive: (podName: string) =>
     ipcRenderer.invoke('datalayer:is-runtime-active', podName),
 
-  listUserRuntimes: () => ipcRenderer.invoke('datalayer:list-user-runtimes'),
-
-  // Generic request handler
-  request: (
-    endpoint: string,
-    options?: {
-      method?: string;
-      body?: unknown;
-      headers?: Record<string, string>;
-    }
-  ) => ipcRenderer.invoke('datalayer:request', { endpoint, options }),
+  listRuntimes: () => ipcRenderer.invoke('datalayer:list-runtimes'),
 
   // Notebooks
   listNotebooks: () => ipcRenderer.invoke('datalayer:list-notebooks'),
@@ -161,13 +180,13 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
       description,
     }),
 
-  deleteNotebook: (spaceId: string, itemId: string) =>
-    ipcRenderer.invoke('datalayer:delete-notebook', {
+  deleteSpaceItem: (spaceId: string, itemId: string) =>
+    ipcRenderer.invoke('datalayer:delete-space-item', {
       spaceId,
       itemId,
     }),
 
-  getUserSpaces: () => ipcRenderer.invoke('datalayer:get-user-spaces'),
+  getMySpaces: () => ipcRenderer.invoke('datalayer:get-my-spaces'),
 
   getSpaceItems: (spaceId: string) =>
     ipcRenderer.invoke('datalayer:get-space-items', spaceId),
@@ -179,11 +198,8 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
   getCollaborationToken: () =>
     ipcRenderer.invoke('datalayer:get-collaboration-token'),
 
-  // User and GitHub API
-  getCurrentUser: () => ipcRenderer.invoke('datalayer:current-user'),
-
-  getGitHubUser: (githubId: number) =>
-    ipcRenderer.invoke('datalayer:github-user', githubId),
+  // User API
+  whoami: () => ipcRenderer.invoke('datalayer:whoami'),
 });
 
 /**
@@ -253,182 +269,85 @@ export interface ElectronAPI {
   platform: NodeJS.Platform;
   closeAboutWindow: () => void;
   openExternal: (url: string) => void;
+  onAuthStateChanged: (
+    callback: (authState: {
+      isAuthenticated: boolean;
+      user: any | null;
+      token: string | null;
+      runUrl: string;
+    }) => void
+  ) => void;
+  removeAuthStateListener: () => void;
 }
 
 /**
- * Environment data structure returned from Datalayer API.
- * Represents available compute environments.
+ * Datalayer IPC Bridge API interface.
+ * Provides IPC methods for interacting with the Datalayer SDK in the main process.
+ * Returns SDK JSON types directly, using Promise rejection for error handling.
+ *
+ * All methods return data directly on success and throw errors on failure.
+ * This provides a cleaner API that aligns with the SDK's own behavior.
  */
-export interface EnvironmentData {
-  name: string;
-  display_name?: string;
-  title?: string;
-  description?: string;
-  image?: string;
-  tags?: string[];
-  language?: string;
-  framework?: string;
-  is_gpu?: boolean;
-  is_default?: boolean;
-  resources?: Record<string, unknown>;
-  [key: string]: unknown;
-}
+export interface DatalayerIPCClient {
+  // Authentication methods - return void on success, throw on error
+  login: (token: string) => Promise<void>;
+  logout: () => Promise<void>;
 
-/**
- * Runtime data structure for active compute instances.
- * Contains connection details and runtime metadata.
- */
-export interface RuntimeData {
-  uid: string;
-  given_name?: string;
-  pod_name: string;
-  ingress?: string;
-  token?: string;
-  environment_name?: string;
-  environment_title?: string;
-  type?: string;
-  burning_rate?: number;
-  reservation_id?: string;
-  started_at?: string;
-  expired_at?: string;
-  status?: string;
-  [key: string]: unknown;
-}
-
-/**
- * Notebook data structure for Jupyter notebooks.
- * Contains notebook identification and metadata.
- */
-export interface NotebookData {
-  uid?: string;
-  id?: string;
-  name?: string;
-  path?: string;
-  [key: string]: unknown;
-}
-
-/**
- * Space data structure for organizing notebooks and documents.
- * Represents a workspace or collection of items.
- */
-export interface SpaceData {
-  uid?: string;
-  id?: string;
-  name?: string;
-  items?: Record<string, unknown>[];
-  [key: string]: unknown;
-}
-
-/**
- * Complete Datalayer API interface.
- * Provides all methods for interacting with the Datalayer platform.
- */
-export interface DatalayerAPI {
-  login: (credentials: {
-    runUrl: string;
-    token: string;
-  }) => Promise<{ success: boolean; message?: string }>;
-  logout: () => Promise<{ success: boolean }>;
+  // Credentials - special case, returns custom type
   getCredentials: () => Promise<{
     runUrl: string;
     token?: string;
     isAuthenticated: boolean;
   }>;
-  getEnvironments: () => Promise<{
-    success: boolean;
-    data?: EnvironmentData[];
-    error?: string;
+
+  // Auth state - returns complete auth state with user data
+  getAuthState: () => Promise<{
+    isAuthenticated: boolean;
+    user: any | null;
+    token: string | null;
+    runUrl: string;
   }>;
+
+  // Environment and runtime methods - return SDK JSON types directly
+  listEnvironments: () => Promise<EnvironmentJSON[]>;
   createRuntime: (options: {
     environment: string;
     name?: string;
     credits?: number;
-  }) => Promise<{
-    success: boolean;
-    data?: { runtime?: RuntimeData };
-    error?: string;
-  }>;
-  deleteRuntime: (
-    podName: string
-  ) => Promise<{ success: boolean; error?: string; message?: string }>;
-  getRuntimeDetails: (
-    runtimeId: string
-  ) => Promise<{ success: boolean; data?: RuntimeData; error?: string }>;
+  }) => Promise<RuntimeJSON>;
+  deleteRuntime: (podName: string) => Promise<void>;
+  getRuntime: (runtimeId: string) => Promise<RuntimeJSON>;
+  listRuntimes: () => Promise<RuntimeJSON[]>;
+
+  // Special runtime method with custom return type
   isRuntimeActive: (podName: string) => Promise<{
-    success: boolean;
     isActive: boolean;
-    runtime?: RuntimeData;
-    error?: string;
+    runtime?: RuntimeJSON;
   }>;
-  listUserRuntimes: () => Promise<{
-    success: boolean;
-    data?: RuntimeData[];
-    error?: string;
-  }>;
-  request: (
-    endpoint: string,
-    options?: {
-      method?: string;
-      body?: unknown;
-      headers?: Record<string, string>;
-    }
-  ) => Promise<{
-    success: boolean;
-    data?: { sessionId?: string; [key: string]: unknown };
-    error?: string;
-  }>;
-  listNotebooks: () => Promise<{
-    success: boolean;
-    data?: NotebookData[];
-    error?: string;
-  }>;
+
+  // Notebook/Space methods - return SDK JSON types directly
+  listNotebooks: () => Promise<NotebookJSON[]>;
   createNotebook: (
     spaceId: string,
     name: string,
     description?: string
-  ) => Promise<{
-    success: boolean;
-    data?: NotebookData;
-    error?: string;
-  }>;
-  deleteNotebook: (
-    spaceId: string,
-    itemId: string
-  ) => Promise<{
-    success: boolean;
-    message?: string;
-    error?: string;
-  }>;
-  getUserSpaces: () => Promise<{
-    success: boolean;
-    spaces?: SpaceData[];
-    error?: string;
-  }>;
-  getSpaceItems: (spaceId: string) => Promise<{
-    success: boolean;
-    data?: Record<string, unknown>[];
-    error?: string;
-  }>;
-  getCollaborationSession: (documentId: string) => Promise<{
-    success: boolean;
-    sessionId?: string;
-    error?: string;
-  }>;
+  ) => Promise<NotebookJSON>;
+  deleteSpaceItem: (spaceId: string, itemId: string) => Promise<void>;
+  getMySpaces: () => Promise<SpaceJSON[]>;
+  getSpaceItems: (
+    spaceId: string
+  ) => Promise<Array<NotebookJSON | LexicalJSON>>;
+
+  // Collaboration methods
+  getCollaborationSession: (documentId: string) => Promise<string>; // Returns session ID directly
   getCollaborationToken: () => Promise<{
     runUrl: string;
     token?: string;
     isAuthenticated: boolean;
   }>;
-  getCurrentUser: () => Promise<{
-    success: boolean;
-    data?: Record<string, unknown>;
-    error?: string;
-  }>;
-  getGitHubUser: (githubId: number) => Promise<{
-    success: boolean;
-    data?: Record<string, unknown>;
-    error?: string;
-  }>;
+
+  // User methods
+  whoami: () => Promise<User>;
 }
 
 /**
@@ -438,7 +357,7 @@ export interface DatalayerAPI {
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
-    datalayerAPI: DatalayerAPI;
+    datalayerClient: DatalayerIPCClient;
     proxyAPI: ProxyAPI;
   }
 }

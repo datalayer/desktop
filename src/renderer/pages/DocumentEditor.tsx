@@ -548,7 +548,7 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
 
   return (
     <Jupyter
-      serviceManager={serviceManager}
+      serviceManager={serviceManager as any}
       startDefaultKernel={!!isServiceManagerReady}
     >
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

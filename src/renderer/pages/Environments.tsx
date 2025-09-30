@@ -13,6 +13,7 @@ import { Box, Heading, Text } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/lib/state';
 import { useEnvironments } from '../stores/environmentStore';
 import { isGPUEnvironment } from '../utils/environments';
+import { logger } from '../utils/logger';
 
 import AuthWarning from '../components/environments/AuthWarning';
 import LoadingSpinner from '../components/environments/LoadingSpinner';
@@ -21,15 +22,26 @@ import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
 import SelectionSummary from '../components/environments/SelectionSummary';
 
+interface EnvironmentsProps {
+  isAuthenticated?: boolean;
+}
+
 /**
  * Environments page component that displays available compute environments for notebooks.
  * Includes environment selection, GPU detection, authentication checks, and caching.
  *
  * @component
+ * @param props.isAuthenticated - Optional authentication state override
  * @returns The rendered environments page
  */
-const Environments: React.FC = () => {
+const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    user: any | null;
+    token: string | null;
+    runUrl: string;
+  } | null>(null);
   const { configuration, setConfiguration } = useCoreStore();
 
   // Use the environment store for caching
@@ -40,11 +52,51 @@ const Environments: React.FC = () => {
     fetchIfNeeded,
   } = useEnvironments();
 
+  // Set up auth state listener
+  useEffect(() => {
+    const handleAuthStateChange = (newAuthState: {
+      isAuthenticated: boolean;
+      user: any | null;
+      token: string | null;
+      runUrl: string;
+    }) => {
+      logger.debug('[Environments] Auth state changed:', newAuthState);
+      setAuthState(newAuthState);
+    };
+
+    // Listen for auth state changes from main process
+    window.electronAPI?.onAuthStateChanged?.(handleAuthStateChange);
+
+    // Get initial auth state
+    window.datalayerClient
+      ?.getAuthState?.()
+      .then(initialAuthState => {
+        handleAuthStateChange(initialAuthState);
+      })
+      .catch(error => {
+        logger.error('[Environments] Failed to get initial auth state:', error);
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          runUrl: '',
+        });
+      });
+
+    return () => {
+      window.electronAPI?.removeAuthStateListener?.();
+    };
+  }, []);
+
   const fetchEnvironments = useCallback(async () => {
     try {
-      // Check if user is authenticated
-      if (!configuration?.token) {
-        // Please login to view available environments
+      // Check if user is authenticated (prefer event-driven auth state)
+      const isUserAuthenticated =
+        authState?.isAuthenticated || isAuthenticated || !!configuration?.token;
+      if (!isUserAuthenticated) {
+        logger.debug(
+          '[Environments] Not authenticated, skipping environments fetch'
+        );
         return;
       }
 
@@ -63,6 +115,9 @@ const Environments: React.FC = () => {
       // Error is handled by the store
     }
   }, [
+    authState?.isAuthenticated,
+    authState?.token,
+    isAuthenticated,
     configuration?.token,
     configuration?.cpuEnvironment,
     fetchIfNeeded,
@@ -102,7 +157,11 @@ const Environments: React.FC = () => {
         </Text>
       </Box>
 
-      {!configuration?.token && <AuthWarning />}
+      {!(
+        authState?.isAuthenticated ||
+        isAuthenticated ||
+        configuration?.token
+      ) && <AuthWarning />}
 
       {loading && <LoadingSpinner />}
 
@@ -125,12 +184,15 @@ const Environments: React.FC = () => {
 
       {!loading && environments.length === 0 && !error && <EmptyState />}
 
-      {configuration?.token && environments.length > 0 && (
-        <SelectionSummary
-          selectedEnv={selectedEnv}
-          environmentsCount={environments.length}
-        />
-      )}
+      {(authState?.isAuthenticated ||
+        isAuthenticated ||
+        configuration?.token) &&
+        environments.length > 0 && (
+          <SelectionSummary
+            selectedEnv={selectedEnv}
+            environmentsCount={environments.length}
+          />
+        )}
     </Box>
   );
 };

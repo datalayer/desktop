@@ -135,11 +135,9 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
       apiLogger.debug('Fetching fresh environments data...');
 
       // Fetch from API
-      const response = await window.datalayerAPI.getEnvironments();
+      const environments = await window.datalayerClient.listEnvironments();
 
-      if (response.success && response.data) {
-        const environments = response.data;
-
+      if (environments) {
         // Update store with fresh data
         set({
           environments,
@@ -150,7 +148,7 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
 
         return environments;
       } else {
-        const errorMsg = response.error || 'Failed to fetch environments';
+        const errorMsg = 'No environments data received';
         set({
           error: errorMsg,
           isLoading: false,

@@ -59,6 +59,7 @@ export interface DocumentsListProps {
     cdnUrl?: string;
     description?: string;
   }) => void;
+  isAuthenticated?: boolean;
 }
 
 export interface HeaderProps {
