@@ -4,11 +4,10 @@
  */
 
 /**
- * @module renderer/services/proxyServiceManager
- *
  * Proxy ServiceManager implementation for Electron.
- * Routes all HTTP and WebSocket traffic through IPC to the main process
- * to bypass browser security restrictions.
+ * Routes HTTP and WebSocket traffic through IPC to bypass browser security restrictions.
+ *
+ * @module renderer/services/proxyServiceManager
  */
 
 import { proxyLogger } from '../utils/logger';

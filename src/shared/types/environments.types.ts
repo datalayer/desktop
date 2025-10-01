@@ -4,10 +4,9 @@
  */
 
 /**
- * @module shared/types/environments
- *
  * Type definitions for compute environments and resource configurations.
- * These types define the structure of environments available for running notebooks and documents.
+ *
+ * @module shared/types/environments
  */
 
 /**
@@ -65,8 +64,8 @@ export interface EnvironmentResourcesProps {
 
 export interface EnvironmentCardProps {
   environment: Environment;
-  isSelected: boolean;
-  onSelect: (envName: string) => void;
+  isSelected?: boolean;
+  onSelect?: (envName: string) => void;
 }
 
 export interface EnvironmentSelectionSummaryProps {

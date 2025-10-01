@@ -4,10 +4,10 @@
  */
 
 /**
- * @module main/app/window-manager
- *
  * Window creation and management for the Electron application.
  * Handles main window configuration, security settings, and event handlers.
+ *
+ * @module main/app/window-manager
  */
 
 import { BrowserWindow, shell } from 'electron';
@@ -21,12 +21,12 @@ import { WINDOW_CONFIG } from '../config/constants';
 
 /**
  * The main application window instance.
- * Set to null when the window is closed.
  */
 let mainWindow: BrowserWindow | null = null;
 
 /**
- * Get the main window instance
+ * Get the main window instance.
+ * @returns The main window or null if closed
  */
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
@@ -34,8 +34,7 @@ export function getMainWindow(): BrowserWindow | null {
 
 /**
  * Creates the main application window with security configurations.
- * Sets up window properties, content security policy, and event handlers.
- * @returns void
+ * Sets up window properties, CSP, and event handlers.
  */
 export function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -89,7 +88,8 @@ export function createWindow(): void {
 }
 
 /**
- * Set up security features for the main window
+ * Set up security features for the main window.
+ * Disables DevTools shortcuts and context menu in production.
  */
 function setupWindowSecurity(): void {
   if (!mainWindow || !shouldUseProductionSecurity()) {

@@ -4,10 +4,10 @@
  */
 
 /**
- * @module renderer/pages/Spaces
- *
  * Spaces page component for managing documents and notebooks.
- * Provides document browsing, space selection, and runtime management functionality.
+ * Provides document browsing, space selection, and runtime management.
+ *
+ * @module renderer/pages/Spaces
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -19,18 +19,18 @@ import {
   SpaceInfo,
   GroupedDocuments,
   DocumentItem,
-  NotebookItem,
 } from '../../shared/types';
 import {
-  mapApiItemToDocumentItem,
   groupDocumentsByType,
   createDataHash,
   getDocumentIcon,
 } from '../utils/library';
-import Header from '../components/library/Header';
-import ErrorMessage from '../components/library/ErrorMessage';
-import LibrarySection from '../components/library/LibrarySection';
-import DeleteConfirmationDialog from '../components/library/DeleteConfirmationDialog';
+import Header from '../components/spaces/Header';
+import ErrorMessage from '../components/spaces/ErrorMessage';
+import SpaceSection from '../components/spaces/SpaceSection';
+import DeleteConfirmationDialog from '../components/spaces/DeleteConfirmationDialog';
+import CreateDocumentDialog from '../components/spaces/CreateDocumentDialog';
+import EditItemDialog from '../components/spaces/EditItemDialog';
 
 /**
  * Documents library page component.
@@ -60,9 +60,17 @@ const Documents: React.FC<DocumentsListProps> = ({
   });
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<NotebookItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<DocumentItem | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createDocumentType, setCreateDocumentType] = useState<
+    'notebook' | 'lexical'
+  >('notebook');
+
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<DocumentItem | null>(null);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastDataHash, setLastDataHash] = useState<string>('');
@@ -174,7 +182,7 @@ const Documents: React.FC<DocumentsListProps> = ({
           }) || spaces[0];
 
         setSelectedSpace(defaultSpace);
-        setSpaceId(defaultSpace.uid || defaultSpace.id);
+        setSpaceId(defaultSpace.uid!);
 
         return { defaultSpace };
       }
@@ -188,24 +196,9 @@ const Documents: React.FC<DocumentsListProps> = ({
 
   const fetchSpaceItems = async (spaceId: string) => {
     try {
-      const spaceItemsData =
-        await window.datalayerClient.getSpaceItems(spaceId);
-
-      if (spaceItemsData) {
-        // Check if spaceItemsData is an array
-        if (Array.isArray(spaceItemsData)) {
-          // Map the items properly with toJSON serialization
-          const documentItems: DocumentItem[] = spaceItemsData.map(
-            mapApiItemToDocumentItem
-          );
-
-          return documentItems;
-        } else {
-          return [];
-        }
-      } else {
-        return [];
-      }
+      const items = await window.datalayerClient.getSpaceItems(spaceId);
+      // SDK returns NotebookJSON | LexicalJSON[] - use directly as DocumentItem
+      return items || [];
     } catch (error) {
       setError('Failed to load space items');
       return [];
@@ -274,10 +267,10 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const checkForUpdatesAndRefresh = async () => {
-    if (!selectedSpace) return;
+    if (!selectedSpace || !selectedSpace.uid) return;
 
     try {
-      const spaceId = selectedSpace.uid || selectedSpace.id;
+      const spaceId = selectedSpace.uid;
 
       // Fetch current items for comparison
       const currentItems = await fetchSpaceItems(spaceId);
@@ -297,12 +290,12 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleManualRefresh = async () => {
-    if (!selectedSpace || isRefreshing) return;
+    if (!selectedSpace || !selectedSpace.uid || isRefreshing) return;
 
     setIsRefreshing(true);
     try {
       // Manual refresh triggered
-      await fetchDocuments(selectedSpace.uid || selectedSpace.id);
+      await fetchDocuments(selectedSpace.uid);
     } catch (error) {
       // Manual refresh failed
       setError('Failed to refresh documents');
@@ -315,12 +308,12 @@ const Documents: React.FC<DocumentsListProps> = ({
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const selectedSpaceId = event.target.value;
-    const space = userSpaces.find(s => (s.uid || s.id) === selectedSpaceId);
+    const space = userSpaces.find(s => s.uid === selectedSpaceId);
 
-    if (space) {
+    if (space && space.uid) {
       setSelectedSpace(space);
-      setSpaceId(space.uid || space.id);
-      await fetchDocuments(space.uid || space.id);
+      setSpaceId(space.uid);
+      await fetchDocuments(space.uid);
     }
   };
 
@@ -345,9 +338,9 @@ const Documents: React.FC<DocumentsListProps> = ({
 
     if (onNotebookSelect) {
       onNotebookSelect({
-        id: notebook.uid || notebook.id,
+        id: notebook.uid,
         name: notebook.name,
-        path: notebook.path,
+        path: `/${notebook.name}`, // Generate path from name
         cdnUrl: notebook.cdnUrl,
         description: notebook.description,
       });
@@ -361,9 +354,9 @@ const Documents: React.FC<DocumentsListProps> = ({
 
     if (onDocumentSelect) {
       onDocumentSelect({
-        id: document.uid || document.id,
+        id: document.uid,
         name: document.name,
-        path: document.path,
+        path: `/${document.name}`, // Generate path from name
         cdnUrl: document.cdnUrl,
         description: document.description,
       });
@@ -373,53 +366,57 @@ const Documents: React.FC<DocumentsListProps> = ({
   const handleDownloadItem = async (item: DocumentItem) => {
     // Downloading item
 
-    if (!item.cdnUrl) {
-      // No CDN URL available for item
-      setError('Cannot download item - no download URL available');
+    if (!item.uid) {
+      setError('Cannot download item - missing UID');
       return;
     }
 
     try {
-      const response = await window.proxyAPI.httpRequest({
-        url: item.cdnUrl,
-        method: 'GET',
-      });
+      // Use SDK's getContent method with the item's uid
+      const content = await window.datalayerClient.getContent(item.uid);
 
-      if (response.status === 200 && response.body) {
-        let content;
-        if (typeof response.body === 'string') {
-          content = response.body;
-        } else if (Array.isArray(response.body)) {
-          const jsonString = String.fromCharCode(...response.body);
-          content = jsonString;
-        } else {
-          content = JSON.stringify(response.body);
-        }
-
-        // Determine the file extension based on item type
-        const itemType = item.type || item.type_s || item.item_type || '';
-        const isNotebook = itemType.toLowerCase() === 'notebook';
-        const extension = isNotebook ? '.ipynb' : '.json';
-
-        const blob = new Blob([content], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = item.name.includes('.')
-          ? item.name
-          : `${item.name}${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        // Item downloaded successfully
-      } else {
-        throw new Error('Failed to fetch item content');
+      if (!content) {
+        throw new Error('No content received from API');
       }
+
+      // Convert content to JSON string
+      const contentString =
+        typeof content === 'string'
+          ? content
+          : JSON.stringify(content, null, 2);
+
+      // Determine the file extension - use item.extension if available
+      let extension = item.extension || '';
+      if (!extension) {
+        // Fallback: determine extension based on item type
+        const isNotebook = item.type?.toLowerCase() === 'notebook';
+        extension = isNotebook ? '.ipynb' : '.json';
+      }
+
+      // Ensure extension starts with a dot
+      if (extension && !extension.startsWith('.')) {
+        extension = `.${extension}`;
+      }
+
+      // Create blob and download
+      const blob = new Blob([contentString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = item.name.includes('.')
+        ? item.name
+        : `${item.name}${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Item downloaded successfully
     } catch (error) {
       // Failed to download item
-      setError('Failed to download item');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to download item';
+      setError(errorMessage);
       setTimeout(() => setError(null), 5000);
     }
   };
@@ -449,10 +446,12 @@ const Documents: React.FC<DocumentsListProps> = ({
 
       // Deleting item
 
-      await window.datalayerClient.deleteSpaceItem(
-        spaceId,
-        itemToDelete.uid || itemToDelete.id
-      );
+      const itemUid = itemToDelete.uid || itemToDelete.id;
+      if (!itemUid) {
+        throw new Error('Item UID is missing');
+      }
+
+      await window.datalayerClient.deleteSpaceItem(spaceId, itemUid);
 
       // If we reach here, deletion was successful (no exception thrown)
       await fetchDocuments(spaceId);
@@ -477,6 +476,67 @@ const Documents: React.FC<DocumentsListProps> = ({
     setError(null);
   };
 
+  const handleCreateNotebook = () => {
+    setCreateDocumentType('notebook');
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateLexical = () => {
+    setCreateDocumentType('lexical');
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateDocument = async (name: string, description: string) => {
+    if (!spaceId) {
+      throw new Error('No space selected');
+    }
+
+    if (createDocumentType === 'notebook') {
+      await window.datalayerClient.createNotebook(spaceId, name, description);
+    } else {
+      await window.datalayerClient.createLexical(spaceId, name, description);
+    }
+
+    // Refresh the space items to show the new document
+    await fetchDocuments(spaceId);
+  };
+
+  const handleEditItem = (item: DocumentItem) => {
+    setItemToEdit(item);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateItem = async (
+    uid: string,
+    name: string,
+    description: string
+  ) => {
+    if (!spaceId) {
+      throw new Error('No space selected');
+    }
+
+    const itemType = itemToEdit?.type?.toLowerCase();
+
+    // TODO: Implement update methods in DatalayerIPCClient
+    // if (itemType === 'notebook') {
+    //   await window.datalayerClient.updateNotebook(uid, name, description);
+    // } else {
+    //   await window.datalayerClient.updateLexical(uid, name, description);
+    // }
+
+    console.warn('Update functionality not yet implemented:', {
+      itemType,
+      uid,
+      name,
+      description,
+    });
+
+    // Refresh the space items to show the updated document
+    await fetchDocuments(spaceId);
+    setShowEditDialog(false);
+    setItemToEdit(null);
+  };
+
   return (
     <Box
       sx={{
@@ -496,37 +556,41 @@ const Documents: React.FC<DocumentsListProps> = ({
 
       <ErrorMessage error={error} warning={warningMessage} />
 
-      <LibrarySection
+      <SpaceSection
         title="Notebooks"
         icon={BookIcon as React.ComponentType<{ size?: number }>}
         items={groupedDocuments.notebooks}
         loading={loading}
         selectedItemId={selectedNotebook}
         emptyMessage="No notebooks yet"
-        onItemSelect={handleOpenNotebook}
+        onItemOpen={handleOpenNotebook}
+        onItemEdit={handleEditItem}
         onItemDownload={handleDownloadItem}
         onItemDelete={handleDeleteItem}
-        showOpenButton={true}
         previousItemCount={previousNotebookCount}
+        onCreateNew={handleCreateNotebook}
+        createButtonLabel="New Notebook"
       />
 
-      <LibrarySection
+      <SpaceSection
         title="Documents"
         icon={FileIcon as React.ComponentType<{ size?: number }>}
         items={groupedDocuments.documents}
         loading={loading}
         selectedItemId={selectedNotebook}
         emptyMessage="No documents yet"
-        onItemSelect={handleOpenDocument}
+        onItemOpen={handleOpenDocument}
+        onItemEdit={handleEditItem}
         onItemDownload={handleDownloadItem}
         onItemDelete={handleDeleteItem}
-        showOpenButton={true}
         getItemIcon={
           getDocumentIcon as (
             item: any
           ) => React.ComponentType<{ size?: number }>
         }
         previousItemCount={previousDocumentCount}
+        onCreateNew={handleCreateLexical}
+        createButtonLabel="New Lexical Document"
       />
 
       <DeleteConfirmationDialog
@@ -538,6 +602,23 @@ const Documents: React.FC<DocumentsListProps> = ({
         onConfirmationTextChange={setDeleteConfirmationText}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+      />
+
+      <CreateDocumentDialog
+        isOpen={showCreateDialog}
+        type={createDocumentType}
+        onClose={() => setShowCreateDialog(false)}
+        onCreate={handleCreateDocument}
+      />
+
+      <EditItemDialog
+        isOpen={showEditDialog}
+        item={itemToEdit}
+        onClose={() => {
+          setShowEditDialog(false);
+          setItemToEdit(null);
+        }}
+        onUpdate={handleUpdateItem}
       />
     </Box>
   );

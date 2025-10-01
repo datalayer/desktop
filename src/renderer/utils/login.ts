@@ -4,16 +4,17 @@
  */
 
 /**
+ * Login form validation and credential utilities.
+ *
  * @module renderer/utils/login
- * @description Login form validation and credential utilities.
  */
 
 import { LoginFormData } from '../../shared/types';
 
 /**
  * Validates login form data.
- * @param data - The login form data to validate
- * @returns Validation result with success status and error message
+ * @param formData - Login form data to validate
+ * @returns Error message or empty string if valid
  */
 export const validateLoginForm = (formData: LoginFormData): string => {
   if (!formData.runUrl || !formData.token) {
@@ -23,14 +24,17 @@ export const validateLoginForm = (formData: LoginFormData): string => {
 };
 
 /**
- * Gets the default run URL for the login form
+ * Gets the default run URL for the login form.
+ * @returns Default run URL
  */
 export const getDefaultRunUrl = (): string => {
   return 'https://prod1.datalayer.run';
 };
 
 /**
- * Formats error messages for display
+ * Formats error messages for display.
+ * @param error - Error object or string
+ * @returns Formatted error message
  */
 export const formatLoginError = (error: unknown): string => {
   if (typeof error === 'string') {

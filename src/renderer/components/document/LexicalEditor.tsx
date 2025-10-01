@@ -4,8 +4,9 @@
  */
 
 /**
+ * Rich text editor component with Jupyter integration and collaboration support.
+ *
  * @module renderer/components/document/LexicalEditor
- * @description Rich text editor component with Jupyter integration and collaboration support.
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -31,15 +32,6 @@ import type { LexicalEditor as LexicalEditorType } from 'lexical';
 
 /**
  * Lexical-based rich text editor component with Jupyter and collaboration features.
- * Supports code execution, real-time collaboration, and document editing.
- * @component
- * @param props - Component props
- * @param props.selectedDocument - The document being edited
- * @param props.collaborationEnabled - Whether collaboration is enabled
- * @param props.onCollaborationStatusChange - Callback for collaboration status changes
- * @param props.onEditorInit - Callback when editor is initialized
- * @param props.serviceManager - Jupyter service manager for code execution
- * @returns Rendered Lexical editor with plugins
  */
 const LexicalEditor: React.FC<CustomLexicalEditorProps> = ({
   selectedDocument,

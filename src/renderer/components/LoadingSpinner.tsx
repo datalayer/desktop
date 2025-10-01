@@ -4,10 +4,10 @@
  */
 
 /**
- * @module renderer/components/LoadingSpinner
- *
- * Reusable loading spinner component with multiple variants and customization options.
+ * Reusable loading spinner component with multiple variants.
  * Provides consistent loading states throughout the application.
+ *
+ * @module renderer/components/LoadingSpinner
  */
 
 import React from 'react';
@@ -15,8 +15,7 @@ import { Box, Text, Spinner } from '@primer/react';
 import { COLORS } from '../../shared/constants/colors';
 
 /**
- * Props for the LoadingSpinner component
- * @interface
+ * Props for the LoadingSpinner component.
  */
 export interface LoadingSpinnerProps {
   /** Primary loading message */
@@ -39,19 +38,6 @@ export interface LoadingSpinnerProps {
 
 /**
  * Versatile loading spinner component that supports multiple variants and layouts.
- * Can be used for fullscreen loading, inline loading, card-based loading, or minimal indicators.
- *
- * @component
- * @param props - Component properties
- * @param props.message - Primary loading message to display
- * @param props.subtext - Optional additional description
- * @param props.size - Size of the spinner ('small', 'medium', 'large')
- * @param props.variant - Layout variant ('default', 'fullscreen', 'inline', 'card')
- * @param props.children - Additional content to show below the message
- * @param props.sx - Custom styles for the container
- * @param props.hideSpinner - Whether to hide the spinner and only show message
- * @param props.minimal - Whether to show as minimal inline loading state
- * @returns The rendered loading spinner component
  */
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   message = 'Loading...',

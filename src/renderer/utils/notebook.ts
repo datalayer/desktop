@@ -4,15 +4,17 @@
  */
 
 /**
+ * Notebook content parsing and validation utilities.
+ *
  * @module renderer/utils/notebook
- * @description Notebook content parsing and validation utilities.
  */
 
+import React from 'react';
 import { INotebookContent } from '@jupyterlab/nbformat';
 
 /**
  * Parse notebook content from API response.
- * @param data - Raw API response data
+ * @param responseBody - Raw API response data
  * @returns Parsed notebook content or null if invalid
  */
 export const parseNotebookContent = (responseBody: any): INotebookContent => {
@@ -43,7 +45,9 @@ export const parseNotebookContent = (responseBody: any): INotebookContent => {
 };
 
 /**
- * Validate notebook content structure
+ * Validate notebook content structure.
+ * @param content - Content to validate
+ * @returns True if valid notebook structure
  */
 export const validateNotebookContent = (content: any): boolean => {
   if (
@@ -59,7 +63,9 @@ export const validateNotebookContent = (content: any): boolean => {
 };
 
 /**
- * Check if runtime was recently terminated
+ * Check if runtime was recently terminated.
+ * @param notebookId - Notebook ID
+ * @returns True if runtime was terminated
  */
 export const isRuntimeTerminated = (notebookId: string): boolean => {
   const wasTerminated = sessionStorage.getItem(
@@ -69,21 +75,25 @@ export const isRuntimeTerminated = (notebookId: string): boolean => {
 };
 
 /**
- * Mark runtime as terminated in session storage
+ * Mark runtime as terminated in session storage.
+ * @param notebookId - Notebook ID
  */
 export const markRuntimeTerminated = (notebookId: string): void => {
   sessionStorage.setItem(`notebook-${notebookId}-terminated`, 'true');
 };
 
 /**
- * Clear runtime termination flag
+ * Clear runtime termination flag.
+ * @param notebookId - Notebook ID
  */
 export const clearRuntimeTerminationFlag = (notebookId: string): void => {
   sessionStorage.removeItem(`notebook-${notebookId}-terminated`);
 };
 
 /**
- * Check if runtime is marked as terminated in global cleanup registry
+ * Check if runtime is marked as terminated in global cleanup registry.
+ * @param runtimeId - Runtime ID
+ * @returns True if in cleanup registry
  */
 export const isRuntimeInCleanupRegistry = (runtimeId: string): boolean => {
   const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
@@ -190,20 +200,25 @@ export const createNotebookProps = (
   notebookContent: INotebookContent,
   serviceManager: any,
   collaborationProvider: any,
-  extensions: any[]
+  extensions: any[],
+  Toolbar?: React.ComponentType<any>
 ) => {
+  const hasCollaboration = !!collaborationProvider;
+
   return {
     id: stableNotebookKey,
     height: '100%' as const,
-    nbformat: notebookContent,
+    // When using collaboration, don't pass nbformat - let collaboration load it
+    nbformat: hasCollaboration ? undefined : notebookContent,
     readonly: false,
     serviceManager: serviceManager,
-    startDefaultKernel: true,
-    collaborative: true,
-    collaborationEnabled: true,
+    startDefaultKernel: false,
+    collaborative: hasCollaboration,
+    collaborationEnabled: hasCollaboration,
     collaborationProvider: collaborationProvider || undefined,
     extensions: extensions,
     cellSidebarMargin: 60,
+    Toolbar: Toolbar,
   };
 };
 

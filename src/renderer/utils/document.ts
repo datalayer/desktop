@@ -4,20 +4,20 @@
  */
 
 /**
+ * Document editor utility functions for runtime connectivity and collaboration.
+ *
  * @module renderer/utils/document
- * @description Document editor utility functions for runtime connectivity and collaboration.
  */
 
 import { logger } from './logger';
 
 /**
  * Wait for runtime to be ready by testing Jupyter server connectivity.
- * Polls the Jupyter server until it responds successfully or timeout occurs.
- * @param runtimeIngress - The runtime's Jupyter server URL
- * @param runtimeToken - Authentication token for the runtime
- * @param maxWaitTime - Maximum time to wait in milliseconds (default: 60000)
- * @param pollInterval - Interval between polls in milliseconds (default: 5000)
- * @returns Promise resolving to true when ready or after timeout
+ * @param runtimeIngress - Runtime's Jupyter server URL
+ * @param runtimeToken - Authentication token
+ * @param maxWaitTime - Maximum wait time in milliseconds
+ * @param pollInterval - Interval between polls in milliseconds
+ * @returns True when ready or after timeout
  */
 export async function waitForRuntimeReady(
   runtimeIngress: string,
@@ -84,8 +84,7 @@ export async function waitForRuntimeReady(
 
 /**
  * Error handler for Lexical editor.
- * Logs editor errors to console for debugging.
- * @param error - The error that occurred in the Lexical editor
+ * @param _error - Error that occurred in the Lexical editor
  */
 export function onLexicalError(_error: Error): void {
   // Lexical error handling (logging removed)
@@ -93,11 +92,10 @@ export function onLexicalError(_error: Error): void {
 
 /**
  * Build WebSocket URL for collaboration.
- * Constructs the collaboration WebSocket endpoint URL from base URL and document ID.
  * @param spacerRunUrl - Base spacer service URL
  * @param token - Authentication token
- * @param documentId - Unique document identifier
- * @returns WebSocket URL string or null if inputs are invalid
+ * @param documentId - Document identifier
+ * @returns WebSocket URL or null if inputs invalid
  */
 export function buildCollaborationWebSocketUrl(
   spacerRunUrl: string | undefined,

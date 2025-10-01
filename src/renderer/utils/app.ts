@@ -4,12 +4,13 @@
  */
 
 /**
+ * Application utility functions for console filtering.
+ *
  * @module renderer/utils/app
- * @description Application utility functions for console filtering.
  */
 
 /**
- * Filter console logs to suppress noisy Jupyter React messages
+ * Filter console logs to suppress noisy Jupyter React messages.
  * @returns Cleanup function to restore original console methods
  */
 export const setupConsoleFiltering = (): (() => void) => {

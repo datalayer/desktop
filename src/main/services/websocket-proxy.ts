@@ -4,18 +4,10 @@
  */
 
 /**
+ * WebSocket proxy service for Jupyter kernel communication and collaboration.
+ * Handles runtime-aware connection management with automatic cleanup on termination.
+ *
  * @module main/services/websocket-proxy
- *
- * WebSocket proxy service for handling WebSocket connections in the main process.
- * Manages WebSocket connections for Jupyter kernel communication and collaboration.
- * Implements runtime-aware connection management with automatic cleanup on termination.
- *
- * Features:
- * - WebSocket connection proxying between renderer and main process
- * - Runtime-aware connection tracking and cleanup
- * - Prevention of connections to terminated runtimes
- * - Window-based connection lifecycle management
- * - Binary and text message support for Jupyter protocols
  */
 
 import { BrowserWindow } from 'electron';
@@ -23,37 +15,25 @@ import WebSocket from 'ws';
 import log from 'electron-log/main';
 
 /**
- * Interface representing a WebSocket connection.
- * @interface WebSocketConnection
+ * WebSocket connection data structure.
  */
 interface WebSocketConnection {
-  /** Unique connection identifier */
   id: string;
-  /** WebSocket instance */
   ws: WebSocket;
-  /** Target URL for the connection */
   url: string;
-  /** Optional WebSocket subprotocol */
   protocol?: string;
-  /** Optional headers for the connection */
   headers?: Record<string, string>;
-  /** Optional runtime ID associated with this connection */
   runtimeId?: string;
 }
 
 /**
  * Service for proxying WebSocket connections between renderer and main process.
  * Handles connection lifecycle, message routing, and runtime association.
- * @class WebSocketProxyService
  */
 class WebSocketProxyService {
-  /** Map of active WebSocket connections by ID */
   private connections = new Map<string, WebSocketConnection>();
-  /** Counter for generating unique connection IDs */
   private connectionCounter = 0;
-  /** Map tracking which connections belong to which window */
   private windowConnections = new Map<BrowserWindow, Set<string>>();
-  /** Map tracking which connections belong to which runtime */
   private runtimeConnections = new Map<string, Set<string>>();
 
   /**
@@ -297,7 +277,9 @@ class WebSocketProxyService {
   }
 
   /**
-   * Send a message through a WebSocket connection
+   * Send a message through a WebSocket connection.
+   * @param id - Connection ID
+   * @param data - Message data to send
    */
   send(id: string, data: unknown): void {
     const connection = this.connections.get(id);
@@ -343,7 +325,10 @@ class WebSocketProxyService {
   }
 
   /**
-   * Close a WebSocket connection
+   * Close a WebSocket connection.
+   * @param id - Connection ID
+   * @param code - Optional close code
+   * @param reason - Optional close reason
    */
   close(id: string, code?: number, reason?: string): void {
     const connection = this.connections.get(id);
@@ -361,7 +346,8 @@ class WebSocketProxyService {
   }
 
   /**
-   * Close all connections for a specific runtime
+   * Close all connections for a specific runtime.
+   * @param runtimeId - Runtime ID to close connections for
    */
   closeConnectionsForRuntime(runtimeId: string): void {
     log.debug(
@@ -431,7 +417,7 @@ class WebSocketProxyService {
   }
 
   /**
-   * Close all connections
+   * Close all connections.
    */
   closeAll(): void {
     log.debug(

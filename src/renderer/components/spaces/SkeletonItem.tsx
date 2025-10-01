@@ -4,17 +4,17 @@
  */
 
 /**
- * @module SkeletonItem
- * @description Skeleton loading component for library items.
+ * Skeleton loading component for library items.
  * Displays animated placeholder boxes that mimic the structure of actual library items.
+ *
+ * @module SkeletonItem
  */
 
 import React from 'react';
 import { Box, ActionList } from '@primer/react';
 
 /**
- * @interface SkeletonItemProps
- * @description Props for the SkeletonItem component
+ * Props for the SkeletonItem component.
  */
 export interface SkeletonItemProps {
   /** Number of skeleton items to render */
@@ -22,11 +22,7 @@ export interface SkeletonItemProps {
 }
 
 /**
- * @component SkeletonItem
- * @description Renders multiple skeleton placeholder items for loading states
- * @param {SkeletonItemProps} props - The component props
- * @param {number} [props.count=3] - Number of skeleton items to render
- * @returns {JSX.Element} The rendered skeleton items
+ * Renders multiple skeleton placeholder items for loading states
  */
 const SkeletonItem: React.FC<SkeletonItemProps> = ({ count = 3 }) => {
   return (
@@ -73,16 +69,18 @@ const SkeletonItem: React.FC<SkeletonItemProps> = ({ count = 3 }) => {
 
           <ActionList.TrailingVisual>
             <Box sx={{ display: 'flex', gap: 1 }}>
+              {/* Open button skeleton */}
               <Box
                 sx={{
-                  width: '40px',
-                  height: '40px',
+                  width: '60px',
+                  height: '32px',
                   bg: 'neutral.muted',
                   borderRadius: 1,
                   animation: 'pulse 1.5s ease-in-out infinite',
                   animationDelay: '0.3s',
                 }}
               />
+              {/* Edit button skeleton */}
               <Box
                 sx={{
                   width: '40px',
@@ -91,6 +89,28 @@ const SkeletonItem: React.FC<SkeletonItemProps> = ({ count = 3 }) => {
                   borderRadius: 1,
                   animation: 'pulse 1.5s ease-in-out infinite',
                   animationDelay: '0.4s',
+                }}
+              />
+              {/* Download button skeleton */}
+              <Box
+                sx={{
+                  width: '40px',
+                  height: '40px',
+                  bg: 'neutral.muted',
+                  borderRadius: 1,
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                  animationDelay: '0.5s',
+                }}
+              />
+              {/* Delete button skeleton */}
+              <Box
+                sx={{
+                  width: '40px',
+                  height: '40px',
+                  bg: 'neutral.muted',
+                  borderRadius: 1,
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                  animationDelay: '0.6s',
                 }}
               />
             </Box>

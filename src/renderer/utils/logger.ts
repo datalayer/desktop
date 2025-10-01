@@ -4,22 +4,10 @@
  */
 
 /**
+ * Centralized logging utility for the renderer process.
+ * Provides module-specific loggers with environment-aware log levels.
+ *
  * @module renderer/utils/logger
- *
- * Centralized logging utility for the renderer process using electron-log.
- * Provides module-specific loggers with configurable levels based on environment.
- *
- * Features:
- * - Environment-aware log levels (debug in development, info in production)
- * - Module-specific scoped loggers for better organization
- * - Global window access for development debugging
- *
- * Available loggers:
- * - apiLogger: API communication logging
- * - proxyLogger: HTTP/WebSocket proxy logging
- * - runtimeLogger: Runtime lifecycle logging
- * - notebookLogger: Notebook operations logging
- * - collaborationLogger: Real-time collaboration logging
  */
 
 import log from 'electron-log/renderer';

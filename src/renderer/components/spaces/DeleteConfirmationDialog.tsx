@@ -4,10 +4,11 @@
  */
 
 /**
- * @module DeleteConfirmationDialog
- * @description Accessible confirmation dialog for deleting library items.
+ * Accessible confirmation dialog for deleting library items.
  * Requires users to type the item name to confirm deletion, preventing accidental deletions.
  * Includes loading states, error handling, and comprehensive accessibility features.
+ *
+ * @module DeleteConfirmationDialog
  */
 
 import React from 'react';
@@ -26,18 +27,7 @@ import { COLORS } from '../../../shared/constants/colors';
 import { DeleteConfirmationDialogProps } from '../../../shared/types';
 
 /**
- * @component DeleteConfirmationDialog
- * @description A modal dialog that confirms deletion of library items with typed confirmation
- * @param {DeleteConfirmationDialogProps} props - The component props
- * @param {boolean} props.isOpen - Whether the dialog is open
- * @param {Object} props.item - The item to be deleted (must have a name property)
- * @param {string} props.confirmationText - Current text in the confirmation input
- * @param {boolean} props.isDeleting - Whether deletion is in progress
- * @param {string | null} props.error - Error message to display
- * @param {function} props.onConfirmationTextChange - Handler for confirmation text changes
- * @param {function} props.onConfirm - Handler for confirming deletion
- * @param {function} props.onCancel - Handler for canceling deletion
- * @returns {JSX.Element | null} The rendered dialog component or null if not open
+ * A modal dialog that confirms deletion of library items with typed confirmation
  */
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   isOpen,

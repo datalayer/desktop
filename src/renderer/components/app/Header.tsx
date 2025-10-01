@@ -4,8 +4,9 @@
  */
 
 /**
+ * Application header component with navigation and user menu.
+ *
  * @module renderer/components/app/Header
- * @description Application header component with navigation and user menu.
  */
 
 import React, { useState } from 'react';
@@ -13,29 +14,32 @@ import { Header, Text } from '@primer/react';
 import { COLORS } from '../../../shared/constants/colors';
 import NavigationTabs from './NavigationTabs';
 import UserMenu from './UserMenu';
-import { AppHeaderProps } from '../../../shared/types';
+import { User } from '../../../shared/types';
+
+export interface AppHeaderProps {
+  activeTabId: string;
+  openNotebooks: Array<{ id: string; name: string; description?: string }>;
+  openDocuments: Array<{ id: string; name: string; description?: string }>;
+  isAuthenticated: boolean;
+  user: User | null;
+  onTabChange: (tabId: string) => void;
+  onNotebookClose: (notebookId: string) => void;
+  onDocumentClose: (documentId: string) => void;
+  onLogout: () => void;
+}
 
 /**
- * Application header component.
- * Displays the app title, navigation tabs, and user menu.
- * @component
- * @param props - Component props
- * @param props.currentView - Currently active view
- * @param props.isNotebookEditorActive - Whether notebook editor is active
- * @param props.isDocumentEditorActive - Whether document editor is active
- * @param props.isAuthenticated - User authentication status
- * @param props.user - User information
- * @param props.onViewChange - Callback for view navigation
- * @param props.onLogout - Callback for logout action
- * @returns Rendered header component
+ * Application header component with tab navigation.
  */
 const AppHeader: React.FC<AppHeaderProps> = ({
-  currentView,
-  isNotebookEditorActive,
-  isDocumentEditorActive,
+  activeTabId,
+  openNotebooks,
+  openDocuments,
   isAuthenticated,
   user,
-  onViewChange,
+  onTabChange,
+  onNotebookClose,
+  onDocumentClose,
   onLogout,
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -43,7 +47,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <Header
       sx={{
-        backgroundColor: COLORS.background.secondary, // Light gray background
+        backgroundColor: COLORS.background.secondary,
         borderBottom: '1px solid',
         borderColor: 'border.default',
       }}
@@ -62,10 +66,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       </Header.Item>
 
       <NavigationTabs
-        currentView={currentView}
-        isNotebookEditorActive={isNotebookEditorActive}
-        isDocumentEditorActive={isDocumentEditorActive}
-        onViewChange={onViewChange}
+        activeTabId={activeTabId}
+        openNotebooks={openNotebooks}
+        openDocuments={openDocuments}
+        onTabChange={onTabChange}
+        onNotebookClose={onNotebookClose}
+        onDocumentClose={onDocumentClose}
       />
 
       {isAuthenticated && user && (

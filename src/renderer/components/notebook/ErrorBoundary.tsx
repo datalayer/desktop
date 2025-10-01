@@ -4,8 +4,9 @@
  */
 
 /**
+ * Error boundary component for handling notebook-specific errors and providing user-friendly error recovery options.
+ *
  * @module NotebookErrorBoundary
- * @description Error boundary component for handling notebook-specific errors and providing user-friendly error recovery options
  */
 
 import React from 'react';
@@ -14,9 +15,6 @@ import { NotebookErrorBoundaryProps } from '../../../shared/types';
 
 /**
  * Error boundary component for notebook components that catches and handles errors gracefully.
- * Provides user-friendly error messages and recovery options for notebook-specific issues.
- *
- * @component
  */
 class ErrorBoundary extends React.Component<
   NotebookErrorBoundaryProps,
@@ -48,7 +46,7 @@ class ErrorBoundary extends React.Component<
   /**
    * Lifecycle method called when an error is caught. Logs error details and calls the onError callback.
    * @param error - The error that was thrown
-   * @param errorInfo - Additional error information from React
+   * @param _errorInfo - Additional error information from React (unused)
    */
   componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
     // Handle specific error types

@@ -4,9 +4,9 @@
  */
 
 /**
+ * Login form component with URL and token input fields.
+ *
  * @module Form
- * @description Login form component with URL and token input fields.
- * Includes comprehensive validation, accessibility features, and keyboard navigation support.
  */
 
 import React from 'react';
@@ -21,15 +21,7 @@ import { LoginFormProps } from '../../../shared/types';
 import Button from './Button';
 
 /**
- * @component Form
- * @description Renders the login form with URL and token input fields
- * @param {LoginFormProps} props - The component props
- * @param {Object} props.formData - Form data containing runUrl and token
- * @param {Object} props.state - Form state including loading and error states
- * @param {function} props.onFormDataChange - Handler for form field changes
- * @param {function} props.onSubmit - Handler for form submission
- * @param {function} props.onKeyPress - Handler for key press events
- * @returns {JSX.Element} The rendered login form component
+ * Renders the login form with URL and token input fields.
  */
 const Form: React.FC<LoginFormProps> = ({
   formData,

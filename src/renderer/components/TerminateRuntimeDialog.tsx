@@ -4,16 +4,9 @@
  */
 
 /**
+ * Modal dialog for confirming runtime termination with keyboard shortcuts and error handling.
+ *
  * @module renderer/components/TerminateRuntimeDialog
- *
- * Modal dialog component for confirming runtime termination with keyboard shortcuts and error handling.
- * Provides user confirmation UI before terminating compute runtimes associated with notebooks or documents.
- *
- * Features:
- * - Keyboard shortcuts (Ctrl+Enter to confirm, Esc to cancel)
- * - Loading state during termination
- * - Error display with retry capability
- * - Accessibility support with ARIA labels
  */
 
 import React, { useEffect } from 'react';
@@ -21,8 +14,7 @@ import { Box, Text, Button, Dialog } from '@primer/react';
 import { XIcon, AlertIcon } from '@primer/octicons-react';
 
 /**
- * Props for the TerminateRuntimeDialog component
- * @interface
+ * Props for the TerminateRuntimeDialog component.
  */
 export interface TerminateRuntimeDialogProps {
   isOpen: boolean;
@@ -35,19 +27,8 @@ export interface TerminateRuntimeDialogProps {
 }
 
 /**
- * Modal dialog that prompts users to confirm runtime termination for notebooks or documents.
- * Features keyboard shortcuts (Ctrl+Enter to confirm, Esc to cancel), error display, and loading states.
- *
- * @component
- * @param props - Component properties
- * @param props.isOpen - Whether the dialog is currently open
- * @param props.isTerminating - Whether termination is in progress
- * @param props.itemName - Name of the item whose runtime is being terminated
- * @param props.itemType - Type of item ('notebook' or 'document')
- * @param props.error - Error message to display if termination failed
- * @param props.onConfirm - Callback function when user confirms termination
- * @param props.onCancel - Callback function when user cancels termination
- * @returns The rendered dialog component or null if not open
+ * Modal dialog for confirming runtime termination.
+ * Features keyboard shortcuts (Ctrl+Enter to confirm, Esc to cancel).
  */
 const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
   isOpen,

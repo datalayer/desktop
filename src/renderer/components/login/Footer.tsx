@@ -4,9 +4,9 @@
  */
 
 /**
+ * Login page footer component with help links and documentation references.
+ *
  * @module Footer
- * @description Login page footer component with help links and documentation references.
- * Provides users with access to documentation and support resources.
  */
 
 import React from 'react';
@@ -15,10 +15,7 @@ import { COLORS } from '../../../shared/constants/colors';
 import { LoginFooterProps } from '../../../shared/types';
 
 /**
- * @component Footer
- * @description Renders the login page footer with help links
- * @param {LoginFooterProps} props - The component props (currently empty interface)
- * @returns {JSX.Element} The rendered footer component
+ * Renders the login page footer with help links.
  */
 const Footer: React.FC<LoginFooterProps> = () => {
   return (

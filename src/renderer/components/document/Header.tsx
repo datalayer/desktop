@@ -4,8 +4,9 @@
  */
 
 /**
+ * Document editor header component with runtime controls and collaboration status.
+ *
  * @module renderer/components/document/Header
- * @description Document editor header component with runtime controls and collaboration status.
  */
 
 import React from 'react';
@@ -15,19 +16,6 @@ import { DocumentHeaderProps } from '../../../shared/types';
 
 /**
  * Header component for the document editor.
- * Displays document title, runtime status, collaboration controls, and runtime management.
- * @component
- * @param props - Component props
- * @param props.selectedDocument - The currently selected document
- * @param props.serviceManager - Jupyter service manager instance
- * @param props.documentRuntime - Runtime information for the document
- * @param props.isTerminatingRuntime - Whether runtime is being terminated
- * @param props.collaborationEnabled - Whether collaboration is enabled
- * @param props.collaborationStatus - Current collaboration connection status
- * @param props.runtimeError - Any runtime error to display
- * @param props.onStopRuntime - Callback to terminate the runtime
- * @param props.onToggleCollaboration - Callback to toggle collaboration
- * @returns Rendered document header
  */
 const Header: React.FC<DocumentHeaderProps> = ({
   selectedDocument,

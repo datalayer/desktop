@@ -4,8 +4,9 @@
  */
 
 /**
+ * Notebook content component with collaboration support and error handling.
+ *
  * @module renderer/components/notebook/Content
- * @description Notebook content component with collaboration support and error handling.
  */
 
 import React, { useMemo, useRef } from 'react';
@@ -21,17 +22,6 @@ import ErrorBoundary from './ErrorBoundary';
 
 /**
  * Notebook content component that renders Jupyter notebooks.
- * Supports real-time collaboration and graceful error recovery.
- * @component
- * @param props - Component props
- * @param props.notebookContent - Jupyter notebook content
- * @param props.serviceManager - Jupyter service manager
- * @param props.collaborationProvider - Optional collaboration provider
- * @param props.stableNotebookKey - Stable key for notebook instance
- * @param props.notebookError - Whether notebook has error
- * @param props.onNotebookError - Error handler callback
- * @param props.onResetNotebook - Reset handler callback
- * @returns Rendered notebook content with error boundaries
  */
 const Content: React.FC<NotebookContentProps> = ({
   notebookContent,
@@ -41,6 +31,7 @@ const Content: React.FC<NotebookContentProps> = ({
   notebookError,
   onNotebookError,
   onResetNotebook,
+  Toolbar,
 }) => {
   // Track if notebook component is mounted to prevent re-initialization
   const notebookComponentRef = useRef<unknown>(null);
@@ -101,7 +92,8 @@ const Content: React.FC<NotebookContentProps> = ({
       notebookContent,
       serviceManager,
       collaborationProvider,
-      notebookExtensions
+      notebookExtensions,
+      Toolbar
     );
 
     // Kernelspecs readiness check
@@ -200,6 +192,7 @@ const Content: React.FC<NotebookContentProps> = ({
     <Box
       sx={{
         flex: 1,
+        width: '100%',
         overflow: 'auto',
         height: '100%',
       }}

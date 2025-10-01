@@ -4,26 +4,17 @@
  */
 
 /**
- * @module renderer/stores/environmentStore
- *
  * Zustand store for managing computing environment configurations.
- * Provides caching, selection state management, and API integration for environments.
+ * Provides caching, selection state management, and API integration.
  *
- * Features:
- * - Environment data caching with configurable expiry (default 5 minutes)
- * - Smart cache invalidation and refresh logic
- * - Environment selection persistence
- * - Resource configuration management (CPU, memory, GPU)
- * - Error handling and loading states
- * - Integration with Datalayer API for fetching environments
+ * @module renderer/stores/environmentStore
  */
 
 import { create } from 'zustand';
 import { apiLogger } from '../utils/logger';
 
 /**
- * Environment configuration interface
- * @interface
+ * Environment configuration interface.
  */
 interface Environment {
   name: string;
@@ -44,8 +35,7 @@ interface Environment {
 }
 
 /**
- * State interface for the environment store
- * @interface
+ * State interface for the environment store.
  */
 interface EnvironmentState {
   // Cache data

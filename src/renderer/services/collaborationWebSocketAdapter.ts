@@ -4,18 +4,16 @@
  */
 
 /**
- * @module renderer/services/collaborationWebSocketAdapter
- *
  * WebSocket adapter for real-time collaboration.
- * Bridges between LoroCollaborativePlugin and Electron's IPC-based WebSocket proxy
- * for secure collaborative document editing.
+ * Bridges LoroCollaborativePlugin and Electron's IPC-based WebSocket proxy.
+ *
+ * @module renderer/services/collaborationWebSocketAdapter
  */
 
 import { logger } from '../utils/logger';
 
 /**
- * Configuration options for CollaborationWebSocketAdapter
- * @interface
+ * Configuration options for CollaborationWebSocketAdapter.
  */
 interface CollaborationWebSocketOptions {
   docId: string;
@@ -25,9 +23,7 @@ interface CollaborationWebSocketOptions {
 }
 
 /**
- * WebSocket adapter for collaboration that bridges between LoroCollaborativePlugin
- * and Electron's IPC-based WebSocket proxy system. Manages real-time collaborative
- * editing connections through Electron's proxy API.
+ * WebSocket adapter for collaboration using Electron's IPC-based proxy.
  */
 export class CollaborationWebSocketAdapter {
   private docId: string;
@@ -42,8 +38,8 @@ export class CollaborationWebSocketAdapter {
   private openHandlers: Set<(event: Event) => void> = new Set();
 
   /**
-   * Creates a new CollaborationWebSocketAdapter instance
-   * @param options - Configuration options for the adapter
+   * Creates a new CollaborationWebSocketAdapter instance.
+   * @param options - Configuration options
    */
   constructor(options: CollaborationWebSocketOptions) {
     this.docId = options.docId;

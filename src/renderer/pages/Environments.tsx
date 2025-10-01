@@ -4,15 +4,16 @@
  */
 
 /**
- * @module Environments
- * @description Environments page for browsing and selecting compute environments with GPU support detection
+ * Environments page for browsing and selecting compute environments.
+ * Supports GPU environment detection and runtime selection.
+ *
+ * @module renderer/pages/Environments
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Heading, Text } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/lib/state';
 import { useEnvironments } from '../stores/environmentStore';
-import { isGPUEnvironment } from '../utils/environments';
 import { logger } from '../utils/logger';
 
 import AuthWarning from '../components/environments/AuthWarning';
@@ -20,7 +21,6 @@ import LoadingSpinner from '../components/environments/LoadingSpinner';
 import ErrorState from '../components/environments/ErrorState';
 import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
-import SelectionSummary from '../components/environments/SelectionSummary';
 
 interface EnvironmentsProps {
   isAuthenticated?: boolean;
@@ -35,14 +35,13 @@ interface EnvironmentsProps {
  * @returns The rendered environments page
  */
 const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
-  const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [authState, setAuthState] = useState<{
     isAuthenticated: boolean;
     user: any | null;
     token: string | null;
     runUrl: string;
   } | null>(null);
-  const { configuration, setConfiguration } = useCoreStore();
+  const { configuration } = useCoreStore();
 
   // Use the environment store for caching
   const {
@@ -102,14 +101,6 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
 
       // Use the cached store fetch which handles caching automatically
       await fetchIfNeeded();
-
-      // Set the current environment as selected
-      if (configuration.cpuEnvironment) {
-        setSelectedEnv(configuration.cpuEnvironment);
-      } else if (environments.length > 0) {
-        // Default to first environment
-        setSelectedEnv(environments[0].name);
-      }
     } catch (err) {
       // Failed to fetch environments
       // Error is handled by the store
@@ -119,29 +110,12 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
     authState?.token,
     isAuthenticated,
     configuration?.token,
-    configuration?.cpuEnvironment,
     fetchIfNeeded,
-    environments,
   ]);
 
   useEffect(() => {
     fetchEnvironments();
   }, [fetchEnvironments]);
-
-  const handleSelectEnvironment = async (envName: string) => {
-    setSelectedEnv(envName);
-
-    // Update the store configuration
-    if (configuration) {
-      const isGPUEnv = isGPUEnvironment(envName);
-
-      setConfiguration({
-        ...configuration,
-        cpuEnvironment: !isGPUEnv ? envName : configuration.cpuEnvironment,
-        gpuEnvironment: isGPUEnv ? envName : configuration.gpuEnvironment,
-      });
-    }
-  };
 
   return (
     <Box
@@ -153,7 +127,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
           Runtime Environments
         </Heading>
         <Text sx={{ color: 'fg.subtle' }}>
-          Select a computing environment for your notebooks and runtimes
+          Available computing environments for your notebooks and runtimes
         </Text>
       </Box>
 
@@ -172,27 +146,12 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
       {!loading && environments.length > 0 && (
         <Box>
           {environments.map(env => (
-            <Card
-              key={env.name}
-              environment={env}
-              isSelected={selectedEnv === env.name}
-              onSelect={handleSelectEnvironment}
-            />
+            <Card key={env.name} environment={env} />
           ))}
         </Box>
       )}
 
       {!loading && environments.length === 0 && !error && <EmptyState />}
-
-      {(authState?.isAuthenticated ||
-        isAuthenticated ||
-        configuration?.token) &&
-        environments.length > 0 && (
-          <SelectionSummary
-            selectedEnv={selectedEnv}
-            environmentsCount={environments.length}
-          />
-        )}
     </Box>
   );
 };

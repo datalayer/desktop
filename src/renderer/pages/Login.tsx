@@ -4,10 +4,10 @@
  */
 
 /**
- * @module renderer/pages/Login
- *
  * Login page component for authenticating with the Datalayer platform.
- * Handles credential validation, secure storage, and initial user data fetching.
+ * Handles credential validation, secure storage, and user data fetching.
+ *
+ * @module renderer/pages/Login
  */
 
 import React, { useState, useCallback } from 'react';

@@ -4,10 +4,10 @@
  */
 
 /**
- * @module main/app/menu-manager
- *
  * Application menu bar creation and management.
  * Provides platform-specific menu structures with proper event handlers.
+ *
+ * @module main/app/menu-manager
  */
 
 import { app, Menu, shell } from 'electron';
@@ -17,9 +17,7 @@ import { EXTERNAL_URLS } from '../config/constants';
 
 /**
  * Creates the application menu bar.
- * Different menu structures for macOS and non-macOS platforms.
- * Includes File, Edit, View, Window, and Help menus with appropriate items.
- * @returns void
+ * Includes File, Edit, View, Window, and Help menus with platform-specific structures.
  */
 export function createMenu(): void {
   if (process.platform === 'darwin') {
@@ -30,7 +28,7 @@ export function createMenu(): void {
 }
 
 /**
- * Create macOS-specific menu structure
+ * Create macOS-specific menu structure.
  */
 function createMacOSMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -70,7 +68,7 @@ function createMacOSMenu(): void {
 }
 
 /**
- * Create non-macOS menu structure
+ * Create non-macOS menu structure.
  */
 function createNonMacOSMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -85,7 +83,7 @@ function createNonMacOSMenu(): void {
 }
 
 /**
- * Create File menu for non-macOS platforms
+ * Create File menu for non-macOS platforms.
  */
 function createFileMenu(): Electron.MenuItemConstructorOptions {
   return {
@@ -103,7 +101,7 @@ function createFileMenu(): Electron.MenuItemConstructorOptions {
 }
 
 /**
- * Create Edit menu (common for all platforms)
+ * Create Edit menu (common for all platforms).
  */
 function createEditMenu(): Electron.MenuItemConstructorOptions {
   const editSubmenu: Electron.MenuItemConstructorOptions[] = [
@@ -141,7 +139,7 @@ function createEditMenu(): Electron.MenuItemConstructorOptions {
 }
 
 /**
- * Create View menu (common for all platforms)
+ * Create View menu (common for all platforms).
  */
 function createViewMenu(): Electron.MenuItemConstructorOptions {
   const viewSubmenu: Electron.MenuItemConstructorOptions[] = [
@@ -175,7 +173,7 @@ function createViewMenu(): Electron.MenuItemConstructorOptions {
 }
 
 /**
- * Create Window menu (macOS only)
+ * Create Window menu (macOS only).
  */
 function createWindowMenu(): Electron.MenuItemConstructorOptions {
   return {
@@ -190,7 +188,7 @@ function createWindowMenu(): Electron.MenuItemConstructorOptions {
 }
 
 /**
- * Create Help menu (common for all platforms)
+ * Create Help menu (common for all platforms).
  */
 function createHelpMenu(): Electron.MenuItemConstructorOptions {
   return {

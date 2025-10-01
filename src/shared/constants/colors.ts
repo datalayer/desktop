@@ -4,19 +4,13 @@
  */
 
 /**
- * @module Colors
- * @description Datalayer brand colors, WCAG-compliant color variants, and semantic color definitions
+ * Datalayer brand colors, WCAG-compliant variants, and semantic color definitions.
+ *
+ * @module shared/constants/colors
  */
 
 /**
- * Datalayer Brand Colors
- * Official palette:
- * - datalayer-green-light: #2ECC71 (46, 204, 113)
- * - datalayer-green-main:  #1ABC9C (26, 188, 156)
- * - datalayer-green-dark:  #16A085 (22, 160, 133)
- * - datalayer-gray:        #59595C (89, 89, 92)
- * - datalayer-black:       #000000 (0, 0, 0)
- * - datalayer-white:       #FFFFFF (255, 255, 255)
+ * Datalayer brand color palette with accessible variants.
  */
 export const DATALAYER_PALETTE = {
   greenLight: '#2ECC71',

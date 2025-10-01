@@ -4,9 +4,9 @@
  */
 
 /**
+ * Component for displaying a list of environment packages as labels.
+ *
  * @module Packages
- * @description Component for displaying a list of environment packages as labels.
- * Shows a limited number of packages with an "and more" indicator when the list is truncated.
  */
 
 import React from 'react';
@@ -14,12 +14,7 @@ import { Box, Text, Label } from '@primer/react';
 import { EnvironmentPackagesProps } from '../../../shared/types';
 
 /**
- * @component Packages
- * @description Renders a list of environment packages as small labels
- * @param {EnvironmentPackagesProps} props - The component props
- * @param {string[]} props.packages - Array of package names to display
- * @param {number} [props.maxVisible=6] - Maximum number of packages to show before truncating
- * @returns {JSX.Element | null} The rendered packages component or null if no packages
+ * Renders a list of environment packages as small labels.
  */
 const Packages: React.FC<EnvironmentPackagesProps> = ({
   packages,

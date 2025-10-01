@@ -4,10 +4,10 @@
  */
 
 /**
- * @module renderer/pages/DocumentEditor
- *
  * Document editor page component using Lexical editor framework.
- * Provides document editing with Jupyter kernel integration for code execution.
+ * Provides document editing with Jupyter kernel integration.
+ *
+ * @module renderer/pages/DocumentEditor
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';

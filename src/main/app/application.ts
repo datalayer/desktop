@@ -4,10 +4,10 @@
  */
 
 /**
- * @module main/app/application
- *
  * Application lifecycle management for the Electron application.
  * Handles app startup, window management, and shutdown procedures.
+ *
+ * @module main/app/application
  */
 
 import { app, BrowserWindow } from 'electron';
@@ -16,11 +16,13 @@ import { createWindow } from './window-manager';
 import { createMenu } from './menu-manager';
 
 /**
- * Application lifecycle manager
+ * Application lifecycle manager.
+ * Coordinates app initialization, window management, and event handlers.
  */
 export class Application {
   /**
-   * Initialize the application when ready
+   * Initialize the application when ready.
+   * Sets up platform-specific configurations and creates the main window.
    */
   static async initialize(): Promise<void> {
     await app.whenReady();
@@ -51,23 +53,18 @@ export class Application {
   }
 
   /**
-   * Set up application event handlers
+   * Set up application event handlers.
+   * Configures window lifecycle and security behaviors.
    */
   static setupEventHandlers(): void {
-    /**
-     * Window close event handler.
-     * Quits the app on non-macOS platforms when all windows are closed.
-     */
+    // Quit app on non-macOS platforms when all windows are closed
     app.on('window-all-closed', () => {
       if (process.platform !== 'darwin') {
         app.quit();
       }
     });
 
-    /**
-     * Security handler to prevent new window creation.
-     * All external links are opened in the default browser instead.
-     */
+    // Security handler: prevent new window creation, open external links in browser
     app.on('web-contents-created', (_, contents) => {
       contents.setWindowOpenHandler(({ url }) => {
         require('electron').shell.openExternal(url);

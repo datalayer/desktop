@@ -4,20 +4,20 @@
  */
 
 /**
- * @module main/app/security-manager
- *
  * Security configuration and Content Security Policy management.
  * Handles CSP headers, security policies, and production security features.
+ *
+ * @module main/app/security-manager
  */
 
 import { session } from 'electron';
 import { shouldUseProductionSecurity } from './environment';
 
 /**
- * Set up Content Security Policy headers for the application
+ * Set up Content Security Policy headers for the application.
+ * Production mode uses stricter CSP policies.
  */
 export function setupContentSecurityPolicy(): void {
-  // In development, we need 'unsafe-eval' for hot reload, but in production it should be removed
   if (shouldUseProductionSecurity()) {
     // Production CSP - stricter
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -39,7 +39,7 @@ export function setupContentSecurityPolicy(): void {
 }
 
 /**
- * Security configuration object with CSP policies
+ * Security configuration object with CSP policies.
  */
 export const SECURITY_POLICIES = {
   PRODUCTION_CSP: {

@@ -4,9 +4,9 @@
  */
 
 /**
+ * Login page header component with logo and title.
+ *
  * @module Header
- * @description Login page header component with logo and title.
- * Displays the Datalayer logo, application title, and login description.
  */
 
 import React from 'react';
@@ -14,11 +14,7 @@ import { Box, Heading, Text } from '@primer/react';
 import { LoginHeaderProps } from '../../../shared/types';
 
 /**
- * @component Header
- * @description Renders the login page header with logo and title
- * @param {LoginHeaderProps} props - The component props
- * @param {string} props.iconSrc - Source URL for the application icon
- * @returns {JSX.Element} The rendered header component
+ * Renders the login page header with logo and title.
  */
 const Header: React.FC<LoginHeaderProps> = ({ iconSrc }) => {
   return (

@@ -4,19 +4,10 @@
  */
 
 /**
- * @module renderer/stores/runtimeStore
- *
  * Zustand store for managing compute runtime state and lifecycle.
  * Handles runtime creation, termination, ServiceManager instances, and cleanup.
- * Implements runtime-aware cleanup to prevent connection attempts to terminated runtimes.
  *
- * Features:
- * - Runtime creation with deduplication via global promises
- * - ServiceManager lifecycle management per runtime
- * - Comprehensive cleanup on termination (timers, connections, services)
- * - Global cleanup registry to track terminated runtimes
- * - Integration with WebSocket proxy for connection management
- * - Automatic cleanup of collaboration providers
+ * @module renderer/stores/runtimeStore
  */
 
 import { create } from 'zustand';
@@ -34,57 +25,36 @@ declare global {
 
 /**
  * Runtime information from Datalayer API.
- * @interface Runtime
  */
 interface Runtime {
-  /** Unique identifier for the runtime */
   uid: string;
-  /** Optional display name */
   given_name?: string;
-  /** Kubernetes pod name */
   pod_name: string;
-  /** Ingress URL for accessing the runtime */
   ingress?: string;
-  /** Authentication token for the runtime */
   token?: string;
-  /** Environment name used */
   environment_name?: string;
-  /** Environment display title */
   environment_title?: string;
-  /** Runtime type */
   type?: string;
-  /** Credit burning rate */
   burning_rate?: number;
-  /** Reservation identifier */
   reservation_id?: string;
-  /** Start timestamp */
   started_at?: string;
-  /** Expiration timestamp */
   expired_at?: string;
-  /** Current runtime status */
   status?: string;
-  /** Additional properties */
   [key: string]: unknown;
 }
 
 /**
  * Associates a notebook with its runtime and service manager.
- * @interface NotebookRuntime
  */
 interface NotebookRuntime {
-  /** Unique notebook identifier */
   notebookId: string;
-  /** Optional notebook file path */
   notebookPath?: string;
-  /** Associated runtime instance */
   runtime: Runtime;
-  /** Optional Jupyter service manager */
   serviceManager?: ServiceManager.IManager;
 }
 
 /**
  * Runtime store state and actions.
- * @interface RuntimeState
  */
 interface RuntimeState {
   // Map of notebook IDs to their runtimes
@@ -92,6 +62,13 @@ interface RuntimeState {
 
   // Currently active notebook
   activeNotebookId: string | null;
+
+  // Global list of all platform runtimes
+  allRuntimes: Runtime[];
+  lastRuntimesFetch: number | null;
+
+  // Expiration timers for automatic cleanup
+  expirationTimers: Map<string, NodeJS.Timeout>;
 
   // Loading states
   isCreatingRuntime: boolean;
@@ -151,12 +128,26 @@ interface RuntimeState {
     allowed: boolean;
     message?: string;
   };
+
+  // Global runtime management
+  fetchAllRuntimes: () => Promise<Runtime[]>;
+  refreshRuntimes: () => Promise<Runtime[]>;
+  selectRuntimeForNotebook: (
+    notebookId: string,
+    runtime: Runtime
+  ) => Promise<void>;
+  startExpirationTimer: (runtime: Runtime) => void;
+  handleRuntimeExpired: (runtimeUid: string) => void;
+  clearAllExpirationTimers: () => void;
 }
 
 export const useRuntimeStore = create<RuntimeState>((set, get) => ({
   // Initial state
   notebookRuntimes: new Map(),
   activeNotebookId: null,
+  allRuntimes: [],
+  lastRuntimesFetch: null,
+  expirationTimers: new Map(),
   isCreatingRuntime: false,
   isTerminatingRuntime: false,
   runtimeError: null,
@@ -824,33 +815,174 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     }
   },
 
-  // Single notebook enforcement
-  canOpenNotebook: notebookId => {
-    const { notebookRuntimes, activeNotebookId } = get();
-
-    // If this notebook already has a runtime, allow opening it
-    if (notebookRuntimes.has(notebookId)) {
-      return { allowed: true };
-    }
-
-    // If there's an active notebook that's different, deny
-    if (activeNotebookId && activeNotebookId !== notebookId) {
-      return {
-        allowed: false,
-        message:
-          'You can only have one notebook open at a time. Please close the current notebook first.',
-      };
-    }
-
-    // If any other runtime exists, deny
-    if (notebookRuntimes.size > 0) {
-      return {
-        allowed: false,
-        message:
-          'You can only have one notebook open at a time. Please close the current notebook first.',
-      };
-    }
-
+  // Multiple notebooks are now supported - always allow opening
+  canOpenNotebook: () => {
     return { allowed: true };
+  },
+
+  // Fetch all runtimes from platform
+  fetchAllRuntimes: async () => {
+    try {
+      // Bridge returns array of plain RuntimeJSON objects, not SDK models
+      const runtimes = await (window as any).datalayerClient.listRuntimes();
+
+      // Start expiration timers for all runtimes
+      runtimes.forEach((runtime: Runtime) => {
+        get().startExpirationTimer(runtime);
+      });
+
+      set({
+        allRuntimes: runtimes,
+        lastRuntimesFetch: Date.now(),
+      });
+
+      return runtimes;
+    } catch (error) {
+      console.error('[runtimeStore] Failed to fetch runtimes:', error);
+      return [];
+    }
+  },
+
+  // Refresh runtimes if cache is stale
+  refreshRuntimes: async () => {
+    const { lastRuntimesFetch } = get();
+    const now = Date.now();
+
+    // Refresh if never fetched OR last fetch was >30s ago
+    if (!lastRuntimesFetch || now - lastRuntimesFetch > 30000) {
+      return get().fetchAllRuntimes();
+    }
+
+    return get().allRuntimes;
+  },
+
+  // Select an existing runtime for a notebook
+  selectRuntimeForNotebook: async (notebookId: string, runtime: Runtime) => {
+    const { notebookRuntimes } = get();
+
+    // Add to notebook runtimes
+    const newRuntimes = new Map(notebookRuntimes);
+    newRuntimes.set(notebookId, {
+      notebookId,
+      runtime,
+    });
+
+    set({
+      notebookRuntimes: newRuntimes,
+      activeNotebookId: notebookId,
+    });
+
+    // Start expiration timer
+    get().startExpirationTimer(runtime);
+
+    // Save to storage
+    get().saveRuntimesToStorage();
+  },
+
+  // Start expiration timer for a runtime
+  startExpirationTimer: (runtime: Runtime) => {
+    const { expirationTimers } = get();
+
+    // Clear existing timer if any
+    const existingTimer = expirationTimers.get(runtime.uid);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    // Parse expiration timestamp
+    const parseTimestamp = (value: string | number) => {
+      if (typeof value === 'string' && !value.includes('-')) {
+        return new Date(parseFloat(value) * 1000);
+      }
+      return new Date(value);
+    };
+
+    const expiredAtValue = (runtime.expired_at || runtime.expiredAt || '0') as
+      | string
+      | number;
+    const expiresAt = parseTimestamp(expiredAtValue).getTime();
+    const now = Date.now();
+    const msUntilExpiration = Math.max(0, expiresAt - now);
+
+    // Don't set timer if already expired
+    if (msUntilExpiration <= 0) {
+      get().handleRuntimeExpired(runtime.uid);
+      return;
+    }
+
+    // Set timer to remove runtime when expired
+    const timer = setTimeout(() => {
+      console.log(
+        `[runtimeStore] Runtime ${runtime.pod_name} expired, removing from state`
+      );
+      get().handleRuntimeExpired(runtime.uid);
+    }, msUntilExpiration);
+
+    // Store timer reference
+    const newTimers = new Map(expirationTimers);
+    newTimers.set(runtime.uid, timer);
+    set({ expirationTimers: newTimers });
+  },
+
+  // Handle runtime expiration
+  handleRuntimeExpired: (runtimeUid: string) => {
+    const { allRuntimes, expirationTimers, notebookRuntimes } = get();
+
+    console.log(
+      `[runtimeStore] Runtime ${runtimeUid} expired, cleaning up state`
+    );
+
+    // Find the expired runtime details for notification
+    const expiredRuntime = allRuntimes.find(r => r.uid === runtimeUid);
+    const runtimeName =
+      expiredRuntime?.given_name ||
+      expiredRuntime?.givenName ||
+      expiredRuntime?.pod_name ||
+      expiredRuntime?.podName ||
+      'Unknown';
+
+    // Remove from global list
+    const newAllRuntimes = allRuntimes.filter(r => r.uid !== runtimeUid);
+
+    // Remove timer
+    const timer = expirationTimers.get(runtimeUid);
+    if (timer) {
+      clearTimeout(timer);
+    }
+    const newTimers = new Map(expirationTimers);
+    newTimers.delete(runtimeUid);
+
+    // Find and remove from notebook runtimes
+    const newNotebookRuntimes = new Map(notebookRuntimes);
+    for (const [notebookId, nbRuntime] of notebookRuntimes) {
+      if (nbRuntime.runtime.uid === runtimeUid) {
+        newNotebookRuntimes.delete(notebookId);
+      }
+    }
+
+    set({
+      allRuntimes: newAllRuntimes,
+      expirationTimers: newTimers,
+      notebookRuntimes: newNotebookRuntimes,
+    });
+
+    // Show notification to user
+    if ((window.electronAPI as any)?.showNotification) {
+      (window.electronAPI as any).showNotification({
+        title: 'Runtime Expired',
+        body: `Runtime "${runtimeName}" has expired and been terminated.`,
+      });
+    }
+
+    // Update storage
+    get().saveRuntimesToStorage();
+  },
+
+  // Clear all expiration timers (cleanup on unmount)
+  clearAllExpirationTimers: () => {
+    const { expirationTimers } = get();
+
+    expirationTimers.forEach(timer => clearTimeout(timer));
+    set({ expirationTimers: new Map() });
   },
 }));

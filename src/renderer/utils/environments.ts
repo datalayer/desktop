@@ -4,8 +4,9 @@
  */
 
 /**
+ * Utility functions for environment parsing, icons, and descriptions.
+ *
  * @module renderer/utils/environments
- * @description Utility functions for environment parsing, icons, and descriptions.
  */
 
 import {
@@ -18,59 +19,51 @@ import {
 // Electron Application Environment Detection
 // ============================================================================
 
-/**
- * Environment modes for the application
- */
 export type EnvironmentMode = 'development' | 'production' | 'dev-prod';
 
 /**
- * Check if the application is running in development mode
+ * Check if running in development mode.
+ * @returns True if NODE_ENV is 'development'
  */
 export function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
 /**
- * Check if the application is running in production mode
+ * Check if running in production mode.
+ * @returns True if NODE_ENV is 'production'
  */
 export function isProduction(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
 /**
- * Check if the application is running in dev-prod mode
- * (production build but with dev tools enabled for local testing)
+ * Check if running in dev-prod mode.
+ * @returns True if ELECTRON_DEV_PROD is 'true'
  */
 export function isDevProd(): boolean {
   return process.env.ELECTRON_DEV_PROD === 'true';
 }
 
 /**
- * Check if developer tools should be enabled
- * Dev tools are enabled in:
- * - Development mode
- * - Dev-prod mode (production build with dev tools for local testing)
- * Dev tools are disabled in:
- * - Pure production mode (for distribution)
+ * Check if developer tools should be enabled.
+ * @returns True in development or dev-prod mode
  */
 export function shouldEnableDevTools(): boolean {
   return isDevelopment() || isDevProd();
 }
 
 /**
- * Check if the application should use production security settings
- * Production security is enabled in:
- * - Production mode (pure production for distribution)
- * - Dev-prod mode (production-like build for testing)
- * Production security is disabled in:
- * - Development mode (for easier debugging)
+ * Check if production security settings should be used.
+ * @returns True in production or dev-prod mode
  */
 export function shouldUseProductionSecurity(): boolean {
   return isProduction() || isDevProd();
 }
 
 /**
- * Get the current environment mode
+ * Get the current environment mode.
+ * @returns Current environment mode
  */
 export function getEnvironmentMode(): EnvironmentMode {
   if (isDevProd()) {
@@ -83,21 +76,16 @@ export function getEnvironmentMode(): EnvironmentMode {
 }
 
 /**
- * Log the current environment configuration
+ * Log the current environment configuration.
  */
 export function logEnvironmentConfig(): void {
-  // Environment configuration logging function (logging removed)
-  // const _mode = getEnvironmentMode();
-  // const _devToolsEnabled = shouldEnableDevTools();
-  // const _productionSecurity = shouldUseProductionSecurity();
+  // Environment configuration logging (removed)
 }
 
-// ============================================================================
-// Jupyter/Compute Environment Utilities
-// ============================================================================
-
 /**
- * Determines the environment type based on name patterns
+ * Determines the environment type based on name patterns.
+ * @param env - Environment object
+ * @returns Environment type
  */
 export const getEnvironmentType = (env: Environment): EnvironmentType => {
   const isGPU =
@@ -108,14 +96,18 @@ export const getEnvironmentType = (env: Environment): EnvironmentType => {
 };
 
 /**
- * Checks if environment is GPU type based on environment object
+ * Checks if environment is GPU type.
+ * @param env - Environment object
+ * @returns True if GPU environment
  */
 export const isGPUEnvironmentType = (env: Environment): boolean => {
   return getEnvironmentType(env) === 'GPU';
 };
 
 /**
- * Formats resource information for display
+ * Formats resource information for display.
+ * @param resources - Resource object
+ * @returns Array of formatted resource strings
  */
 export const formatResources = (
   resources: Record<string, unknown>
@@ -136,7 +128,9 @@ export const formatResources = (
 };
 
 /**
- * Parses HTML description to extract structured data
+ * Parses HTML description to extract structured data.
+ * @param description - HTML description string
+ * @returns Parsed description object or null
  */
 export const parseEnvironmentDescription = (
   description: string
@@ -170,7 +164,9 @@ export const parseEnvironmentDescription = (
 };
 
 /**
- * Checks if environment is GPU type based on name patterns
+ * Checks if environment is GPU type based on name patterns.
+ * @param envName - Environment name
+ * @returns True if GPU environment
  */
 export const isGPUEnvironment = (envName: string): boolean => {
   return (

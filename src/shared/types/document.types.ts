@@ -4,10 +4,9 @@
  */
 
 /**
- * @module shared/types/document
- *
  * Type definitions for the Lexical document editor.
- * Includes interfaces for document data, editor state, and component props.
+ *
+ * @module shared/types/document
  */
 
 import type { LexicalEditor } from 'lexical';

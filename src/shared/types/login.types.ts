@@ -4,10 +4,9 @@
  */
 
 /**
- * @module shared/types/login
- *
  * Type definitions for the authentication and login system.
- * Includes interfaces for login forms, state management, and component props.
+ *
+ * @module shared/types/login
  */
 
 /**

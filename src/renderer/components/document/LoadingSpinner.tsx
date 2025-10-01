@@ -4,8 +4,9 @@
  */
 
 /**
+ * Loading spinner component for document editor states.
+ *
  * @module renderer/components/document/LoadingSpinner
- * @description Loading spinner component for document editor states.
  */
 
 import React from 'react';
@@ -14,13 +15,6 @@ import UnifiedLoadingSpinner from '../LoadingSpinner';
 
 /**
  * Loading spinner component specific to document editor operations.
- * Displays contextual loading messages based on document editor state.
- * @component
- * @param props - Component props
- * @param props.isCreatingRuntime - Whether a runtime is being created
- * @param props.loading - Generic loading state (unused in current implementation)
- * @param props.serviceManager - Jupyter service manager instance
- * @returns Rendered loading spinner with appropriate message
  */
 const LoadingSpinner: React.FC<DocumentLoadingStateProps> = ({
   isCreatingRuntime,

@@ -4,17 +4,16 @@
  */
 
 /**
- * @module renderer/hooks/usePreload
+ * React hooks for managing component preloading operations.
+ * Supports parallel coordination for performance optimization.
  *
- * React hooks for managing component preloading operations with parallel coordination support.
- * Enables performance optimization through strategic component preloading.
+ * @module renderer/hooks/usePreload
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
- * State interface for preloading operations
- * @interface
+ * State interface for preloading operations.
  */
 export interface PreloadState {
   isPreloading: boolean;
@@ -23,8 +22,7 @@ export interface PreloadState {
 }
 
 /**
- * Configuration options for the usePreload hook
- * @interface
+ * Configuration options for the usePreload hook.
  */
 export interface UsePreloadOptions {
   autoStart?: boolean;
@@ -33,8 +31,7 @@ export interface UsePreloadOptions {
 }
 
 /**
- * Return type for the usePreload hook
- * @interface
+ * Return type for the usePreload hook.
  */
 export interface UsePreloadResult extends PreloadState {
   startPreload: () => Promise<void>;
@@ -42,12 +39,10 @@ export interface UsePreloadResult extends PreloadState {
 }
 
 /**
- * React hook that manages component preloading states for parallel loading optimization.
- * Supports automatic start, success/error callbacks, and prevents duplicate operations.
- *
+ * React hook for managing component preloading states.
  * @param preloadFn - Async function to execute for preloading
- * @param options - Configuration options for preload behavior
- * @returns Object containing preload state and control functions
+ * @param options - Configuration options
+ * @returns Preload state and control functions
  */
 export function usePreload(
   preloadFn: () => Promise<void>,
@@ -65,7 +60,7 @@ export function usePreload(
   const preloadPromiseRef = useRef<Promise<void> | null>(null);
 
   /**
-   * Starts the preload operation if not already running or completed
+   * Starts the preload operation if not already running or completed.
    * @returns Promise that resolves when preloading is complete
    */
   const startPreload = useCallback(async () => {
@@ -110,7 +105,7 @@ export function usePreload(
   }, [preloadFn, onSuccess, onError, state.isPreloaded, state.isPreloading]);
 
   /**
-   * Resets the preload state to initial values
+   * Resets the preload state to initial values.
    */
   const reset = useCallback(() => {
     setState({
@@ -140,10 +135,8 @@ export function usePreload(
 
 /**
  * React hook that coordinates multiple preload operations in parallel.
- * Useful for managing complex loading scenarios with multiple dependencies.
- *
- * @param preloadConfigs - Array of preload configurations with names and functions
- * @returns Object containing individual preload states and coordination functions
+ * @param preloadConfigs - Array of preload configurations
+ * @returns Individual preload states and coordination functions
  */
 export function useParallelPreload(
   preloadConfigs: Array<{
@@ -166,8 +159,8 @@ export function useParallelPreload(
   });
 
   /**
-   * Starts all configured preload operations in parallel
-   * @returns Promise that resolves when all preloads have completed (success or failure)
+   * Starts all configured preload operations in parallel.
+   * @returns Promise that resolves when all preloads complete
    */
   const startAllPreloads = useCallback(async () => {
     // Start all preloads in parallel

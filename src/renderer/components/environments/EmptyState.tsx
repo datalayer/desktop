@@ -4,8 +4,9 @@
  */
 
 /**
+ * Empty state component when no environments are available.
+ *
  * @module renderer/components/environments/EmptyState
- * @description Empty state component when no environments are available.
  */
 
 import React from 'react';
@@ -13,9 +14,6 @@ import { Box, Text } from '@primer/react';
 
 /**
  * Empty state component for when no environments are available.
- * Displays a centered message encouraging users to check their connection.
- * @component
- * @returns Rendered empty state message
  */
 const EmptyState: React.FC = () => {
   return (

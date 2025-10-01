@@ -4,9 +4,9 @@
  */
 
 /**
+ * Error message component for login form validation and authentication errors.
+ *
  * @module ErrorMessage
- * @description Error message component for login form validation and authentication errors.
- * Displays error messages with appropriate accessibility attributes and visual styling.
  */
 
 import React from 'react';
@@ -14,11 +14,7 @@ import { Flash } from '@primer/react';
 import { LoginErrorProps } from '../../../shared/types';
 
 /**
- * @component ErrorMessage
- * @description Displays login-related error messages with accessibility support
- * @param {LoginErrorProps} props - The component props
- * @param {string | null} props.error - Error message to display
- * @returns {JSX.Element | null} The rendered error message or null if no error
+ * Displays login-related error messages with accessibility support.
  */
 const ErrorMessage: React.FC<LoginErrorProps> = ({ error }) => {
   if (!error) {

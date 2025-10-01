@@ -4,8 +4,9 @@
  */
 
 /**
+ * Error state component with retry functionality for environment loading.
+ *
  * @module renderer/components/environments/ErrorState
- * @description Error state component with retry functionality for environment loading.
  */
 
 import React from 'react';
@@ -13,7 +14,6 @@ import { Box, Text, Button, Flash } from '@primer/react';
 
 /**
  * Props for the ErrorState component.
- * @interface ErrorStateProps
  */
 interface ErrorStateProps {
   /** Error message to display */
@@ -24,12 +24,6 @@ interface ErrorStateProps {
 
 /**
  * Error state component for environment loading failures.
- * Displays error message with a retry button.
- * @component
- * @param props - Component props
- * @param props.error - Error message to display
- * @param props.onRetry - Callback when retry is clicked
- * @returns Rendered error state with retry option
  */
 const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry }) => {
   return (

@@ -4,33 +4,21 @@
  */
 
 /**
- * @module shared/types/documents
- *
  * Type definitions for document and notebook management in the library view.
- * Includes interfaces for notebooks, documents, and grouped document structures.
+ *
+ * @module shared/types/documents
  */
+
+import type {
+  NotebookJSON,
+  LexicalJSON,
+} from '@datalayer/core/lib/client/models';
 
 /**
- * Represents a notebook item in the library.
+ * Represents any document item (notebook or lexical) from the API.
+ * Directly uses SDK JSON types - no need for custom mapping!
  */
-export interface NotebookItem {
-  id: string;
-  uid?: string;
-  name: string;
-  path: string;
-  createdAt: string;
-  modifiedAt: string;
-  size?: number;
-  kernel?: string;
-  cdnUrl?: string;
-  description?: string;
-}
-
-export interface DocumentItem extends NotebookItem {
-  type?: string;
-  type_s?: string;
-  item_type?: string;
-}
+export type DocumentItem = NotebookJSON | LexicalJSON;
 
 export interface SpaceInfo {
   id: string;
@@ -107,7 +95,7 @@ export interface DocumentItemProps {
 
 export interface DeleteConfirmationDialogProps {
   isOpen: boolean;
-  item: NotebookItem | null;
+  item: DocumentItem | null;
   confirmationText: string;
   isDeleting: boolean;
   error: string | null;

@@ -4,9 +4,10 @@
  */
 
 /**
- * @module Header
- * @description Library page header component with space selection and refresh functionality.
+ * Library page header component with space selection and refresh functionality.
  * Includes title, description, space selector dropdown, and refresh button with custom styling.
+ *
+ * @module Header
  */
 
 import React from 'react';
@@ -23,16 +24,7 @@ import { COLORS } from '../../../shared/constants/colors';
 import { HeaderProps } from '../../../shared/types';
 
 /**
- * @component Header
- * @description Renders the library page header with space selection and refresh controls
- * @param {HeaderProps} props - The component props
- * @param {Object | null} props.selectedSpace - Currently selected space object
- * @param {Array} props.userSpaces - Array of available user spaces
- * @param {boolean} props.loading - Whether the page is loading
- * @param {boolean} props.isRefreshing - Whether a refresh operation is in progress
- * @param {function} props.onSpaceChange - Handler for space selection changes
- * @param {function} props.onRefresh - Handler for refresh button clicks
- * @returns {JSX.Element} The rendered header component
+ * Renders the library page header with space selection and refresh controls
  */
 const Header: React.FC<HeaderProps> = ({
   selectedSpace,

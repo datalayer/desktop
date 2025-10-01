@@ -4,9 +4,9 @@
  */
 
 /**
+ * Component that displays a summary of the currently selected environment.
+ *
  * @module SelectionSummary
- * @description Component that displays a summary of the currently selected environment.
- * Shows which environment is selected and provides context about its usage.
  */
 
 import React from 'react';
@@ -14,12 +14,7 @@ import { Box, Text } from '@primer/react';
 import { EnvironmentSelectionSummaryProps } from '../../../shared/types';
 
 /**
- * @component SelectionSummary
- * @description Displays a summary card showing the currently selected environment
- * @param {EnvironmentSelectionSummaryProps} props - The component props
- * @param {string | null} props.selectedEnv - Name of the currently selected environment
- * @param {number} props.environmentsCount - Total number of available environments
- * @returns {JSX.Element | null} The rendered selection summary or null if no environments
+ * Displays a summary card showing the currently selected environment.
  */
 const SelectionSummary: React.FC<EnvironmentSelectionSummaryProps> = ({
   selectedEnv,

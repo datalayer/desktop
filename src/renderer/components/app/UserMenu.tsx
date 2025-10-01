@@ -4,8 +4,9 @@
  */
 
 /**
+ * User profile dropdown menu component with GitHub user display and logout.
+ *
  * @module renderer/components/app/UserMenu
- * @description User profile dropdown menu component with GitHub user display and logout.
  */
 
 import React, { useEffect } from 'react';
@@ -15,14 +16,6 @@ import { UserMenuProps } from '../../../shared/types';
 
 /**
  * User menu dropdown component for the application header.
- * Displays user profile information and provides logout functionality.
- * @component
- * @param props - Component props
- * @param props.user - User information
- * @param props.isOpen - Whether the menu is currently open
- * @param props.onOpenChange - Callback to toggle menu open state
- * @param props.onLogout - Callback when user logs out
- * @returns Rendered user menu dropdown
  */
 const UserMenu: React.FC<UserMenuProps> = ({
   user,
@@ -30,10 +23,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
   onOpenChange,
   onLogout,
 }) => {
-  /**
-   * Handle Escape key press to close user menu.
-   * Captures escape key at document level when menu is open.
-   */
+  // Handle Escape key press to close user menu
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -53,18 +43,13 @@ const UserMenu: React.FC<UserMenuProps> = ({
     return undefined;
   }, [isOpen, onOpenChange]);
 
-  /**
-   * Handle user logout action.
-   * Triggers logout callback and closes menu.
-   */
+  // Handle user logout action
   const handleLogout = () => {
     onLogout();
     onOpenChange(false);
   };
 
-  /**
-   * Toggle user menu visibility.
-   */
+  // Toggle user menu visibility
   const handleMenuToggle = () => {
     onOpenChange(!isOpen);
   };

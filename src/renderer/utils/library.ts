@@ -4,13 +4,19 @@
  */
 
 /**
+ * Utility functions for document library operations and formatting.
+ *
  * @module renderer/utils/library
- * @description Utility functions for document library operations and formatting.
  */
 
 import { FileIcon, BookIcon } from '@primer/octicons-react';
 import { DocumentItem } from '../../shared/types';
 
+/**
+ * Format date as relative time string.
+ * @param dateString - ISO date string
+ * @returns Formatted relative time
+ */
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
@@ -30,14 +36,24 @@ export const formatDate = (dateString: string): string => {
   }
 };
 
+/**
+ * Get icon component for document type.
+ * @param document - Document item
+ * @returns Icon component
+ */
 export const getDocumentIcon = (document: DocumentItem) => {
-  const itemType = document.type || document.type_s || document.item_type || '';
+  const itemType = document.type || '';
   if (itemType.toLowerCase() === 'notebook') {
     return BookIcon;
   }
   return FileIcon;
 };
 
+/**
+ * Create hash string from document data for change detection.
+ * @param data - Array of document items
+ * @returns JSON hash string
+ */
 export const createDataHash = (data: any[]): string => {
   return JSON.stringify(
     data.map(item => ({
@@ -48,49 +64,35 @@ export const createDataHash = (data: any[]): string => {
   );
 };
 
+/**
+ * Sort documents by modified date (newest first).
+ * @param a - First document
+ * @param b - Second document
+ * @returns Sort comparison result
+ */
 export const sortByModifiedDate = (
   a: DocumentItem,
   b: DocumentItem
 ): number => {
-  return new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime();
+  const aDate = a.updatedAt || a.createdAt || '';
+  const bDate = b.updatedAt || b.createdAt || '';
+  return new Date(bDate).getTime() - new Date(aDate).getTime();
 };
 
-export const mapApiItemToDocumentItem = (item: any): DocumentItem => ({
-  id: String(item.id || item.uid || item.path || ''),
-  uid: item.uid as string | undefined,
-  name: String(
-    item.name_t ||
-      item.name ||
-      (item.path as string)?.split('/').pop() ||
-      'Untitled'
-  ),
-  path: String(item.path || `/${item.name_t || item.name || 'document'}`),
-  createdAt: String(
-    item.creation_ts_dt || item.created_at || new Date().toISOString()
-  ),
-  modifiedAt: String(
-    item.last_update_ts_dt || item.modified_at || new Date().toISOString()
-  ),
-  size:
-    (item.content_length_i as number | undefined) ||
-    (item.size as number | undefined),
-  kernel: (item.kernel_spec as any)?.display_name || 'Python 3',
-  cdnUrl: item.cdn_url_s as string | undefined,
-  description: item.description_t as string | undefined,
-  type: item.type as string | undefined,
-  type_s: item.type_s as string | undefined,
-  item_type: item.item_type as string | undefined,
-});
-
+/**
+ * Group documents by type (notebooks and documents).
+ * @param documentItems - Array of document items
+ * @returns Object with notebooks and documents arrays
+ */
 export const groupDocumentsByType = (documentItems: DocumentItem[]) => {
   const notebooks = documentItems.filter(item => {
-    const itemType = item.type || item.type_s || item.item_type || '';
+    const itemType = item.type || '';
     return itemType.toLowerCase() === 'notebook';
   });
 
   const documents = documentItems.filter(item => {
-    const itemType = item.type || item.type_s || item.item_type || '';
-    return itemType.toLowerCase() === 'document';
+    const itemType = item.type || '';
+    return itemType.toLowerCase() !== 'notebook'; // Everything else is a document
   });
 
   return {

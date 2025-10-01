@@ -4,69 +4,252 @@
  */
 
 /**
+ * Navigation tabs container component that manages tab visibility and state.
+ *
  * @module renderer/components/app/NavigationTabs
- * @description Navigation tabs container component that manages tab visibility and state.
  */
 
 import React from 'react';
-import { Header } from '@primer/react';
-import { DatabaseIcon, BookIcon, PencilIcon } from '@primer/octicons-react';
+import { Header, IconButton, Box } from '@primer/react';
+import {
+  DatabaseIcon,
+  BookIcon,
+  PencilIcon,
+  FileCodeIcon,
+  XIcon,
+} from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
-import { NavigationTabsProps } from '../../../shared/types';
+import { COLORS } from '../../../shared/constants/colors';
+
+export interface NavigationTabsProps {
+  activeTabId: string;
+  openNotebooks: Array<{ id: string; name: string; description?: string }>;
+  openDocuments: Array<{ id: string; name: string; description?: string }>;
+  onTabChange: (tabId: string) => void;
+  onNotebookClose: (notebookId: string) => void;
+  onDocumentClose: (documentId: string) => void;
+}
 
 /**
- * Container component for navigation tabs in the app header.
- * Manages visibility of notebook and document editor tabs based on active state.
- * @component
- * @param props - Component props
- * @param props.currentView - Currently active view
- * @param props.isNotebookEditorActive - Whether notebook editor is active
- * @param props.isDocumentEditorActive - Whether document editor is active
- * @param props.onViewChange - Callback when view changes
- * @returns Rendered navigation tabs container
+ * Container component for navigation tabs with horizontal scrolling.
+ * Shows Environments, Spaces, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
-  currentView,
-  isNotebookEditorActive,
-  isDocumentEditorActive,
-  onViewChange,
+  activeTabId,
+  openNotebooks,
+  openDocuments,
+  onTabChange,
+  onNotebookClose,
+  onDocumentClose,
 }) => {
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        flex: 1,
+        // Custom scrollbar styles
+        '&::-webkit-scrollbar': {
+          height: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'neutral.muted',
+          borderRadius: '3px',
+        },
+        '&::-webkit-scrollbar-track': {
+          backgroundColor: 'transparent',
+        },
+      }}
+    >
+      {/* Fixed tabs - cannot be closed */}
       <NavigationTab
         label="Environments"
         icon={DatabaseIcon}
-        isActive={currentView === 'environments'}
-        onClick={() => onViewChange('environments')}
+        isActive={activeTabId === 'environments'}
+        onClick={() => onTabChange('environments')}
       />
 
       <NavigationTab
         label="Spaces"
         icon={BookIcon}
-        isActive={currentView === 'notebooks'}
-        onClick={() => onViewChange('notebooks')}
+        isActive={activeTabId === 'spaces'}
+        onClick={() => onTabChange('spaces')}
       />
 
-      {isNotebookEditorActive && (
-        <NavigationTab
-          label="Notebook Editor"
-          icon={PencilIcon}
-          isActive={currentView === 'notebook'}
-          onClick={() => onViewChange('notebook')}
-        />
-      )}
+      {/* Dynamic notebook tabs - can be closed */}
+      {openNotebooks.map(notebook => (
+        <Header.Item key={`notebook-${notebook.id}`}>
+          <Header.Link
+            href="#"
+            onClick={(e: React.MouseEvent) => {
+              e.preventDefault();
+              onTabChange(`notebook-${notebook.id}`);
+            }}
+            title={notebook.description}
+            sx={{
+              fontWeight: 'normal',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              pr: 1,
+              color:
+                activeTabId === `notebook-${notebook.id}`
+                  ? `${COLORS.brand.primary} !important`
+                  : `${COLORS.text.primary} !important`,
+              borderBottom:
+                activeTabId === `notebook-${notebook.id}`
+                  ? `2px solid ${COLORS.brand.primary}`
+                  : '2px solid transparent',
+              paddingBottom: '4px',
+              textDecoration: 'none !important',
+              backgroundColor: 'transparent !important',
+              outline: 'none',
+              '&:hover': {
+                textDecoration: 'none !important',
+                color: `${COLORS.brand.primary} !important`,
+                backgroundColor: 'transparent !important',
+              },
+              '&:active, &:visited': {
+                color:
+                  activeTabId === `notebook-${notebook.id}`
+                    ? `${COLORS.brand.primary} !important`
+                    : `${COLORS.text.primary} !important`,
+                backgroundColor: 'transparent !important',
+              },
+              '&:focus, &:focus-visible': {
+                color:
+                  activeTabId === `notebook-${notebook.id}`
+                    ? `${COLORS.brand.primary} !important`
+                    : `${COLORS.text.primary} !important`,
+                backgroundColor: 'transparent !important',
+                outline: '2px solid',
+                outlineColor: 'accent.emphasis',
+                outlineOffset: '-2px',
+              },
+              '& span': {
+                color: 'inherit !important',
+              },
+              '& svg': {
+                color: 'inherit !important',
+              },
+            }}
+          >
+            <FileCodeIcon size={16} />
+            <span>{notebook.name}</span>
+            <IconButton
+              icon={XIcon}
+              size="small"
+              aria-label="Close tab"
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onNotebookClose(notebook.id);
+              }}
+              sx={{
+                width: '18px',
+                height: '18px',
+                padding: 0,
+                ml: 1,
+                color: 'fg.muted',
+                '&:hover': {
+                  backgroundColor: 'neutral.muted',
+                  color: 'fg.default',
+                },
+              }}
+            />
+          </Header.Link>
+        </Header.Item>
+      ))}
 
-      {isDocumentEditorActive && (
-        <NavigationTab
-          label="Document Editor"
-          icon={PencilIcon}
-          isActive={currentView === 'document'}
-          onClick={() => onViewChange('document')}
-        />
-      )}
+      {/* Dynamic document tabs - can be closed */}
+      {openDocuments.map(document => (
+        <Header.Item key={`document-${document.id}`}>
+          <Header.Link
+            href="#"
+            onClick={(e: React.MouseEvent) => {
+              e.preventDefault();
+              onTabChange(`document-${document.id}`);
+            }}
+            title={document.description}
+            sx={{
+              fontWeight: 'normal',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              pr: 1,
+              color:
+                activeTabId === `document-${document.id}`
+                  ? `${COLORS.brand.primary} !important`
+                  : `${COLORS.text.primary} !important`,
+              borderBottom:
+                activeTabId === `document-${document.id}`
+                  ? `2px solid ${COLORS.brand.primary}`
+                  : '2px solid transparent',
+              paddingBottom: '4px',
+              textDecoration: 'none !important',
+              backgroundColor: 'transparent !important',
+              outline: 'none',
+              '&:hover': {
+                textDecoration: 'none !important',
+                color: `${COLORS.brand.primary} !important`,
+                backgroundColor: 'transparent !important',
+              },
+              '&:active, &:visited': {
+                color:
+                  activeTabId === `document-${document.id}`
+                    ? `${COLORS.brand.primary} !important`
+                    : `${COLORS.text.primary} !important`,
+                backgroundColor: 'transparent !important',
+              },
+              '&:focus, &:focus-visible': {
+                color:
+                  activeTabId === `document-${document.id}`
+                    ? `${COLORS.brand.primary} !important`
+                    : `${COLORS.text.primary} !important`,
+                backgroundColor: 'transparent !important',
+                outline: '2px solid',
+                outlineColor: 'accent.emphasis',
+                outlineOffset: '-2px',
+              },
+              '& span': {
+                color: 'inherit !important',
+              },
+              '& svg': {
+                color: 'inherit !important',
+              },
+            }}
+          >
+            <PencilIcon size={16} />
+            <span>{document.name}</span>
+            <IconButton
+              icon={XIcon}
+              size="small"
+              aria-label="Close tab"
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDocumentClose(document.id);
+              }}
+              sx={{
+                width: '18px',
+                height: '18px',
+                padding: 0,
+                ml: 1,
+                color: 'fg.muted',
+                '&:hover': {
+                  backgroundColor: 'neutral.muted',
+                  color: 'fg.default',
+                },
+              }}
+            />
+          </Header.Link>
+        </Header.Item>
+      ))}
 
       <Header.Item full />
-    </>
+    </Box>
   );
 };
 

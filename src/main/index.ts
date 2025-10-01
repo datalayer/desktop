@@ -4,29 +4,20 @@
  */
 
 /**
- * @module main/index
- *
- * Clean main process entry point for the Datalayer Desktop Electron application.
+ * Main process entry point for the Datalayer Desktop Electron application.
  * Coordinates initialization of all application components and services.
  *
- * Architecture:
- * - Logging configuration and console overrides
- * - Application lifecycle management
- * - IPC handler registration
- * - Service initialization
+ * @module main/index
  */
 
-// Initialize logging FIRST
 import { initializeLogging, setupConsoleOverrides } from './config/logging';
 import log from 'electron-log/main';
 
-// Initialize logging immediately
 initializeLogging();
 setupConsoleOverrides();
 
 // Core Electron imports
-import * as electron from 'electron';
-const { app, ipcMain, shell } = electron;
+import { app, ipcMain, shell } from 'electron';
 import { getMainWindow } from './app/window-manager';
 
 // Application components
@@ -64,7 +55,8 @@ interface WebSocketConfig {
 }
 
 /**
- * Register all IPC handlers for the application
+ * Register all IPC handlers for the application.
+ * Configures handlers for authentication, environments, runtimes, notebooks, and collaboration.
  */
 function registerIPCHandlers(): void {
   // System handlers
@@ -89,7 +81,10 @@ function registerIPCHandlers(): void {
     };
   });
 
-  // Auth state broadcasting utility
+  /**
+   * Broadcast authentication state changes to renderer process.
+   * @param authState - Authentication state to broadcast
+   */
   function broadcastAuthState(authState: any) {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -170,12 +165,12 @@ function registerIPCHandlers(): void {
 
   ipcMain.handle('datalayer:create-runtime', async (_, options) => {
     const runtime = await sdkBridge.call(
-      'ensure_runtime',
-      options.environment,
-      options.credits || 100,
-      true, // waitForReady
-      120000, // maxWaitTime
-      true // reuseExisting
+      'createRuntime',
+      options.environmentName, // environmentName
+      options.type, // type: 'notebook' | 'terminal' | 'job'
+      options.givenName, // givenName
+      options.minutesLimit, // minutesLimit
+      undefined // fromSnapshotId
     );
     return runtime; // Returns RuntimeJSON directly, throws on error
   });
@@ -230,12 +225,25 @@ function registerIPCHandlers(): void {
     'datalayer:create-notebook',
     async (_, { spaceId, name, description }) => {
       const notebook = await sdkBridge.call(
-        'create_notebook',
+        'createNotebook',
         spaceId,
         name,
         description
       );
       return notebook; // Returns NotebookJSON directly, throws on error
+    }
+  );
+
+  ipcMain.handle(
+    'datalayer:create-lexical',
+    async (_, { spaceId, name, description }) => {
+      const lexical = await sdkBridge.call(
+        'createLexical',
+        spaceId,
+        name,
+        description
+      );
+      return lexical; // Returns LexicalJSON directly, throws on error
     }
   );
 
@@ -254,6 +262,13 @@ function registerIPCHandlers(): void {
     const items = await sdkBridge.call('get_space_items', spaceId);
     return items; // Returns Array<NotebookJSON | LexicalJSON> directly, throws on error
   });
+
+  ipcMain.handle('datalayer:get-content', async (_, itemId: string) => {
+    const content = await sdkBridge.call('getContent', itemId);
+    return content; // Returns item content from CDN or API, throws on error
+  });
+
+  // Note: create-notebook and create-lexical handlers are already registered above
 
   // Collaboration handlers
   ipcMain.handle(
@@ -411,7 +426,8 @@ function registerIPCHandlers(): void {
 }
 
 /**
- * Main application initialization
+ * Main application initialization.
+ * Initializes SDK bridge, registers IPC handlers, and starts the application.
  */
 async function main(): Promise<void> {
   try {

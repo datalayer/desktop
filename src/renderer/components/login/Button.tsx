@@ -4,9 +4,9 @@
  */
 
 /**
+ * Login button component with loading states and accessibility features.
+ *
  * @module Button
- * @description Login button component with loading states and accessibility features.
- * Provides visual feedback during authentication and includes comprehensive screen reader support.
  */
 
 import React from 'react';
@@ -16,13 +16,7 @@ import { COLORS } from '../../../shared/constants/colors';
 import { LoginButtonProps } from '../../../shared/types';
 
 /**
- * @component Button
- * @description Renders the login/connect button with loading and disabled states
- * @param {LoginButtonProps} props - The component props
- * @param {boolean} props.loading - Whether authentication is in progress
- * @param {boolean} props.disabled - Whether the button should be disabled
- * @param {function} props.onClick - Handler for button clicks
- * @returns {JSX.Element} The rendered login button component
+ * Renders the login/connect button with loading and disabled states.
  */
 const Button: React.FC<LoginButtonProps> = ({ loading, disabled, onClick }) => {
   return (

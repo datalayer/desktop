@@ -4,10 +4,10 @@
  */
 
 /**
- * @module renderer/services/serviceManagerLoader
- *
- * Runtime loader for ServiceManager that handles CommonJS/ESM module resolution issues.
+ * Runtime loader for ServiceManager handling CommonJS/ESM module resolution.
  * Provides dynamic loading of JupyterLab services to work around bundling conflicts.
+ *
+ * @module renderer/services/serviceManagerLoader
  */
 
 let realServiceManager: any = null;

@@ -99,6 +99,7 @@ export default defineConfig({
         process.env.NODE_ENV || 'production'
       ),
       global: 'globalThis',
+      __dirname: '""',
     },
     esbuild: {
       // Ensure native globals are preserved
@@ -209,6 +210,14 @@ export default defineConfig({
           if (warning.message.includes('Use of eval')) return;
           warn(warning);
         },
+      },
+    },
+    resolve: {
+      alias: {
+        '@datalayer/jupyter-react': resolve(
+          __dirname,
+          '../jupyter-ui/packages/react/lib'
+        ),
       },
     },
     plugins: [
@@ -2637,7 +2646,7 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
         '@datalayer/core': resolve(__dirname, '../core'),
         '@datalayer/jupyter-react': resolve(
           __dirname,
-          'node_modules/@datalayer/jupyter-react'
+          '../jupyter-ui/packages/react/lib'
         ),
         '~react-toastify': 'react-toastify',
         json5: resolve(__dirname, 'node_modules/json5/lib/index.js'),

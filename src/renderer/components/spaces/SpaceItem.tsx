@@ -4,57 +4,42 @@
  */
 
 /**
- * @module LibraryItem
- * @description Individual library item component with actions (open, download, delete).
+ * Individual space item component with actions (open, download, delete).
  * Displays item information and provides action buttons with custom styling and accessibility features.
+ *
+ * @module SpaceItem
  */
 
 import React from 'react';
-import { Box, Text, ActionList, IconButton } from '@primer/react';
-import { PlayIcon, DownloadIcon, TrashIcon } from '@primer/octicons-react';
+import { Box, Text, ActionList, IconButton, Button } from '@primer/react';
+import { PencilIcon, DownloadIcon, TrashIcon } from '@primer/octicons-react';
 import { COLORS } from '../../../shared/constants/colors';
+import type { DocumentItem } from '../../../shared/types';
 
 /**
- * @interface LibraryItemProps
- * @description Props for the LibraryItem component
+ * Props for the SpaceItem component.
  */
-export interface LibraryItemProps {
-  item: {
-    id: string;
-    name: string;
-    modifiedAt: string;
-    description?: string;
-    type?: string;
-  };
+export interface SpaceItemProps {
+  item: DocumentItem; // Use SDK types directly
   icon: React.ComponentType<{ size?: number }>;
   isSelected: boolean;
-  onSelect: () => void;
+  onOpen: () => void;
+  onEdit: () => void;
   onDownload: () => void;
   onDelete: () => void;
-  showOpenButton?: boolean;
 }
 
 /**
- * @component LibraryItem
- * @description Renders a single library item with action buttons
- * @param {LibraryItemProps} props - The component props
- * @param {Object} props.item - The library item data
- * @param {React.ComponentType} props.icon - Icon component to display
- * @param {boolean} props.isSelected - Whether the item is selected
- * @param {function} props.onSelect - Handler for item selection
- * @param {function} props.onDownload - Handler for download action
- * @param {function} props.onDelete - Handler for delete action
- * @param {boolean} [props.showOpenButton=false] - Whether to show the open button
- * @returns {JSX.Element} The rendered library item component
+ * Renders a single space item with action buttons
  */
-const LibraryItem: React.FC<LibraryItemProps> = ({
+const SpaceItem: React.FC<SpaceItemProps> = ({
   item,
   icon: _Icon,
   isSelected,
-  onSelect,
+  onOpen,
+  onEdit,
   onDownload,
   onDelete,
-  showOpenButton = false,
 }) => {
   return (
     <ActionList.Item
@@ -101,36 +86,41 @@ const LibraryItem: React.FC<LibraryItemProps> = ({
         )}
       </Box>
       <ActionList.TrailingVisual>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {showOpenButton && (
-            <IconButton
-              aria-label="Open"
-              icon={PlayIcon}
-              size="large"
-              variant="invisible"
-              sx={{
-                color: COLORS.brand.primary + ' !important',
-                '& svg': {
-                  color: COLORS.brand.primary + ' !important',
-                  fill: COLORS.brand.primary + ' !important',
-                  width: '20px',
-                  height: '20px',
-                },
-                '&:hover': {
-                  color: COLORS.brand.primaryHover + ' !important',
-                  backgroundColor: `${COLORS.brand.primary}15`,
-                  '& svg': {
-                    color: COLORS.brand.primaryHover + ' !important',
-                    fill: COLORS.brand.primaryHover + ' !important',
-                  },
-                },
-              }}
-              onClick={e => {
-                e.stopPropagation();
-                onSelect();
-              }}
-            />
-          )}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Button
+            size="small"
+            variant="invisible"
+            onClick={e => {
+              e.stopPropagation();
+              onOpen();
+            }}
+            sx={{
+              color: COLORS.brand.primary + ' !important',
+              fontWeight: 'semibold',
+              '&:hover': {
+                color: COLORS.brand.primaryHover + ' !important',
+                backgroundColor: `${COLORS.brand.primary}15`,
+              },
+            }}
+          >
+            Open
+          </Button>
+          <IconButton
+            aria-label="Edit"
+            icon={PencilIcon}
+            size="large"
+            variant="invisible"
+            sx={{
+              '& svg': {
+                width: '20px',
+                height: '20px',
+              },
+            }}
+            onClick={e => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          />
           <IconButton
             aria-label="Download"
             icon={DownloadIcon}
@@ -180,4 +170,4 @@ const LibraryItem: React.FC<LibraryItemProps> = ({
   );
 };
 
-export default LibraryItem;
+export default SpaceItem;

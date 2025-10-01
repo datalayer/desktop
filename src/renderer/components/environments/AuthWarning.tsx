@@ -4,8 +4,9 @@
  */
 
 /**
+ * Warning component displayed when user is not authenticated.
+ *
  * @module renderer/components/environments/AuthWarning
- * @description Warning component displayed when user is not authenticated.
  */
 
 import React from 'react';
@@ -14,9 +15,6 @@ import { AlertIcon } from '@primer/octicons-react';
 
 /**
  * Authentication warning component.
- * Displays a warning message when the user needs to login to view environments.
- * @component
- * @returns Rendered warning flash message
  */
 const AuthWarning: React.FC = () => {
   return (

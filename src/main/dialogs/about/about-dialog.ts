@@ -4,10 +4,10 @@
  */
 
 /**
- * @module main/dialogs/about/about-dialog
- *
  * About dialog creation and management.
  * Handles the modal about window with secure event handling.
+ *
+ * @module main/dialogs/about/about-dialog
  */
 
 import { BrowserWindow, ipcMain } from 'electron';
@@ -17,7 +17,7 @@ import { getMainWindow } from '../../app/window-manager';
 import { ABOUT_DIALOG_CONFIG } from '../../config/constants';
 
 /**
- * Create and show the About dialog
+ * Create and show the About dialog.
  */
 export function createAboutDialog(): void {
   const mainWindow = getMainWindow();
@@ -55,7 +55,8 @@ export function createAboutDialog(): void {
 }
 
 /**
- * Set up event handlers for the about dialog
+ * Set up event handlers for the about dialog.
+ * Configures ESC key closing and IPC communication with proper cleanup.
  */
 function setupAboutDialogHandlers(aboutWindow: BrowserWindow): void {
   // Create named handlers for proper cleanup

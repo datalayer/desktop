@@ -27,7 +27,7 @@ import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
-import { ViewType, User, NotebookData, DocumentData } from '../shared/types';
+import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 
@@ -52,7 +52,6 @@ const App: React.FC = () => {
     return cleanup;
   }, []);
 
-  const [currentView, setCurrentView] = useState<ViewType>('environments');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -62,14 +61,12 @@ const App: React.FC = () => {
     token: string | null;
     runUrl: string;
   } | null>(null);
-  const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
-    null
-  );
-  const [selectedDocument, setSelectedDocument] = useState<DocumentData | null>(
-    null
-  );
-  const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
-  const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
+
+  // Support multiple open notebooks and documents
+  const [openNotebooks, setOpenNotebooks] = useState<NotebookData[]>([]);
+  const [openDocuments, setOpenDocuments] = useState<DocumentData[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('environments');
+
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   const { configuration } = useCoreStore();
 
@@ -96,12 +93,9 @@ const App: React.FC = () => {
               setAuthState(currentAuthState);
               setIsAuthenticated(true);
 
-              // Use user data directly from SDK
+              // User is already a plain JSON object from bridge
               if (currentAuthState.user) {
-                const userJson = currentAuthState.user?.toJSON
-                  ? currentAuthState.user.toJSON()
-                  : currentAuthState.user;
-                setUser(userJson);
+                setUser(currentAuthState.user);
               }
             }
           }
@@ -166,12 +160,9 @@ const App: React.FC = () => {
       setAuthState(newAuthState);
       setIsAuthenticated(newAuthState.isAuthenticated);
 
+      // User is already a plain JSON object from bridge
       if (newAuthState.user) {
-        // Use user data directly from SDK
-        const userJson = newAuthState.user?.toJSON
-          ? newAuthState.user.toJSON()
-          : newAuthState.user;
-        setUser(userJson);
+        setUser(newAuthState.user);
       } else {
         setUser(null);
       }
@@ -267,17 +258,51 @@ const App: React.FC = () => {
 
   // Monitor network connectivity
 
-  const handleNotebookEditorDeactivate = useCallback(() => {
-    setIsNotebookEditorActive(false);
-    setCurrentView('notebooks');
-    setSelectedNotebook(null);
-  }, []);
+  // Close a specific notebook tab
+  const handleNotebookClose = useCallback(
+    (notebookId: string) => {
+      setOpenNotebooks(prev => {
+        const filtered = prev.filter(nb => nb.id !== notebookId);
 
-  const handleDocumentEditorDeactivate = useCallback(() => {
-    setIsDocumentEditorActive(false);
-    setCurrentView('notebooks');
-    setSelectedDocument(null);
-  }, []);
+        // If we closed the active tab, switch to another tab or spaces
+        if (activeTabId === `notebook-${notebookId}`) {
+          if (filtered.length > 0) {
+            setActiveTabId(`notebook-${filtered[0].id}`);
+          } else if (openDocuments.length > 0) {
+            setActiveTabId(`document-${openDocuments[0].id}`);
+          } else {
+            setActiveTabId('spaces');
+          }
+        }
+
+        return filtered;
+      });
+    },
+    [activeTabId, openDocuments]
+  );
+
+  // Close a specific document tab
+  const handleDocumentClose = useCallback(
+    (documentId: string) => {
+      setOpenDocuments(prev => {
+        const filtered = prev.filter(doc => doc.id !== documentId);
+
+        // If we closed the active tab, switch to another tab or spaces
+        if (activeTabId === `document-${documentId}`) {
+          if (filtered.length > 0) {
+            setActiveTabId(`document-${filtered[0].id}`);
+          } else if (openNotebooks.length > 0) {
+            setActiveTabId(`notebook-${openNotebooks[0].id}`);
+          } else {
+            setActiveTabId('spaces');
+          }
+        }
+
+        return filtered;
+      });
+    },
+    [activeTabId, openNotebooks]
+  );
 
   const handleLogout = async () => {
     try {
@@ -286,78 +311,103 @@ const App: React.FC = () => {
         await window.datalayerClient.logout();
       }
       setIsAuthenticated(false);
-      setCurrentView('environments');
-      setSelectedNotebook(null);
-      setSelectedDocument(null);
-      setIsNotebookEditorActive(false);
-      setIsDocumentEditorActive(false);
+      setOpenNotebooks([]);
+      setOpenDocuments([]);
+      setActiveTabId('environments');
     } catch (error) {
       logger.error('Logout failed:', error);
     }
   };
 
-  const handleNotebookSelect = (notebook: NotebookData) => {
-    setSelectedNotebook(notebook);
-    setCurrentView('notebook');
-    setIsNotebookEditorActive(true);
-  };
+  const handleNotebookSelect = useCallback((notebook: NotebookData) => {
+    setOpenNotebooks(prev => {
+      // Check if already open
+      const exists = prev.find(nb => nb.id === notebook.id);
+      if (exists) {
+        // Just switch to it
+        setActiveTabId(`notebook-${notebook.id}`);
+        return prev;
+      }
+      // Add new notebook
+      setActiveTabId(`notebook-${notebook.id}`);
+      return [...prev, notebook];
+    });
+  }, []);
 
-  const handleDocumentSelect = (document: DocumentData) => {
-    setSelectedDocument(document);
-    setCurrentView('document');
-    setIsDocumentEditorActive(true);
-  };
+  const handleDocumentSelect = useCallback((document: DocumentData) => {
+    setOpenDocuments(prev => {
+      // Check if already open
+      const exists = prev.find(doc => doc.id === document.id);
+      if (exists) {
+        // Just switch to it
+        setActiveTabId(`document-${document.id}`);
+        return prev;
+      }
+      // Add new document
+      setActiveTabId(`document-${document.id}`);
+      return [...prev, document];
+    });
+  }, []);
 
   const renderView = (): React.ReactElement => {
-    // Handle notebook view with conditional mounting to avoid MathJax conflicts
-    if (currentView === 'notebook' && selectedNotebook) {
-      return (
-        <Suspense
-          fallback={
-            <LoadingSpinner
-              variant="fullscreen"
-              message="Loading notebook editor..."
-            />
-          }
-        >
-          <NotebookEditor
-            key={`notebook-${selectedNotebook.id}`}
-            selectedNotebook={selectedNotebook}
-            onClose={() => {
-              setCurrentView('notebooks');
-              setSelectedNotebook(null);
-              setIsNotebookEditorActive(false);
-            }}
-            onRuntimeTerminated={handleNotebookEditorDeactivate}
-          />
-        </Suspense>
-      );
-    }
-
-    // Handle document view
-    if (currentView === 'document' && selectedDocument) {
-      return (
-        <Suspense
-          fallback={
-            <LoadingSpinner
-              variant="inline"
-              message="Loading document editor..."
-            />
-          }
-        >
-          <DocumentEditor
-            key={`document-${selectedDocument.id}`}
-            selectedDocument={selectedDocument}
-            onClose={handleDocumentEditorDeactivate}
-          />
-        </Suspense>
-      );
-    }
-
-    // For list views, keep them mounted and toggle visibility
+    // Keep all views mounted and toggle visibility to avoid remounts
     return (
       <>
-        <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
+        {/* Render all open notebooks */}
+        {openNotebooks.map(notebook => (
+          <Box
+            key={`notebook-${notebook.id}`}
+            sx={{
+              flex: 1,
+              display:
+                activeTabId === `notebook-${notebook.id}` ? 'flex' : 'none',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            <Suspense
+              fallback={
+                <LoadingSpinner
+                  variant="fullscreen"
+                  message="Loading notebook editor..."
+                />
+              }
+            >
+              <NotebookEditor notebookId={notebook.id} />
+            </Suspense>
+          </Box>
+        ))}
+
+        {/* Render all open documents */}
+        {openDocuments.map(document => (
+          <Box
+            key={`document-${document.id}`}
+            sx={{
+              flex: 1,
+              display:
+                activeTabId === `document-${document.id}` ? 'flex' : 'none',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            <Suspense
+              fallback={
+                <LoadingSpinner
+                  variant="inline"
+                  message="Loading document editor..."
+                />
+              }
+            >
+              <DocumentEditor
+                selectedDocument={document}
+                onClose={() => handleDocumentClose(document.id)}
+              />
+            </Suspense>
+          </Box>
+        ))}
+
+        {/* Library view */}
+        <Box sx={{ display: activeTabId === 'spaces' ? 'block' : 'none' }}>
           <Suspense
             fallback={
               <LoadingSpinner variant="inline" message="Loading library..." />
@@ -370,8 +420,10 @@ const App: React.FC = () => {
             />
           </Suspense>
         </Box>
+
+        {/* Environments view */}
         <Box
-          sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
+          sx={{ display: activeTabId === 'environments' ? 'block' : 'none' }}
         >
           <Environments />
         </Box>
@@ -429,20 +481,30 @@ const App: React.FC = () => {
       >
         <AppLayout>
           <AppHeader
-            currentView={currentView}
-            isNotebookEditorActive={isNotebookEditorActive}
-            isDocumentEditorActive={isDocumentEditorActive}
+            activeTabId={activeTabId}
+            openNotebooks={openNotebooks}
+            openDocuments={openDocuments}
             isAuthenticated={isAuthenticated}
             user={user}
-            onViewChange={setCurrentView}
+            onTabChange={setActiveTabId}
+            onNotebookClose={handleNotebookClose}
+            onDocumentClose={handleDocumentClose}
             onLogout={handleLogout}
           />
 
           <Box
             sx={{
               flex: 1,
-              overflow: 'auto',
-              p: currentView === 'notebook' ? 0 : 3,
+              overflow: activeTabId.startsWith('notebook-') ? 'hidden' : 'auto',
+              p:
+                activeTabId.startsWith('notebook-') ||
+                activeTabId.startsWith('document-')
+                  ? 0
+                  : 3,
+              position: 'relative',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {renderView()}

@@ -4,13 +4,13 @@
  */
 
 /**
+ * Environment card component displaying environment details and selection state.
+ *
  * @module renderer/components/environments/Card
- * @description Environment card component displaying environment details and selection state.
  */
 
 import React from 'react';
-import { Box, Heading, Text, Button } from '@primer/react';
-import { COLORS } from '../../../shared/constants/colors';
+import { Box, Heading, Text } from '@primer/react';
 import { EnvironmentCardProps } from '../../../shared/types';
 import Icon from './Icon';
 import TypeLabel from './TypeLabel';
@@ -18,20 +18,9 @@ import Description from './Description';
 import Resources from './Resources';
 
 /**
- * Environment card component for selecting compute environments.
- * Displays environment details, icon, type, resources, and selection state.
- * @component
- * @param props - Component props
- * @param props.environment - Environment data to display
- * @param props.isSelected - Whether this environment is currently selected
- * @param props.onSelect - Callback when environment is selected
- * @returns Rendered environment card
+ * Environment card component displaying environment details.
  */
-const Card: React.FC<EnvironmentCardProps> = ({
-  environment,
-  isSelected,
-  onSelect,
-}) => {
+const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
   return (
     <Box
       key={environment.name}
@@ -40,31 +29,9 @@ const Card: React.FC<EnvironmentCardProps> = ({
         mb: 2,
         bg: 'canvas.subtle',
         border: '1px solid',
-        borderColor: isSelected ? COLORS.brand.primary : 'border.default',
+        borderColor: 'border.default',
         borderRadius: 2,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: COLORS.brand.primaryLight,
-          bg: 'canvas.default',
-        },
-        '&:focus-visible': {
-          outline: '2px solid',
-          outlineColor: COLORS.brand.primary,
-          outlineOffset: '2px',
-        },
       }}
-      onClick={() => onSelect(environment.name)}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect(environment.name);
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={`Select ${environment.title || environment.name} environment`}
-      aria-pressed={isSelected}
     >
       <Box
         sx={{
@@ -107,28 +74,6 @@ const Card: React.FC<EnvironmentCardProps> = ({
             )}
           </Box>
         </Box>
-
-        {isSelected && (
-          <Button
-            size="small"
-            aria-label={`${environment.title || environment.name} is currently selected`}
-            sx={{
-              backgroundColor: COLORS.brand.primary,
-              color: 'white',
-              cursor: 'default',
-              '&:hover': {
-                backgroundColor: COLORS.brand.primary,
-              },
-              '&:focus-visible': {
-                outline: '2px solid',
-                outlineColor: COLORS.palette.white,
-                outlineOffset: '2px',
-              },
-            }}
-          >
-            Selected
-          </Button>
-        )}
       </Box>
 
       <Resources resources={environment.resources} />

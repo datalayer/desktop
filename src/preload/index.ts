@@ -4,22 +4,10 @@
  */
 
 /**
+ * Preload script providing secure bridge between main and renderer processes.
+ * Exposes electronAPI, proxyAPI, and datalayerClient to the renderer via context isolation.
+ *
  * @module preload/index
- *
- * Preload script that provides a secure bridge between the main and renderer processes.
- * Implements context isolation by exposing carefully controlled APIs to the renderer.
- * All communication between renderer and main process goes through this secure bridge.
- *
- * Exposed APIs:
- * - electronAPI: System information, menu actions, platform detection
- * - proxyAPI: HTTP and WebSocket proxying for Jupyter kernel communication
- * - datalayerAPI: Authentication, runtime management, notebook operations
- *
- * Security features:
- * - Context isolation enabled
- * - No direct Node.js access from renderer
- * - All IPC calls are explicitly defined
- * - Type-safe API contracts
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
@@ -36,8 +24,7 @@ import type {
 import { User } from '@datalayer/core/lib/client/models/User';
 
 /**
- * Expose Electron API methods to the renderer process.
- * Provides safe access to system information and menu actions.
+ * Electron API for system information and menu actions.
  */
 contextBridge.exposeInMainWorld('electronAPI', {
   // Get app version info
@@ -86,8 +73,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 });
 
 /**
- * Expose proxy APIs for ServiceManager.
- * Provides HTTP and WebSocket proxy functionality for Jupyter kernel communication.
+ * Proxy API for HTTP and WebSocket communication with Jupyter kernels.
  */
 contextBridge.exposeInMainWorld('proxyAPI', {
   // HTTP proxy
@@ -136,8 +122,7 @@ contextBridge.exposeInMainWorld('proxyAPI', {
 });
 
 /**
- * Expose Datalayer API methods.
- * Provides access to authentication, runtime management, and notebook operations.
+ * Datalayer API for authentication, runtime management, and notebook operations.
  */
 contextBridge.exposeInMainWorld('datalayerClient', {
   // Authentication - SDK only needs token, uses default URLs
@@ -154,9 +139,10 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   listEnvironments: () => ipcRenderer.invoke('datalayer:list-environments'),
 
   createRuntime: (options: {
-    environment: string;
-    name?: string;
-    credits?: number;
+    environmentName: string;
+    type: 'notebook' | 'terminal' | 'job';
+    givenName: string;
+    minutesLimit: number;
   }) => ipcRenderer.invoke('datalayer:create-runtime', options),
 
   deleteRuntime: (runtimeId: string) =>
@@ -191,6 +177,16 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   getSpaceItems: (spaceId: string) =>
     ipcRenderer.invoke('datalayer:get-space-items', spaceId),
 
+  getContent: (itemId: string) =>
+    ipcRenderer.invoke('datalayer:get-content', itemId),
+
+  createLexical: (spaceId: string, name: string, description: string) =>
+    ipcRenderer.invoke('datalayer:create-lexical', {
+      spaceId,
+      name,
+      description,
+    }),
+
   // Collaboration
   getCollaborationSession: (documentId: string) =>
     ipcRenderer.invoke('datalayer:get-collaboration-session', documentId),
@@ -204,7 +200,6 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 
 /**
  * Proxy API interface for HTTP and WebSocket communication.
- * Used primarily for Jupyter kernel connections.
  */
 export interface ProxyAPI {
   httpRequest: (options: {
@@ -251,7 +246,6 @@ export interface ProxyAPI {
 
 /**
  * Electron API interface for system and application information.
- * Provides access to version info, environment variables, and platform actions.
  */
 export interface ElectronAPI {
   getVersion: () => Promise<{
@@ -282,11 +276,7 @@ export interface ElectronAPI {
 
 /**
  * Datalayer IPC Bridge API interface.
- * Provides IPC methods for interacting with the Datalayer SDK in the main process.
- * Returns SDK JSON types directly, using Promise rejection for error handling.
- *
- * All methods return data directly on success and throw errors on failure.
- * This provides a cleaner API that aligns with the SDK's own behavior.
+ * Provides methods for interacting with the Datalayer SDK via IPC.
  */
 export interface DatalayerIPCClient {
   // Authentication methods - return void on success, throw on error
@@ -311,9 +301,10 @@ export interface DatalayerIPCClient {
   // Environment and runtime methods - return SDK JSON types directly
   listEnvironments: () => Promise<EnvironmentJSON[]>;
   createRuntime: (options: {
-    environment: string;
-    name?: string;
-    credits?: number;
+    environmentName: string;
+    type: 'notebook' | 'terminal' | 'job';
+    givenName: string;
+    minutesLimit: number;
   }) => Promise<RuntimeJSON>;
   deleteRuntime: (podName: string) => Promise<void>;
   getRuntime: (runtimeId: string) => Promise<RuntimeJSON>;
@@ -337,6 +328,12 @@ export interface DatalayerIPCClient {
   getSpaceItems: (
     spaceId: string
   ) => Promise<Array<NotebookJSON | LexicalJSON>>;
+  getContent: (itemId: string) => Promise<any>;
+  createLexical: (
+    spaceId: string,
+    name: string,
+    description: string
+  ) => Promise<LexicalJSON>;
 
   // Collaboration methods
   getCollaborationSession: (documentId: string) => Promise<string>; // Returns session ID directly
@@ -352,7 +349,6 @@ export interface DatalayerIPCClient {
 
 /**
  * Global window interface extensions.
- * Makes APIs available on the window object in the renderer process.
  */
 declare global {
   interface Window {

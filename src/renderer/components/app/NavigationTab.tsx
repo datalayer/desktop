@@ -4,8 +4,9 @@
  */
 
 /**
+ * Individual navigation tab component with active state styling.
+ *
  * @module renderer/components/app/NavigationTab
- * @description Individual navigation tab component with active state styling.
  */
 
 import React from 'react';
@@ -15,15 +16,6 @@ import { NavigationTabProps } from '../../../shared/types';
 
 /**
  * Navigation tab component for app header.
- * Displays an icon and label with active state indication.
- * @component
- * @param props - Component props
- * @param props.label - Tab label text
- * @param props.icon - Icon component to display
- * @param props.isActive - Whether this tab is currently active
- * @param props.onClick - Click handler for tab selection
- * @param props.aria-label - Optional ARIA label for accessibility
- * @returns Rendered navigation tab
  */
 const NavigationTab: React.FC<NavigationTabProps> = ({
   label,
@@ -31,6 +23,7 @@ const NavigationTab: React.FC<NavigationTabProps> = ({
   isActive,
   onClick,
   'aria-label': ariaLabel,
+  title,
 }) => {
   return (
     <Header.Item>
@@ -41,35 +34,44 @@ const NavigationTab: React.FC<NavigationTabProps> = ({
           onClick();
         }}
         aria-label={ariaLabel || label}
+        title={title}
         sx={{
           fontWeight: 'normal',
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          color: isActive ? COLORS.brand.primary : COLORS.text.primary,
+          color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
           borderBottom: isActive
             ? `2px solid ${COLORS.brand.primary}`
             : '2px solid transparent',
           paddingBottom: '4px',
+          textDecoration: 'none !important',
+          backgroundColor: 'transparent !important',
+          outline: 'none',
           '&:hover': {
-            textDecoration: 'none',
+            textDecoration: 'none !important',
             color: `${COLORS.brand.primary} !important`,
+            backgroundColor: 'transparent !important',
             borderBottom: isActive
               ? `2px solid ${COLORS.brand.primary}`
               : '2px solid transparent',
           },
-          '&:active': {
-            color: `${COLORS.brand.primary} !important`,
+          '&:active, &:visited': {
+            color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
+            backgroundColor: 'transparent !important',
           },
-          '&:visited': {
-            color: isActive
-              ? `${COLORS.brand.primary} !important`
-              : `${COLORS.text.primary} !important`,
+          '&:focus, &:focus-visible': {
+            color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
+            backgroundColor: 'transparent !important',
+            outline: '2px solid',
+            outlineColor: 'accent.emphasis',
+            outlineOffset: '-2px',
           },
-          '&:focus': {
-            color: isActive
-              ? `${COLORS.brand.primary} !important`
-              : `${COLORS.text.primary} !important`,
+          '& span': {
+            color: 'inherit !important',
+          },
+          '& svg': {
+            color: 'inherit !important',
           },
         }}
       >

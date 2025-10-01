@@ -4,11 +4,10 @@
  */
 
 /**
- * @module renderer/services/electronCollaborationProvider
- *
  * Electron-aware collaboration provider for Datalayer.
- * Uses IPC bridge instead of direct HTTP requests for secure
- * collaborative document editing in the desktop application.
+ * Uses IPC bridge for secure collaborative document editing.
+ *
+ * @module renderer/services/electronCollaborationProvider
  */
 
 import { YNotebook } from '@jupyter/ydoc';
@@ -90,7 +89,6 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
     options?: Record<string, unknown>
   ): Promise<void> {
     if (this.isConnected) {
-      // Already connected to Datalayer collaboration service
       return;
     }
 
@@ -156,10 +154,8 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       }
 
       // Request collaboration session from Datalayer via IPC
-      // Use the generic request method if the specific collaboration method isn't available yet
       let sessionId;
       if (window.datalayerClient.getCollaborationSession) {
-        // getCollaborationSession now returns the session ID directly
         sessionId =
           await window.datalayerClient.getCollaborationSession(documentId);
       } else {
@@ -202,8 +198,9 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
         }
       }
 
-      // Create WebSocket provider following original Datalayer pattern
+      // Create WebSocket provider
       // Both sessionId and token are passed as params to y-websocket
+
       this._provider = new WebsocketProvider(wsUrl, documentId, ydoc, {
         disableBc: true,
         params: wsParams,
@@ -227,6 +224,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       this._provider.on('sync', this._onSync);
       this._provider.on('connection-close', this._onConnectionClose);
     } catch (error) {
+      console.error('[ElectronCollaboration] Connection error:', error);
       this.setStatus(CollaborationStatus.Error);
       this._errorOccurred.emit(error as Error);
       throw error;
@@ -261,7 +259,6 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
     // Handle session expiration (code 4002)
     if (event.code === 4002) {
-      // Collaboration session expired
       // Attempt to reconnect could be implemented here
     }
   }

@@ -4,72 +4,58 @@
  */
 
 /**
- * @module LibrarySection
- * @description Section component for organizing library items by type (notebooks, folders, etc.).
- * Handles loading states, empty states, and renders collections of LibraryItem components.
+ * Section component for organizing space items by type (notebooks, folders, etc.).
+ * Handles loading states, empty states, and renders collections of SpaceItem components.
+ *
+ * @module SpaceSection
  */
 
 import React from 'react';
-import { Box, Heading, Text, ActionList } from '@primer/react';
-import LibraryItem from './LibraryItem';
+import { Box, Heading, Text, ActionList, Button } from '@primer/react';
+import { PlusIcon } from '@primer/octicons-react';
+import SpaceItem from './SpaceItem';
 import SkeletonItem from './SkeletonItem';
 
+import type { DocumentItem } from '../../../shared/types';
+
 /**
- * @interface LibrarySectionProps
- * @description Props for the LibrarySection component
+ * Props for the SpaceSection component.
  */
-export interface LibrarySectionProps {
+export interface SpaceSectionProps {
   title: string;
   icon: React.ComponentType<{ size?: number }>;
-  items: Array<{
-    id: string;
-    name: string;
-    modifiedAt: string;
-    description?: string;
-    type?: string;
-  }>;
+  items: DocumentItem[]; // Use SDK types directly
   loading: boolean;
   selectedItemId: string | null;
   emptyMessage: string;
-  onItemSelect: (item: any) => void;
-  onItemDownload: (item: any) => void;
-  onItemDelete: (item: any) => void;
-  showOpenButton?: boolean;
-  getItemIcon?: (item: any) => React.ComponentType<{ size?: number }>;
+  onItemOpen: (item: DocumentItem) => void;
+  onItemEdit: (item: DocumentItem) => void;
+  onItemDownload: (item: DocumentItem) => void;
+  onItemDelete: (item: DocumentItem) => void;
+  getItemIcon?: (item: DocumentItem) => React.ComponentType<{ size?: number }>;
   previousItemCount?: number;
+  onCreateNew?: () => void; // Optional create button handler
+  createButtonLabel?: string; // Custom label for the create button
 }
 
 /**
- * @component LibrarySection
- * @description Renders a section of library items with header, loading states, and empty states
- * @param {LibrarySectionProps} props - The component props
- * @param {string} props.title - Section title
- * @param {React.ComponentType} props.icon - Icon component for the section
- * @param {Array} props.items - Array of items to display
- * @param {boolean} props.loading - Whether the section is loading
- * @param {string | null} props.selectedItemId - ID of the currently selected item
- * @param {string} props.emptyMessage - Message to show when no items
- * @param {function} props.onItemSelect - Handler for item selection
- * @param {function} props.onItemDownload - Handler for item download
- * @param {function} props.onItemDelete - Handler for item deletion
- * @param {boolean} [props.showOpenButton=false] - Whether to show open button on items
- * @param {function} [props.getItemIcon] - Function to get icon for specific items
- * @param {number} [props.previousItemCount=0] - Previous item count for skeleton loading
- * @returns {JSX.Element} The rendered library section component
+ * Renders a section of space items with header, loading states, and empty states.
  */
-const LibrarySection: React.FC<LibrarySectionProps> = ({
+const SpaceSection: React.FC<SpaceSectionProps> = ({
   title,
   icon: SectionIcon,
   items,
   loading,
   selectedItemId,
   emptyMessage,
-  onItemSelect,
+  onItemOpen,
+  onItemEdit,
   onItemDownload,
   onItemDelete,
-  showOpenButton = false,
   getItemIcon,
   previousItemCount = 0,
+  onCreateNew,
+  createButtonLabel = 'New',
 }) => {
   return (
     <Box sx={{ mb: 3 }}>
@@ -91,6 +77,16 @@ const LibrarySection: React.FC<LibrarySectionProps> = ({
             {title} ({loading ? '...' : items.length})
           </Heading>
         </Box>
+        {onCreateNew && (
+          <Button
+            variant="primary"
+            size="small"
+            leadingVisual={PlusIcon}
+            onClick={onCreateNew}
+          >
+            {createButtonLabel}
+          </Button>
+        )}
       </Box>
 
       {loading ? (
@@ -117,15 +113,15 @@ const LibrarySection: React.FC<LibrarySectionProps> = ({
         >
           <ActionList>
             {items.map(item => (
-              <LibraryItem
+              <SpaceItem
                 key={item.id}
                 item={item}
                 icon={getItemIcon ? getItemIcon(item) : SectionIcon}
                 isSelected={selectedItemId === item.id}
-                onSelect={() => onItemSelect(item)}
+                onOpen={() => onItemOpen(item)}
+                onEdit={() => onItemEdit(item)}
                 onDownload={() => onItemDownload(item)}
                 onDelete={() => onItemDelete(item)}
-                showOpenButton={showOpenButton}
               />
             ))}
           </ActionList>
@@ -149,4 +145,4 @@ const LibrarySection: React.FC<LibrarySectionProps> = ({
   );
 };
 
-export default LibrarySection;
+export default SpaceSection;

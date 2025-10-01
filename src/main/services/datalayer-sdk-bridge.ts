@@ -4,10 +4,10 @@
  */
 
 /**
- * @module main/services/datalayer-sdk-bridge
- *
  * Direct SDK bridge for Electron app with smart method dispatching.
  * Provides automatic snake_case to camelCase conversion and model serialization.
+ *
+ * @module main/services/datalayer-sdk-bridge
  */
 
 import { DatalayerClient } from '@datalayer/core/lib/client/index';
@@ -19,7 +19,7 @@ import log from 'electron-log';
 
 /**
  * Direct SDK bridge with smart method dispatching.
- * Eliminates wrapper layers by providing direct SDK access with IPC-safe serialization.
+ * Provides direct SDK access with IPC-safe serialization and secure token storage.
  */
 export class DatalayerSDKBridge {
   private sdk: DatalayerClient;
@@ -29,7 +29,7 @@ export class DatalayerSDKBridge {
 
   /**
    * Get the token storage path (lazy-loaded).
-   * Ensures app is ready before accessing userData path.
+   * @returns Token storage file path
    */
   private get tokenPath(): string {
     if (!this._tokenPath) {
@@ -61,8 +61,8 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Initialize the SDK bridge - call this AFTER app is ready!
-   * IMPORTANT: Caller must ensure app.whenReady() has resolved before calling this.
+   * Initialize the SDK bridge.
+   * Restores authentication from stored token if available. Call after app is ready.
    */
   async initialize(): Promise<void> {
     if (!this.initialized) {
@@ -107,7 +107,8 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Save token securely using Electron's safeStorage
+   * Save token securely using Electron's safeStorage.
+   * @param token - Authentication token to save
    */
   private saveToken(token: string): void {
     try {
@@ -124,7 +125,8 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Load stored token from secure storage
+   * Load stored token from secure storage.
+   * @returns Decrypted token or null if not found
    */
   private loadStoredToken(): string | null {
     try {
@@ -141,7 +143,7 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Clear stored token
+   * Clear stored token.
    */
   private clearStoredToken(): void {
     try {
@@ -156,7 +158,7 @@ export class DatalayerSDKBridge {
 
   /**
    * Smart method dispatcher with automatic case conversion.
-   * Converts snake_case IPC calls to camelCase SDK methods.
+   * Handles special cases for login/logout/whoami and serializes results for IPC.
    *
    * @param method - Method name (snake_case or camelCase)
    * @param args - Method arguments
@@ -217,7 +219,8 @@ export class DatalayerSDKBridge {
 
   /**
    * Convert snake_case to camelCase.
-   * Examples: list_environments → listEnvironments, get_my_spaces → getMySpaces
+   * @param str - String to convert
+   * @returns Camel-cased string
    */
   private toCamelCase(str: string): string {
     return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -225,7 +228,9 @@ export class DatalayerSDKBridge {
 
   /**
    * Serialize data for safe IPC transmission.
-   * Automatically converts SDK models using toJSON() method.
+   * Converts SDK models using toJSON() method.
+   * @param data - Data to serialize
+   * @returns IPC-safe serialized data
    */
   private serializeForIPC(data: any): any {
     if (!data) return data;
@@ -255,7 +260,7 @@ export class DatalayerSDKBridge {
 
   /**
    * Get direct SDK access for complex operations.
-   * Use sparingly - prefer the call() method for consistency.
+   * @returns DatalayerClient instance
    */
   getSDK(): DatalayerClient {
     return this.sdk;
@@ -263,6 +268,7 @@ export class DatalayerSDKBridge {
 
   /**
    * Get SDK configuration for debugging.
+   * @returns SDK configuration object
    */
   getConfig() {
     return this.sdk.getConfig();
@@ -270,6 +276,7 @@ export class DatalayerSDKBridge {
 
   /**
    * Check if SDK is initialized.
+   * @returns True if initialized
    */
   isInitialized(): boolean {
     return this.initialized;
@@ -303,4 +310,3 @@ export class DatalayerSDKBridge {
  * Singleton SDK bridge instance.
  */
 export const sdkBridge = new DatalayerSDKBridge();
-export default sdkBridge;

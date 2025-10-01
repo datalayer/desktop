@@ -4,8 +4,9 @@
  */
 
 /**
- * @module NotebookTypes
- * @description TypeScript type definitions for notebook data structures, components, and operations
+ * Type definitions for notebook data structures, components, and operations.
+ *
+ * @module shared/types/notebook
  */
 
 import type { ServiceManager } from '@jupyterlab/services';
@@ -14,7 +15,6 @@ import type { ElectronCollaborationProvider } from '../../renderer/services/elec
 
 /**
  * Notebook data structure interface
- * @interface
  */
 export interface NotebookData {
   id: string;
@@ -88,6 +88,11 @@ export interface NotebookContentProps {
   notebookError: boolean;
   onNotebookError: (error: Error) => void;
   onResetNotebook: () => void;
+  Toolbar?: React.ComponentType<any>; // Optional toolbar component
+  hasKernel?: boolean; // Whether a real kernel is connected
+  isConnectingKernel?: boolean; // Whether kernel is connecting
+  kernelName?: string; // Current kernel name
+  onStartKernel?: () => void; // Callback to start kernel
 }
 
 export interface UseNotebookContentOptions {

@@ -4,8 +4,9 @@
  */
 
 /**
+ * Loading spinner component for notebook operations with contextual messages and accessibility support
+ *
  * @module NotebookLoadingSpinner
- * @description Loading spinner component for notebook operations with contextual messages and accessibility support
  */
 
 import React from 'react';
@@ -15,15 +16,6 @@ import { NotebookLoadingStateProps } from '../../../shared/types';
 
 /**
  * Loading spinner component that displays contextual loading messages for various notebook operations.
- * Provides accessibility support and different messages based on the type of loading operation.
- *
- * @component
- * @param props - Component properties
- * @param props.loading - General loading state
- * @param props.loadingNotebook - Whether notebook content is being loaded
- * @param props.isCreatingRuntime - Whether runtime environment is being created
- * @param props.message - Custom loading message to display
- * @returns The rendered loading spinner component or null if not loading
  */
 const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
   loading,
