@@ -428,16 +428,51 @@ desktop/
 │   ├── renderer/                  # Renderer process (React)
 │   │   ├── main.tsx              # 🎯 RENDERER ENTRY POINT
 │   │   ├── App.tsx               # 🎯 MAIN REACT COMPONENT
-│   │   ├── components/           # UI components (atomic design)
-│   │   │   ├── app/              # App-level components
+│   │   ├── components/           # UI components (domain-driven)
+│   │   │   ├── common/           # Shared, reusable components
+│   │   │   │   ├── LoadingSpinner.tsx
+│   │   │   │   └── ErrorMessage.tsx
+│   │   │   ├── app/              # App shell components
 │   │   │   │   ├── Header.tsx
 │   │   │   │   ├── UserMenu.tsx
-│   │   │   │   └── LoadingScreen.tsx
+│   │   │   │   ├── Layout.tsx
+│   │   │   │   ├── LoadingScreen.tsx
+│   │   │   │   ├── NavigationTab.tsx
+│   │   │   │   └── NavigationTabs.tsx
+│   │   │   ├── auth/             # Authentication components
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── ErrorMessage.tsx
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   ├── Form.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   └── Version.tsx
+│   │   │   ├── runtime/          # Runtime management components
+│   │   │   │   ├── CreateRuntimeDialog.tsx
+│   │   │   │   ├── RuntimeSelector.tsx
+│   │   │   │   ├── RuntimeProgressBar.tsx
+│   │   │   │   └── TerminateRuntimeDialog.tsx
 │   │   │   ├── environments/     # Environment selection
-│   │   │   ├── spaces/           # Library/spaces
-│   │   │   ├── notebook/         # Notebook components
-│   │   │   ├── document/         # Document components
-│   │   │   └── login/            # Login components
+│   │   │   │   ├── AuthWarning.tsx
+│   │   │   │   ├── Card.tsx
+│   │   │   │   ├── EmptyState.tsx
+│   │   │   │   └── ErrorState.tsx
+│   │   │   ├── spaces/           # Space/library management
+│   │   │   │   ├── CreateDocumentDialog.tsx
+│   │   │   │   ├── DeleteConfirmationDialog.tsx
+│   │   │   │   ├── EditItemDialog.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── SpaceItem.tsx
+│   │   │   │   └── SpaceSection.tsx
+│   │   │   ├── notebook/         # Notebook editor components
+│   │   │   │   ├── Content.tsx
+│   │   │   │   ├── ErrorBoundary.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── KernelSelectionDialog.tsx
+│   │   │   │   └── Toolbar.tsx
+│   │   │   └── document/         # Lexical document components
+│   │   │       ├── EditorInitPlugin.tsx
+│   │   │       ├── Header.tsx
+│   │   │       └── LexicalEditor.tsx
 │   │   ├── pages/                # Main views
 │   │   │   ├── Login.tsx         # Login page
 │   │   │   ├── Environments.tsx  # Environment selection
@@ -764,6 +799,52 @@ npm run type-check    # TypeScript
 ---
 
 ## Build System
+
+### Recent Improvements (January 2025)
+
+#### Memory Optimization
+Increased Node.js heap size from 4GB to 8GB to handle large dependency graphs during renderer build:
+```json
+{
+  "scripts": {
+    "build": "... NODE_OPTIONS=--max-old-space-size=8192 ..."
+  }
+}
+```
+
+#### Backbone Conflict Resolution
+Fixed duplicate `Backbone` identifier errors in @jupyter-widgets/base by renaming imports:
+```typescript
+// In electron.vite.config.ts - Custom Vite plugin
+{
+  name: 'fix-jupyter-widgets-backbone',
+  enforce: 'pre',
+  transform(code, id) {
+    if (id.includes('@jupyter-widgets/base')) {
+      // Rename Backbone → BackboneLib to avoid conflicts
+      let fixed = code.replace(
+        /import \* as Backbone from ['"]backbone['"]/g,
+        "import * as BackboneLib from 'backbone'"
+      );
+      fixed = fixed.replace(/\bBackbone\b(?!Lib)/g, 'BackboneLib');
+      return fixed;
+    }
+  }
+}
+```
+
+#### Dynamic Import Fix
+ServiceManager now uses dynamic imports to work around Rollup CommonJS export issues:
+```typescript
+// src/renderer/services/serviceManagerLoader.ts
+export async function loadServiceManager() {
+  const services = await import('@jupyterlab/services');
+  return {
+    ServiceManager: services.ServiceManager,
+    ServerConnection: services.ServerConnection,
+  };
+}
+```
 
 ### Vite Configuration ([`electron.vite.config.ts`](electron.vite.config.ts))
 
