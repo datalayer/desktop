@@ -19,6 +19,7 @@ jobs:
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Setup directory structure
@@ -29,6 +30,7 @@ jobs:
         with:
           path: datalayer/desktop
           fetch-depth: 0
+          retries: 3
 
       - name: Checkout core repository
         uses: actions/checkout@v4
@@ -36,6 +38,7 @@ jobs:
           repository: goanpeca/core
           ref: enh/sdk-updates
           path: datalayer/core
+          retries: 3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -90,6 +93,7 @@ jobs:
   lint-check:
     name: Lint Check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Setup directory structure
@@ -100,6 +104,7 @@ jobs:
         with:
           path: datalayer/desktop
           fetch-depth: 0
+          retries: 3
 
       - name: Checkout core repository
         uses: actions/checkout@v4
@@ -107,6 +112,7 @@ jobs:
           repository: goanpeca/core
           ref: enh/sdk-updates
           path: datalayer/core
+          retries: 3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -164,6 +170,7 @@ jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Setup directory structure
@@ -174,6 +181,7 @@ jobs:
         with:
           path: datalayer/desktop
           fetch-depth: 0
+          retries: 3
 
       - name: Checkout core repository
         uses: actions/checkout@v4
@@ -181,6 +189,7 @@ jobs:
           repository: goanpeca/core
           ref: enh/sdk-updates
           path: datalayer/core
+          retries: 3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

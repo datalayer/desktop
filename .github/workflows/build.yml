@@ -29,6 +29,7 @@ concurrency:
 jobs:
   build:
     name: Build ${{ matrix.platform }} (${{ matrix.arch }})
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -37,29 +38,29 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: x64
-            
+
           # Windows
           - os: windows-latest
             platform: win
             arch: x64
-            
+
           # macOS Universal (Intel + Apple Silicon)
           - os: macos-latest
             platform: mac
             arch: universal
-            
+
           # macOS Intel only
           - os: macos-13
             platform: mac
             arch: x64
-            
-          # macOS Apple Silicon only  
+
+          # macOS Apple Silicon only
           - os: macos-latest
             platform: mac
             arch: arm64
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
       - name: Setup directory structure
         run: mkdir -p datalayer
@@ -69,6 +70,7 @@ jobs:
         with:
           path: datalayer/desktop
           fetch-depth: 0
+          retries: 3
 
       - name: Checkout core repository
         uses: actions/checkout@v4
@@ -76,6 +78,7 @@ jobs:
           repository: goanpeca/core
           ref: enh/sdk-updates
           path: datalayer/core
+          retries: 3
 
       - name: Debug directory structure
         run: |
@@ -224,8 +227,9 @@ jobs:
     name: Test Artifacts
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: success()
-    
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

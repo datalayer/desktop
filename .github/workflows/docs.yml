@@ -18,6 +18,7 @@ jobs:
   build-docs:
     name: Build Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Setup directory structure
@@ -28,6 +29,7 @@ jobs:
         with:
           path: datalayer/desktop
           fetch-depth: 0
+          retries: 3
 
       - name: Checkout core repository
         uses: actions/checkout@v4
@@ -35,6 +37,7 @@ jobs:
           repository: goanpeca/core
           ref: enh/sdk-updates
           path: datalayer/core
+          retries: 3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

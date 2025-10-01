@@ -1,0 +1,250 @@
+name: Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v0.0.2, v1.0.0, etc.
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build-and-release:
+    name: Build and Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          # macOS Universal (Intel + Apple Silicon)
+          - os: macos-latest
+            platform: mac
+            arch: universal
+
+          # Windows x64
+          - os: windows-latest
+            platform: win
+            arch: x64
+
+          # Linux x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install core dependencies
+        run: |
+          cd ../core
+          npm ci
+          cd ../desktop
+
+      - name: Extract version from tag
+        id: extract_version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Verify package.json version matches tag
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${{ steps.extract_version.outputs.version }}"
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $PACKAGE_VERSION"
+
+      - name: Run type checking
+        run: npm run type-check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build application
+        run: npm run build
+
+      # Package for each platform (unsigned builds for GitHub Releases only)
+      - name: Package application (macOS)
+        if: matrix.platform == 'mac'
+        run: npm run dist:mac-universal
+
+      - name: Package application (Windows)
+        if: matrix.platform == 'win'
+        run: npm run dist:win
+
+      - name: Package application (Linux)
+        if: matrix.platform == 'linux'
+        run: npm run dist:linux
+
+      # Find and list generated artifacts
+      - name: List artifacts
+        id: artifacts
+        shell: bash
+        run: |
+          echo "Generated artifacts:"
+          ls -lh dist/
+
+          # Find artifact files (DMG for macOS, EXE/MSI for Windows, AppImage/deb for Linux)
+          if [ "${{ matrix.platform }}" == "mac" ]; then
+            ARTIFACTS=$(find dist -name "*.dmg" -o -name "*.zip")
+          elif [ "${{ matrix.platform }}" == "win" ]; then
+            ARTIFACTS=$(find dist -name "*.exe" -o -name "*.msi")
+          else
+            ARTIFACTS=$(find dist -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm")
+          fi
+
+          echo "artifacts<<EOF" >> $GITHUB_OUTPUT
+          echo "$ARTIFACTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # Upload artifacts to GitHub Actions
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: datalayer-desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.exe
+            dist/*.msi
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+          retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-and-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, using initial commit"
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
+
+          # Generate changelog
+          CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)" --no-merges)
+
+          # Save to file
+          cat > CHANGELOG.txt << 'EOF'
+          ## What's Changed
+
+          $CHANGELOG
+
+          ## Downloads
+
+          Choose the appropriate installer for your platform:
+          - **macOS**: `.dmg` (Intel & Apple Silicon Universal)
+          - **Windows**: `.exe` installer
+          - **Linux**: `.AppImage` (portable), `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL)
+
+          ## Installation
+
+          ### macOS
+          1. Download the `.dmg` file
+          2. Open it and drag Datalayer Desktop to Applications
+          3. On first launch, right-click → Open to bypass Gatekeeper
+
+          ### Windows
+          1. Download the `.exe` file
+          2. Run the installer
+          3. Follow the installation wizard
+
+          ### Linux
+          **AppImage (Recommended)**
+          1. Download the `.AppImage` file
+          2. Make it executable: `chmod +x Datalayer-Desktop-*.AppImage`
+          3. Run it: `./Datalayer-Desktop-*.AppImage`
+
+          **Debian/Ubuntu**
+          ```bash
+          sudo dpkg -i datalayer-desktop_*_amd64.deb
+          ```
+
+          **Fedora/RHEL**
+          ```bash
+          sudo rpm -i datalayer-desktop-*.x86_64.rpm
+          ```
+          EOF
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Display artifact structure
+        run: ls -R artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Datalayer Desktop ${{ steps.extract_version.outputs.version }}
+          body_path: CHANGELOG.txt
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.zip
+            artifacts/**/*.exe
+            artifacts/**/*.msi
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+          draft: false
+          prerelease: ${{ contains(steps.extract_version.outputs.version, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: success()
+
+    steps:
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Success notification
+        run: |
+          echo "✅ Datalayer Desktop ${{ steps.version.outputs.version }} released successfully!"
+          echo "- GitHub Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          echo "- Downloads available for: macOS, Windows, Linux"
