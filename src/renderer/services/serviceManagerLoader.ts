@@ -4,78 +4,79 @@
  */
 
 /**
- * Runtime loader for ServiceManager handling CommonJS/ESM module resolution.
- * Provides dynamic loading of JupyterLab services to work around bundling conflicts.
+ * Dynamic loader for JupyterLab ServiceManager.
+ * Imports from the proxied @jupyterlab/services module.
  *
  * @module renderer/services/serviceManagerLoader
  */
 
-let realServiceManager: any = null;
-let realServerConnection: any = null;
-
 /**
- * Dynamically load the real ServiceManager at runtime.
- * Caches the loaded module for subsequent calls.
+ * Load ServiceManager and ServerConnection from @jupyterlab/services.
+ * This function exists to allow dynamic imports and proper module resolution
+ * through the Vite proxy configuration.
  *
- * @returns Promise resolving to ServiceManager and ServerConnection classes
- * @throws {Error} If ServiceManager cannot be loaded from the module
+ * @returns Object containing ServiceManager and ServerConnection classes
  */
 export async function loadServiceManager() {
-  if (realServiceManager) {
-    // Using cached ServiceManager
+  try {
+    // Import directly from lib paths to avoid bundling issues
+    // In production, Vite bundles the main @jupyterlab/services module incorrectly
+    const [managerModule, serverConnectionModule] = await Promise.all([
+      import('@jupyterlab/services/lib/manager'),
+      import('@jupyterlab/services/lib/serverconnection'),
+    ]);
+
+    // Extract the exports (handle both CJS and ESM)
+    let ServiceManager = (managerModule as any).ServiceManager || (managerModule as any).default?.ServiceManager || (managerModule as any).default;
+    let ServerConnection = (serverConnectionModule as any).ServerConnection || (serverConnectionModule as any).default?.ServerConnection || (serverConnectionModule as any).default;
+
+    // Handle Vite's __require wrapper (CommonJS interop)
+    if (!ServiceManager && (managerModule as any).__require && typeof (managerModule as any).__require === 'function') {
+      console.log('[ServiceManagerLoader] Found __require wrapper, calling it');
+      try {
+        const unwrapped = (managerModule as any).__require('@jupyterlab/services/lib/manager');
+        ServiceManager = unwrapped?.ServiceManager || unwrapped?.default?.ServiceManager || unwrapped?.default || unwrapped;
+      } catch (e) {
+        console.error('[ServiceManagerLoader] Failed to use __require:', e);
+      }
+    }
+
+    if (!ServerConnection && (serverConnectionModule as any).__require && typeof (serverConnectionModule as any).__require === 'function') {
+      console.log('[ServiceManagerLoader] Found __require wrapper for ServerConnection, calling it');
+      try {
+        const unwrapped = (serverConnectionModule as any).__require('@jupyterlab/services/lib/serverconnection');
+        ServerConnection = unwrapped?.ServerConnection || unwrapped?.default?.ServerConnection || unwrapped?.default || unwrapped;
+      } catch (e) {
+        console.error('[ServiceManagerLoader] Failed to use __require for ServerConnection:', e);
+      }
+    }
+
+    // Verify that required exports exist
+    if (!ServiceManager) {
+      console.error('[ServiceManagerLoader] Failed to extract ServiceManager from module:', {
+        managerModuleKeys: Object.keys(managerModule),
+        managerModuleDefault: (managerModule as any).default,
+      });
+      throw new Error('ServiceManager not found in @jupyterlab/services/lib/manager');
+    }
+    if (!ServerConnection) {
+      console.error('[ServiceManagerLoader] Failed to extract ServerConnection from module:', {
+        serverConnectionModuleKeys: Object.keys(serverConnectionModule),
+        serverConnectionModuleDefault: (serverConnectionModule as any).default,
+      });
+      throw new Error('ServerConnection not found in @jupyterlab/services/lib/serverconnection');
+    }
+    if (!ServerConnection.makeSettings) {
+      throw new Error('ServerConnection.makeSettings not found');
+    }
+
+    console.log('[ServiceManagerLoader] Successfully loaded ServiceManager and ServerConnection');
     return {
-      ServiceManager: realServiceManager,
-      ServerConnection: realServerConnection,
+      ServiceManager,
+      ServerConnection,
     };
+  } catch (error) {
+    console.error('[ServiceManagerLoader] Failed to load @jupyterlab/services:', error);
+    throw error;
   }
-
-  // Loading @jupyterlab/services dynamically...
-
-  // Import the proxy file instead which has the proper exports
-  // @ts-expect-error Dynamic import of JS file - types not available
-  const services = await import('../polyfills/jupyterlab-proxy.js');
-  // Loaded jupyterlab-services-proxy
-
-  // Extract ServiceManager and ServerConnection
-  realServiceManager = services?.ServiceManager;
-  realServerConnection = services?.ServerConnection;
-
-  if (!realServiceManager) {
-    // ServiceManager not found in services
-
-    // Check if it's wrapped in default or another property
-    if (services?.default) {
-      // Checking default export...
-      realServiceManager = services.default?.ServiceManager;
-      realServerConnection = services.default?.ServerConnection;
-    }
-
-    if (!realServiceManager) {
-      throw new Error(
-        'Failed to import ServiceManager from @jupyterlab/services'
-      );
-    }
-  }
-
-  // Successfully loaded ServiceManager and ServerConnection
-
-  return {
-    ServiceManager: realServiceManager,
-    ServerConnection: realServerConnection,
-  };
-}
-
-/**
- * Create a service manager instance using the dynamically loaded class.
- *
- * @param options - Optional configuration options for ServiceManager
- * @returns Promise resolving to a new ServiceManager instance
- * @throws {Error} If ServiceManager could not be loaded
- */
-export async function createServiceManager(options?: any) {
-  const { ServiceManager } = await loadServiceManager();
-  if (!ServiceManager) {
-    throw new Error('ServiceManager could not be loaded');
-  }
-  return new ServiceManager(options);
 }

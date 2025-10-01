@@ -51,11 +51,6 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
             startedAt: new Date(runtimeJSON.startedAt),
             expiresAt: new Date(runtimeJSON.expiredAt),
           });
-        } else {
-          console.warn('[RuntimeProgressBar] Missing timestamp fields:', {
-            startedAt: runtimeJSON.startedAt,
-            expiredAt: runtimeJSON.expiredAt,
-          });
         }
       })
       .catch((error: Error) => {

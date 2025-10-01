@@ -12,7 +12,7 @@
 import React from 'react';
 import { ThemeProvider, BaseStyles } from '@primer/react';
 import { LoadingScreenProps } from '../../../shared/types';
-import LoadingSpinner from '../LoadingSpinner';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { PreloadState } from '../../hooks/usePreload';
 
 /**

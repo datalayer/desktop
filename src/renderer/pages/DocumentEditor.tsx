@@ -4,591 +4,405 @@
  */
 
 /**
- * Document editor page component using Lexical editor framework.
- * Provides document editing with Jupyter kernel integration.
+ * Document editor with Lexical and Jupyter cells.
+ * Completely remounts when runtime is selected/changed.
  *
  * @module renderer/pages/DocumentEditor
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box } from '@primer/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { ListItemNode, ListNode } from '@lexical/list';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { ListNode, ListItemNode } from '@lexical/list';
+import { CodeNode, CodeHighlightNode } from '@lexical/code';
+import { LinkNode } from '@lexical/link';
+import { LoroCollaborationPlugin } from '@datalayer/lexical-loro';
+import { createWebsocketProvider } from '@datalayer/lexical-loro';
+import { Jupyter, useJupyter } from '@datalayer/jupyter-react';
 import {
-  JupyterCellNode,
+  ComponentPickerMenuPlugin,
+  JupyterInputOutputPlugin,
+  DraggableBlockPlugin,
   JupyterInputNode,
-  JupyterOutputNode,
   JupyterInputHighlightNode,
-} from '@datalayer/jupyter-lexical/lib/nodes';
-import { Jupyter, loadJupyterConfig } from '@datalayer/jupyter-react';
-import { useCoreStore } from '@datalayer/core/lib/state';
+  JupyterOutputNode,
+} from '@datalayer/jupyter-lexical';
+import type { EditorState } from 'lexical';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
+import { createMockServiceManager } from '../services/mockServiceManager';
+import { Notebook2Toolbar } from '../components/notebook/Toolbar';
 import { useRuntimeStore } from '../stores/runtimeStore';
-import { DocumentViewProps, CollaborationStatus } from '../../shared/types';
-import { waitForRuntimeReady, onLexicalError } from '../utils/document';
-import { logger } from '../utils/logger';
-import Header from '../components/document/Header';
-import LoadingSpinner from '../components/document/LoadingSpinner';
-import TerminateRuntimeDialog from '../components/TerminateRuntimeDialog';
-import LexicalEditorComponent from '../components/document/LexicalEditor';
-import { type LexicalEditor as LexicalEditorType } from 'lexical';
-
-// Import Jupyter theme - will be fixed by Vite plugin at build time
-import jupyterTheme from '@datalayer/jupyter-lexical/lib/themes/Theme';
-
-// Use the Jupyter theme directly - the Vite plugin will fix any 'class-name' issues
-const theme = jupyterTheme;
-
-// Lexical editor configuration - use minimal theme to isolate the error
-const initialConfig = {
-  namespace: 'DatalayerDocumentEditor',
-  theme: theme,
-  onError: onLexicalError,
-  nodes: [
-    HeadingNode,
-    QuoteNode,
-    ListNode,
-    ListItemNode,
-    CodeNode,
-    CodeHighlightNode,
-    AutoLinkNode,
-    LinkNode,
-    JupyterCellNode,
-    JupyterInputNode,
-    JupyterOutputNode,
-    JupyterInputHighlightNode,
-  ],
-};
+import { DocumentViewProps } from '../../shared/types';
 
 /**
- * Provides Lexical editor context to child components.
- *
- * @param props - Component props
- * @param props.children - Child components to wrap with Lexical context
- * @returns The Lexical context provider component
+ * Document editor that creates a fresh service manager when runtime changes.
+ * Each runtime selection completely remounts the editor component.
  */
-const LexicalProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  return (
-    <LexicalComposer initialConfig={initialConfig}>{children}</LexicalComposer>
-  );
-};
+const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
+  const { refreshRuntimes, allRuntimes } = useRuntimeStore();
+  const [runtimeInfo, setRuntimeInfo] = useState<{
+    id: string;
+    podName: string;
+    ingress: string;
+    token: string;
+  } | null>(null);
+  const [serviceManager, setServiceManager] = useState<any>(null);
+  const [spacerUrl, setSpacerUrl] = useState<string>('');
 
-/**
- * Document editor page component.
- * Wraps the editor content with Lexical composer for context management.
- *
- * @param props - Component props
- * @param props.selectedDocument - The document to edit
- * @param props.onClose - Callback invoked when the editor closes
- * @returns The document editor component
- */
-const DocumentEditor: React.FC<DocumentViewProps> = ({
-  selectedDocument,
-  onClose,
-}) => {
-  return (
-    <LexicalProvider>
-      <DocumentEditorContent
-        selectedDocument={selectedDocument}
-        onClose={onClose}
-      />
-    </LexicalProvider>
-  );
-};
+  const documentId = selectedDocument?.id || '';
 
-/**
- * Main document editor content component.
- * Handles runtime management, service manager initialization, and document rendering.
- *
- * @param props - Component props
- * @param props.selectedDocument - The document being edited
- * @param props.onClose - Callback invoked when closing the editor
- * @returns The document editor content component
- */
-const DocumentEditorContent: React.FC<DocumentViewProps> = ({
-  selectedDocument,
-  onClose,
-}) => {
-  const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
-  const [runtimeError, setRuntimeError] = useState<string | null>(null);
-  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [isTerminating, setIsTerminating] = useState(false);
-  const [collaborationEnabled, setCollaborationEnabled] = useState(true);
-  const [collaborationStatus, setCollaborationStatus] =
-    useState<CollaborationStatus>('connecting');
-  const [, setLexicalEditor] = useState<LexicalEditorType | null>(null);
-  const { configuration } = useCoreStore();
-  const mountedRef = useRef(true);
-
-  // Use runtime store for runtime management
-  const {
-    isCreatingRuntime,
-    isTerminatingRuntime,
-    runtimeError: storeRuntimeError,
-    createRuntimeForNotebook,
-    getRuntimeForNotebook,
-    terminateRuntimeForNotebook,
-    setServiceManagerForNotebook,
-    setActiveNotebook,
-    loadRuntimesFromStorage,
-  } = useRuntimeStore();
-
-  // Get runtime and service manager for current document
-  const documentRuntime = selectedDocument
-    ? getRuntimeForNotebook(selectedDocument.id)
-    : null;
-  const serviceManager = documentRuntime?.serviceManager || null;
-
-  // Check if serviceManager is ready but isReady is false - force ready state
-  const isServiceManagerReady =
-    serviceManager &&
-    (serviceManager.isReady ||
-      (serviceManager.kernelspecs && serviceManager.sessions));
-
-  // Initialize document - just set loading to false after brief delay
+  // Get spacer URL
   useEffect(() => {
-    const initDocument = async () => {
-      logger.debug('Initializing document:', selectedDocument);
-      // Brief delay to ensure runtime setup starts
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setLoading(false);
-    };
-
-    if (selectedDocument) {
-      initDocument();
-    }
-  }, [selectedDocument]);
-
-  // Function to show terminate dialog
-  const handleStopRuntime = () => {
-    setShowTerminateDialog(true);
-  };
-
-  // Function to actually terminate runtime
-  const handleTerminateRuntime = async () => {
-    if (!selectedDocument) return;
-
-    setIsTerminating(true);
-    try {
-      logger.debug('Terminating runtime for document:', selectedDocument.name);
-
-      // Set a flag to prevent re-creating runtime if component re-mounts
-      sessionStorage.setItem(
-        `document-${selectedDocument.id}-terminated`,
-        'true'
-      );
-
-      // Get current runtime to safely dispose service manager
-      const currentRuntime = getRuntimeForNotebook(selectedDocument.id);
-      if (currentRuntime?.serviceManager) {
-        try {
-          // Safely dispose service manager if it exists and isn't already disposed
-          if (
-            typeof currentRuntime.serviceManager.dispose === 'function' &&
-            !(currentRuntime.serviceManager as any).isDisposed
-          ) {
-            (currentRuntime.serviceManager as any).dispose();
-            logger.debug('Service manager disposed successfully');
-          }
-        } catch (disposeError) {
-          logger.warn('Error disposing service manager:', disposeError);
-        }
-      }
-
-      await terminateRuntimeForNotebook(selectedDocument.id);
-      setActiveNotebook(null);
-      setShowTerminateDialog(false);
-
-      logger.debug('Runtime terminated successfully');
-
-      // Close the document after successful termination
-      if (onClose) {
-        onClose();
-      }
-    } catch (error) {
-      logger.error('Failed to terminate runtime:', error);
-      setRuntimeError(
-        error instanceof Error ? error.message : 'Failed to terminate runtime'
-      );
-    } finally {
-      setIsTerminating(false);
-    }
-  };
-
-  // Handle editor initialization
-  const handleEditorInit = useCallback((editor: LexicalEditorType) => {
-    setLexicalEditor(editor);
-    logger.debug(
-      'Lexical editor initialized - collaboration will handle content loading'
-    );
+    // TODO: Implement getSpacerUrl method
+    // For now, use hardcoded value
+    setSpacerUrl('https://run.datalayer.io');
   }, []);
 
-  // Toggle collaboration
-  const handleToggleCollaboration = useCallback(() => {
-    setCollaborationEnabled(!collaborationEnabled);
-  }, [collaborationEnabled]);
-
-  // Component mount/unmount tracking and runtime management
+  // Refresh runtimes when document opens
   useEffect(() => {
-    mountedRef.current = true;
-    // Load any existing runtimes from storage on mount
-    loadRuntimesFromStorage();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []); // Empty deps - only run on mount/unmount
+    refreshRuntimes();
+  }, [refreshRuntimes]);
 
-  // Update runtime error from store
+  // Watch for runtime expiration
   useEffect(() => {
-    if (storeRuntimeError) {
-      setRuntimeError(storeRuntimeError);
-    }
-  }, [storeRuntimeError]);
-
-  // Test API accessibility when serviceManager is ready
-  useEffect(() => {
-    if (isServiceManagerReady && serviceManager) {
-      logger.debug('Service manager is ready, can start kernel operations');
-    }
-  }, [isServiceManagerReady, serviceManager]);
-
-  // Auto-start runtime when document is selected - using stable reference to avoid double execution
-  useEffect(() => {
-    let isEffectActive = true;
-    let timeoutId: NodeJS.Timeout;
-
-    const autoStartRuntime = async () => {
-      // Double-check if effect is still active
-      if (!isEffectActive || !mountedRef.current) {
-        logger.debug(
-          'Effect cancelled or component unmounted, skipping runtime creation'
-        );
-        return;
-      }
-
-      logger.debug('autoStartRuntime called with:', {
-        selectedDocument: selectedDocument?.name,
-        hasConfiguration: !!configuration,
-        configurationReady: configuration?.runUrl && configuration?.token,
-      });
-
-      if (!selectedDocument || !configuration) {
-        logger.debug(
-          'Skipping runtime creation: missing document or configuration'
-        );
-        return;
-      }
-
-      if (!configuration.runUrl || !configuration.token) {
-        logger.debug('Skipping runtime creation: incomplete configuration');
-        return;
-      }
-
-      // Check if we already have a runtime for this document
-      const existingRuntime = getRuntimeForNotebook(selectedDocument.id);
-      if (existingRuntime?.serviceManager) {
-        logger.debug(
-          'Runtime already exists for document, skipping auto-start'
-        );
-        return;
-      }
-
-      // Check if user manually terminated this runtime (don't auto-start)
-      const wasTerminated = sessionStorage.getItem(
-        `document-${selectedDocument.id}-terminated`
-      );
-      if (wasTerminated === 'true') {
-        logger.debug('Runtime was manually terminated, skipping auto-start');
-        return;
-      }
-
-      logger.debug(
-        'Auto-starting runtime for document:',
-        selectedDocument.name
+    if (runtimeInfo) {
+      const currentRuntimeExists = allRuntimes.some(
+        r => (r.pod_name || r.podName) === runtimeInfo.podName
       );
 
-      // Inline the runtime creation logic to avoid dependency issues
-      setRuntimeError(null);
-
-      try {
-        logger.debug('Creating runtime for document:', selectedDocument.name);
-
-        // Check again if effect is still active before proceeding
-        if (!isEffectActive || !mountedRef.current) {
-          logger.debug('Effect cancelled during runtime creation, aborting');
-          return;
-        }
-
-        // Use existing runtime or create new one
-        let runtime = getRuntimeForNotebook(selectedDocument.id);
-
-        if (!runtime) {
-          // Create a new runtime
-          logger.debug('No existing runtime found, creating new one');
-          await createRuntimeForNotebook(
-            selectedDocument.id,
-            selectedDocument.name
-          );
-          runtime = getRuntimeForNotebook(selectedDocument.id);
-          logger.debug('Runtime created:', runtime);
-
-          // Wait for runtime to be ready before proceeding
-          if (
-            runtime?.runtime?.ingress &&
-            runtime?.runtime?.token &&
-            isEffectActive &&
-            mountedRef.current
-          ) {
-            logger.debug('Waiting for runtime to be ready...');
-            const isReady = await waitForRuntimeReady(
-              runtime.runtime.ingress,
-              runtime.runtime.token
-            );
-            if (!isReady || !isEffectActive || !mountedRef.current) {
-              if (!isEffectActive || !mountedRef.current) {
-                logger.debug('Effect cancelled during runtime readiness check');
-              } else {
-                logger.error('Runtime failed to become ready within timeout');
-                onClose?.();
-              }
-              return;
-            }
-            logger.debug('Runtime is ready!');
-          }
-        } else {
-          logger.debug('Using existing runtime:', runtime);
-        }
-
-        // Final check before creating service manager
-        if (!isEffectActive || !mountedRef.current) {
-          logger.debug('Effect cancelled before service manager creation');
-          return;
-        }
-
-        // Create service manager if needed
-        if (
-          runtime &&
-          !runtime.serviceManager &&
-          configuration &&
-          runtime.runtime.ingress &&
-          runtime.runtime.token
-        ) {
-          // RACE CONDITION PREVENTION: Check if runtime is terminated before creating ServiceManager
-          const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
-          const runtimeUid = runtime.runtime?.pod_name || runtime.runtime?.uid;
-          if (cleanupRegistry && runtimeUid) {
-            if (
-              cleanupRegistry.has(runtimeUid) &&
-              cleanupRegistry.get(runtimeUid).terminated
-            ) {
-              logger.info(
-                '🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation for terminated runtime:',
-                runtimeUid
-              );
-              return;
-            }
-          }
-
-          // Check if we're currently terminating any runtime
-          const { isTerminatingRuntime } = useRuntimeStore.getState();
-          if (isTerminatingRuntime) {
-            logger.info(
-              '🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation during termination'
-            );
-            return;
-          }
-
-          logger.debug('Creating service manager for runtime');
-
-          // Override Jupyter config BEFORE creating ServiceManager
-          try {
-            loadJupyterConfig({
-              jupyterServerUrl: runtime.runtime.ingress,
-              jupyterServerToken: runtime.runtime.token,
-            });
-            logger.debug(
-              '✅ Configured Jupyter with runtime-specific settings:',
-              {
-                url: runtime.runtime.ingress,
-                hasToken: !!runtime.runtime.token,
-              }
-            );
-          } catch (error) {
-            logger.error('❌ Failed to configure Jupyter settings:', error);
-          }
-
-          const proxyServiceManager = await createProxyServiceManager(
-            runtime.runtime.ingress,
-            runtime.runtime.token,
-            runtime.runtime?.pod_name || ''
-          );
-
-          if (isEffectActive && mountedRef.current) {
-            setServiceManagerForNotebook(
-              selectedDocument.id,
-              proxyServiceManager
-            );
-            setActiveNotebook(selectedDocument.id);
-            logger.debug('Service manager created for document');
-          }
-        } else if (!runtime) {
-          logger.error('Runtime creation failed - no runtime returned');
-        } else if (runtime.serviceManager) {
-          logger.debug('Service manager already exists');
-        }
-      } catch (error) {
-        if (isEffectActive && mountedRef.current) {
-          logger.error('Failed to start runtime:', error);
-          setRuntimeError(
-            error instanceof Error ? error.message : 'Failed to start runtime'
-          );
-          // Auto-close document when runtime fails to start
-          if (onClose) {
-            logger.debug('Auto-closing document due to runtime failure');
-            setTimeout(() => onClose(), 1000); // Small delay to show error briefly
-          }
-        }
+      if (!currentRuntimeExists) {
+        setRuntimeInfo(null);
       }
-    };
-
-    // Wait a moment after component mounts to auto-start
-    if (selectedDocument && configuration && !loading) {
-      timeoutId = setTimeout(() => {
-        if (isEffectActive && mountedRef.current) {
-          autoStartRuntime().catch(error => {
-            if (isEffectActive && mountedRef.current) {
-              logger.error('Failed to auto-start runtime:', error);
-            }
-          });
-        }
-      }, 1000);
-    } else {
-      logger.debug('Not starting timeout for runtime creation:', {
-        hasDocument: !!selectedDocument,
-        hasConfiguration: !!configuration,
-        loading: loading,
-      });
     }
+  }, [allRuntimes, runtimeInfo]);
 
-    // Cleanup function
-    return () => {
-      isEffectActive = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+  // Handle runtime creation
+  const handleRuntimeCreated = useCallback(
+    async (runtime: {
+      id: string;
+      podName: string;
+      ingress: string;
+      token: string;
+    }) => {
+      setRuntimeInfo(runtime);
+    },
+    []
+  );
+
+  // Handle runtime selection
+  const handleRuntimeSelected = useCallback(
+    async (runtime: {
+      id: string;
+      podName: string;
+      ingress: string;
+      token: string;
+    }) => {
+      setRuntimeInfo(runtime);
+    },
+    []
+  );
+
+  const handleRuntimeTerminated = useCallback(() => {
+    setRuntimeInfo(null);
+  }, []);
+
+  // Create service manager when runtime info changes
+  useEffect(() => {
+    let mounted = true;
+    let currentManager: any = null;
+
+    const createServiceManager = async () => {
+      // Clear service manager first
+      setServiceManager(null);
+
+      if (!runtimeInfo) {
+        // No runtime - use mock service manager
+        const mockManager = createMockServiceManager();
+        currentManager = mockManager;
+        if (mounted) {
+          setServiceManager(mockManager);
+        }
+      } else {
+        // Runtime selected - create real service manager
+        try {
+          const realManager = await createProxyServiceManager(
+            runtimeInfo.ingress,
+            runtimeInfo.token,
+            runtimeInfo.id
+          );
+          currentManager = realManager;
+          if (mounted) {
+            setServiceManager(realManager);
+          }
+        } catch (error) {
+          console.error(
+            '[DocumentEditor] Failed to create service manager:',
+            error
+          );
+          // Fallback to mock on error
+          if (mounted) {
+            const mockManager = createMockServiceManager();
+            currentManager = mockManager;
+            setServiceManager(mockManager);
+          }
+        }
       }
     };
-  }, [
-    selectedDocument?.id, // Only depend on the ID, not the whole object
-    configuration?.runUrl,
-    configuration?.token,
-    loading, // Add loading to prevent running when still loading
-  ]);
 
-  // Log serviceManager state for debugging
-  logger.debug('ServiceManager state:', {
-    hasServiceManager: !!serviceManager,
-    isReady: serviceManager?.isReady,
-    kernelspecs: serviceManager?.kernelspecs?.isReady,
-    sessions: serviceManager?.sessions?.isReady,
-    kernelspecsReady: serviceManager?.kernelspecs ? 'exists' : 'missing',
-    sessionsReady: serviceManager?.sessions ? 'exists' : 'missing',
-    isServiceManagerReady,
-  });
+    createServiceManager();
 
-  // Step 1: Creating runtime (spinner only)
-  if (isCreatingRuntime) {
-    return (
-      <LoadingSpinner
-        isCreatingRuntime={true}
-        loading={false}
-        serviceManager={null}
-      />
-    );
+    return () => {
+      mounted = false;
+      if (currentManager) {
+        // Cleanup service manager if needed
+      }
+    };
+  }, [runtimeInfo]);
+
+  // Build WebSocket URL for collaboration
+  const collaborationWebSocketUrl = useMemo(() => {
+    if (!spacerUrl) return null;
+    return `${spacerUrl.replace(/^http/, 'ws')}/api/spacer/v1/lexical/ws`;
+  }, [spacerUrl]);
+
+  // Lexical editor configuration
+  const editorConfig = {
+    namespace: 'DocumentEditor',
+    theme: {},
+    nodes: [
+      HeadingNode,
+      QuoteNode,
+      ListNode,
+      ListItemNode,
+      CodeNode,
+      CodeHighlightNode,
+      LinkNode,
+      JupyterInputNode,
+      JupyterInputHighlightNode,
+      JupyterOutputNode,
+    ],
+    editable: true,
+    onError: (err: Error) => {
+      console.error('Lexical editor error:', err);
+    },
+  };
+
+  const handleChange = (_editorState: EditorState) => {
+    // Handle editor changes if needed
+  };
+
+  const handleInitialization = () => {
+    // Lexical editor initialized
+  };
+
+  // Generate unique key to force complete remount when runtime changes
+  const editorKey = useMemo(() => {
+    return `document-${documentId}-runtime-${runtimeInfo?.podName || 'mock'}`;
+  }, [documentId, runtimeInfo?.podName]);
+
+  // Handle no document selected
+  if (!selectedDocument) {
+    return <Box sx={{ p: 4, textAlign: 'center' }}>No document selected</Box>;
   }
 
-  // Step 2: Loading document and waiting for serviceManager to be ready (spinner only)
-  if (loading || !isServiceManagerReady) {
+  // Show loading state while service manager is being created
+  if (!serviceManager || !collaborationWebSocketUrl) {
     return (
-      <LoadingSpinner
-        isCreatingRuntime={false}
-        loading={loading}
-        serviceManager={serviceManager}
-      />
-    );
-  }
-
-  // Handle errors by auto-closing
-  if (error || runtimeError) {
-    return (
-      <LoadingSpinner
-        isCreatingRuntime={false}
-        loading={true}
-        serviceManager={null}
-      />
-    );
-  }
-
-  // Main document view - only render Jupyter component when we have a valid ServiceManager
-  // This prevents the Jupyter React component from falling back to default hardcoded config
-  if (!serviceManager) {
-    return (
-      <LoadingSpinner
-        isCreatingRuntime={false}
-        loading={false}
-        serviceManager={null}
-      />
-    );
-  }
-
-  return (
-    <Jupyter
-      serviceManager={serviceManager as any}
-      startDefaultKernel={!!isServiceManagerReady}
-    >
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* Document Header */}
-        <Header
-          selectedDocument={selectedDocument}
-          serviceManager={serviceManager}
-          documentRuntime={documentRuntime}
-          isTerminatingRuntime={isTerminatingRuntime}
-          collaborationEnabled={collaborationEnabled}
-          collaborationStatus={collaborationStatus}
-          runtimeError={runtimeError}
-          onStopRuntime={handleStopRuntime}
-          onToggleCollaboration={handleToggleCollaboration}
-        />
-
-        {/* Document Editor - Step 3: Full connected editor visible */}
-        <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          <LexicalEditorComponent
-            selectedDocument={selectedDocument}
-            collaborationEnabled={collaborationEnabled}
-            collaborationStatus={collaborationStatus}
-            onCollaborationStatusChange={setCollaborationStatus}
-            onEditorInit={handleEditorInit}
-            serviceManager={serviceManager}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ flexShrink: 0 }}>
+          <Notebook2Toolbar
+            showNotebookControls={false}
+            runtimePodName={runtimeInfo?.podName}
+            onRuntimeCreated={handleRuntimeCreated}
+            onRuntimeSelected={handleRuntimeSelected}
+            onRuntimeTerminated={handleRuntimeTerminated}
           />
         </Box>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          {runtimeInfo ? 'Connecting to runtime...' : 'Initializing editor...'}
+        </Box>
+      </Box>
+    );
+  }
 
-        {/* Terminate Runtime Dialog */}
-        <TerminateRuntimeDialog
-          isOpen={showTerminateDialog}
-          isTerminating={isTerminating}
-          itemName={selectedDocument?.name || ''}
-          itemType="document"
-          error={runtimeError}
-          onConfirm={handleTerminateRuntime}
-          onCancel={() => setShowTerminateDialog(false)}
+  // Render editor with fresh service manager
+  return (
+    <Jupyter serviceManager={serviceManager} startDefaultKernel={!!runtimeInfo}>
+      <DocumentEditorInner
+        documentId={documentId}
+        editorKey={editorKey}
+        editorConfig={editorConfig}
+        collaborationWebSocketUrl={collaborationWebSocketUrl}
+        runtimeInfo={runtimeInfo}
+        handleChange={handleChange}
+        handleInitialization={handleInitialization}
+        handleRuntimeCreated={handleRuntimeCreated}
+        handleRuntimeSelected={handleRuntimeSelected}
+        handleRuntimeTerminated={handleRuntimeTerminated}
+      />
+    </Jupyter>
+  );
+};
+
+/**
+ * Inner component that has access to Jupyter context (kernel)
+ */
+const DocumentEditorInner: React.FC<{
+  documentId: string;
+  editorKey: string;
+  editorConfig: any;
+  collaborationWebSocketUrl: string;
+  runtimeInfo: {
+    id: string;
+    podName: string;
+    ingress: string;
+    token: string;
+  } | null;
+  handleChange: (editorState: EditorState) => void;
+  handleInitialization: (isInitialized: boolean) => void;
+  handleRuntimeCreated: (runtime: {
+    id: string;
+    podName: string;
+    ingress: string;
+    token: string;
+  }) => void;
+  handleRuntimeSelected: (runtime: {
+    id: string;
+    podName: string;
+    ingress: string;
+    token: string;
+  }) => void;
+  handleRuntimeTerminated: () => void;
+}> = ({
+  documentId,
+  editorKey,
+  editorConfig,
+  collaborationWebSocketUrl,
+  runtimeInfo,
+  handleChange,
+  handleInitialization,
+  handleRuntimeCreated,
+  handleRuntimeSelected,
+  handleRuntimeTerminated,
+}) => {
+  const { defaultKernel } = useJupyter();
+  const [floatingAnchorElem, setFloatingAnchorElem] =
+    useState<HTMLDivElement | null>(null);
+
+  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+    if (_floatingAnchorElem !== null) {
+      setFloatingAnchorElem(_floatingAnchorElem);
+    }
+  };
+
+  // Kernel availability check removed to prevent Symbol serialization errors in production
+
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Toolbar */}
+      <Box sx={{ flexShrink: 0 }}>
+        <Notebook2Toolbar
+          showNotebookControls={false}
+          runtimePodName={runtimeInfo?.podName}
+          onRuntimeCreated={handleRuntimeCreated}
+          onRuntimeSelected={handleRuntimeSelected}
+          onRuntimeTerminated={handleRuntimeTerminated}
         />
       </Box>
-    </Jupyter>
+
+      {/* Editor - completely remounts when key changes */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          minHeight: 0,
+          overflow: 'auto',
+        }}
+      >
+        <LexicalComposer key={editorKey} initialConfig={editorConfig}>
+          <div
+            ref={onRef}
+            style={{
+              position: 'relative',
+              flex: 1,
+              overflow: 'auto',
+            }}
+          >
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable
+                  style={{
+                    minHeight: '100%',
+                    outline: 'none',
+                    padding: '16px',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    fontFamily:
+                      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  }}
+                />
+              }
+              placeholder={
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '16px',
+                    color: 'fg.muted',
+                    pointerEvents: 'none',
+                    fontSize: 1,
+                  }}
+                >
+                  Type / for commands...
+                </Box>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <OnChangePlugin onChange={handleChange} />
+            <ComponentPickerMenuPlugin kernel={defaultKernel} />
+            <JupyterInputOutputPlugin kernel={defaultKernel} />
+            {floatingAnchorElem && (
+              <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
+            )}
+            <LoroCollaborationPlugin
+              id={documentId}
+              shouldBootstrap={true}
+              providerFactory={createWebsocketProvider}
+              websocketUrl={collaborationWebSocketUrl}
+              showCollaborators={true}
+              onInitialization={handleInitialization}
+            />
+          </div>
+        </LexicalComposer>
+      </Box>
+    </Box>
   );
 };
 

@@ -17,7 +17,7 @@ import { useEnvironments } from '../stores/environmentStore';
 import { logger } from '../utils/logger';
 
 import AuthWarning from '../components/environments/AuthWarning';
-import LoadingSpinner from '../components/environments/LoadingSpinner';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorState from '../components/environments/ErrorState';
 import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
@@ -137,7 +137,13 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
         configuration?.token
       ) && <AuthWarning />}
 
-      {loading && <LoadingSpinner />}
+      {loading && (
+        <LoadingSpinner
+          message="Loading environments..."
+          variant="inline"
+          sx={{ py: 6 }}
+        />
+      )}
 
       {error && !loading && (
         <ErrorState error={error} onRetry={fetchEnvironments} />

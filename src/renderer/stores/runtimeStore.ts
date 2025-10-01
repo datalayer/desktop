@@ -912,9 +912,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
     // Set timer to remove runtime when expired
     const timer = setTimeout(() => {
-      console.log(
-        `[runtimeStore] Runtime ${runtime.pod_name} expired, removing from state`
-      );
       get().handleRuntimeExpired(runtime.uid);
     }, msUntilExpiration);
 
@@ -927,10 +924,6 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
   // Handle runtime expiration
   handleRuntimeExpired: (runtimeUid: string) => {
     const { allRuntimes, expirationTimers, notebookRuntimes } = get();
-
-    console.log(
-      `[runtimeStore] Runtime ${runtimeUid} expired, cleaning up state`
-    );
 
     // Find the expired runtime details for notification
     const expiredRuntime = allRuntimes.find(r => r.uid === runtimeUid);

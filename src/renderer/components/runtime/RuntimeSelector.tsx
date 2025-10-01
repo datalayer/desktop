@@ -12,7 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Select, Spinner, Text } from '@primer/react';
 import { RocketIcon, CheckIcon } from '@primer/octicons-react';
-import { useRuntimeStore } from '../stores/runtimeStore';
+import { useRuntimeStore } from '../../stores/runtimeStore';
 
 export interface RuntimeSelectorProps {
   /** Currently selected runtime pod name */

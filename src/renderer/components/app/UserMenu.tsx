@@ -155,7 +155,10 @@ const UserMenu: React.FC<UserMenuProps> = ({
               onClick={handleLogout}
               sx={{
                 width: '100%',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'flex-start',
+                gap: 2,
                 color: 'danger.fg',
                 px: 3,
                 py: 2,
@@ -166,7 +169,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
               }}
             >
               <SignOutIcon size={16} />
-              <Text sx={{ ml: 2 }}>Sign out</Text>
+              <Text>Sign out</Text>
             </Button>
           </Box>
         </Box>

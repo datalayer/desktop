@@ -28,7 +28,7 @@ import { useCoreStore } from '@datalayer/core/lib/state';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { createMockServiceManager } from '../services/mockServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
-import { Notebook2Toolbar } from '../components/Notebook2Toolbar';
+import { Notebook2Toolbar } from '../components/notebook/Toolbar';
 import { useRuntimeStore } from '../stores/runtimeStore';
 
 interface NotebookEditorProps {
@@ -55,7 +55,6 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
 
   // Refresh runtimes when notebook opens
   useEffect(() => {
-    console.log('[NotebookEditorSimple] Refreshing runtimes on notebook open');
     refreshRuntimes();
   }, [refreshRuntimes]);
 
@@ -67,9 +66,6 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       );
 
       if (!currentRuntimeExists) {
-        console.log(
-          '[NotebookEditorSimple] Current runtime no longer exists (likely expired), clearing selection'
-        );
         setRuntimeInfo(null);
       }
     }
@@ -83,7 +79,6 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       ingress: string;
       token: string;
     }) => {
-      console.log('[NotebookEditorSimple] Runtime created:', runtime.podName);
       setRuntimeInfo(runtime);
     },
     []
@@ -97,14 +92,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       ingress: string;
       token: string;
     }) => {
-      console.log('[NotebookEditorSimple] Runtime selected:', runtime.podName);
       setRuntimeInfo(runtime);
     },
     []
   );
 
   const handleRuntimeTerminated = useCallback(() => {
-    console.log('[NotebookEditorSimple] Runtime terminated, clearing state');
     setRuntimeInfo(null);
   }, []);
 
@@ -160,20 +153,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     let currentManager: any = null;
 
     const createServiceManager = async () => {
-      console.log(
-        '[NotebookEditorSimple] Creating service manager for runtime:',
-        runtimeInfo?.podName
-      );
-
       // Immediately clear service manager to prevent race conditions
       // This ensures Notebook2 unmounts before we create a new manager
       setServiceManager(null);
 
       if (!runtimeInfo) {
         // No runtime - use mock service manager
-        console.log(
-          '[NotebookEditorSimple] No runtime, creating mock service manager'
-        );
         const mockManager = createMockServiceManager();
         currentManager = mockManager;
         if (mounted) {
@@ -181,10 +166,6 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         }
       } else {
         // Runtime selected - create real service manager
-        console.log(
-          '[NotebookEditorSimple] Loading real service manager for:',
-          runtimeInfo.ingress
-        );
         try {
           const realManager = await createProxyServiceManager(
             runtimeInfo.ingress,
@@ -193,7 +174,6 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           );
           currentManager = realManager;
           if (mounted) {
-            console.log('[NotebookEditorSimple] Service manager ready');
             setServiceManager(realManager);
           } else {
             // Component unmounted, clean up immediately
@@ -218,32 +198,18 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     const cleanupServiceManager = async (manager: any) => {
       if (!manager) return;
 
-      console.log(
-        '[NotebookEditorSimple] Starting comprehensive service manager cleanup'
-      );
-
       try {
         // Step 1: Shutdown all running kernels first
         if (manager.kernels?.running) {
           const runningKernels = Array.from(manager.kernels.running()) as any[];
-          console.log(
-            `[NotebookEditorSimple] Shutting down ${runningKernels.length} running kernels`
-          );
 
           for (const kernel of runningKernels) {
             try {
               if (kernel?.shutdown && typeof kernel.shutdown === 'function') {
                 await (kernel.shutdown as () => Promise<void>)();
-                console.log(
-                  `[NotebookEditorSimple] Kernel ${kernel.id} shutdown complete`
-                );
               }
             } catch (kernelError) {
               // Kernel may already be shutdown on server - this is expected
-              console.log(
-                `[NotebookEditorSimple] Kernel shutdown skipped (already stopped):`,
-                kernelError
-              );
             }
           }
         }
@@ -253,37 +219,25 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           const runningSessions = Array.from(
             manager.sessions.running()
           ) as any[];
-          console.log(
-            `[NotebookEditorSimple] Shutting down ${runningSessions.length} sessions`
-          );
 
           for (const session of runningSessions) {
             try {
               if (session?.shutdown && typeof session.shutdown === 'function') {
                 await (session.shutdown as () => Promise<void>)();
-                console.log(
-                  `[NotebookEditorSimple] Session ${session.id} shutdown complete`
-                );
               }
             } catch (sessionError) {
-              console.log(
-                `[NotebookEditorSimple] Session shutdown skipped:`,
-                sessionError
-              );
+              // Session shutdown failed
             }
           }
         }
 
         // Step 3: Now dispose the service manager itself
         if (typeof manager.dispose === 'function') {
-          console.log('[NotebookEditorSimple] Disposing service manager');
           manager.dispose();
         }
-
-        console.log('[NotebookEditorSimple] Service manager cleanup complete');
       } catch (error) {
         // Log but don't throw - cleanup should be best-effort
-        console.warn(
+        console.error(
           '[NotebookEditorSimple] Error during service manager cleanup:',
           error
         );
@@ -296,12 +250,9 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       mounted = false;
       // Clean up current manager when effect reruns or component unmounts
       if (currentManager) {
-        console.log(
-          '[NotebookEditorSimple] Effect cleanup - disposing service manager'
-        );
         // Use async cleanup but don't await (cleanup function can't be async)
         cleanupServiceManager(currentManager).catch(err => {
-          console.warn(
+          console.error(
             '[NotebookEditorSimple] Cleanup error in effect return:',
             err
           );

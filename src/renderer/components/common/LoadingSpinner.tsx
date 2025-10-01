@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { Box, Text, Spinner } from '@primer/react';
-import { COLORS } from '../../shared/constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 
 /**
  * Props for the LoadingSpinner component.

@@ -26,7 +26,7 @@ import Environments from './pages/Environments';
 import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
-import LoadingSpinner from './components/LoadingSpinner';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';

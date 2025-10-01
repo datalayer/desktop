@@ -4,6 +4,7 @@
  */
 
 /* Import styles from dependencies */
+@import '@datalayer/jupyter-lexical/style/index.css';
 
 /* Datalayer Color Palette CSS Variables */
 :root {
@@ -34,8 +35,8 @@
   --color-fg-muted: var(--datalayer-gray);
   --color-accent-fg: var(--datalayer-green-main);
   --color-success-fg: var(--datalayer-green-main);
-  --color-btn-primary-bg: var(--datalayer-green-main);
-  --color-btn-primary-hover-bg: var(--datalayer-green-dark);
+  --color-btn-primary-bg: var(--datalayer-green-main) !important;
+  --color-btn-primary-hover-bg: var(--datalayer-green-dark) !important;
 
   /* Override ALL Primer focus-related colors to use green */
   --color-accent-emphasis: var(--datalayer-green-accessible-dark);

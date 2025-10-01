@@ -13,11 +13,11 @@
 import React, { useState, useCallback } from 'react';
 import { Box } from '@primer/react';
 import iconImage from '../assets/icon.png';
-import Header from '../components/login/Header';
-import ErrorMessage from '../components/login/ErrorMessage';
-import Form from '../components/login/Form';
-import Footer from '../components/login/Footer';
-import Version from '../components/login/Version';
+import Header from '../components/auth/Header';
+import ErrorMessage from '../components/common/ErrorMessage';
+import Form from '../components/auth/Form';
+import Footer from '../components/auth/Footer';
+import Version from '../components/auth/Version';
 import { LoginFormData, LoginState } from '../../shared/types';
 import { validateLoginForm, formatLoginError } from '../utils/login';
 

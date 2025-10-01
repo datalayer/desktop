@@ -26,11 +26,12 @@ export function setupContentSecurityPolicy(): void {
           ...details.responseHeaders,
           'Content-Security-Policy': [
             "default-src 'self'; " +
-              "script-src 'self' 'unsafe-eval'; " +
-              "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' data: https:; " +
-              "connect-src 'self' https://prod1.datalayer.run https://*.datalayer.io wss://*.datalayer.run; " +
-              "font-src 'self' data:;",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+              "img-src 'self' data: https: blob:; " +
+              "connect-src 'self' https://prod1.datalayer.run https://*.datalayer.io https://*.datalayer.run wss://*.datalayer.run wss://*.datalayer.io; " +
+              "font-src 'self' data: https://cdn.jsdelivr.net; " +
+              "worker-src 'self' blob:;",
           ],
         },
       });

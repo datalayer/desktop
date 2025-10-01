@@ -55,10 +55,6 @@ if (!Symbol.keyFor) {
 if (!Symbol.iterator) Symbol.iterator = Symbol('Symbol.iterator');
 if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('Symbol.toStringTag');
 
-console.log('[Symbol Polyfill] Symbol:', typeof Symbol);
-console.log('[Symbol Polyfill] Symbol.for:', typeof Symbol.for);
-console.log('[Symbol Polyfill] Testing Symbol.for:', Symbol.for('test'));
-
 // Lodash polyfills
 var base$1 = function(object, source) { return object && source; };
 var base$2 = base$1;

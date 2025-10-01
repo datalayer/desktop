@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 electron-vite build && node scripts/fix-production-bundle.js",
+    "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --quiet",
@@ -132,8 +132,8 @@
           "arch": "universal"
         }
       ],
-      "mergeASARs": false,
-      "singleArchFiles": "*"
+      "mergeASARs": true,
+      "singleArchFiles": "node_modules/**/*.node"
     },
     "linux": {
       "target": "AppImage",

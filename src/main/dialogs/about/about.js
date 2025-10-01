@@ -13,8 +13,6 @@
 
 // Initialize the about dialog when DOM is ready
 function initializeAboutDialog() {
-  console.log('[About] Initializing about dialog');
-
   // Update copyright year to current year
   const currentYear = new Date().getFullYear();
   const copyrightYearElement = document.getElementById('copyright-year');
@@ -28,12 +26,8 @@ function initializeAboutDialog() {
   const githubBtn = document.querySelector('[data-action="github"]');
   const closeBtn = document.querySelector('[data-action="close"]');
 
-  console.log('[About] Found close button:', !!closeBtn);
-  console.log('[About] aboutAPI available:', !!window.aboutAPI);
-
   if (websiteBtn) {
     websiteBtn.addEventListener('click', () => {
-      console.log('[About] Website button clicked');
       if (window.aboutAPI) {
         window.aboutAPI.openExternal('https://datalayer.io');
       }
@@ -42,7 +36,6 @@ function initializeAboutDialog() {
 
   if (docsBtn) {
     docsBtn.addEventListener('click', () => {
-      console.log('[About] Docs button clicked');
       if (window.aboutAPI) {
         window.aboutAPI.openExternal('https://docs.datalayer.io');
       }
@@ -51,7 +44,6 @@ function initializeAboutDialog() {
 
   if (githubBtn) {
     githubBtn.addEventListener('click', () => {
-      console.log('[About] GitHub button clicked');
       if (window.aboutAPI) {
         window.aboutAPI.openExternal('https://github.com/datalayer/core');
       }
@@ -60,9 +52,7 @@ function initializeAboutDialog() {
 
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      console.log('[About] Close button clicked');
       if (window.aboutAPI) {
-        console.log('[About] Calling aboutAPI.close()');
         window.aboutAPI.close();
       } else {
         console.error('[About] aboutAPI not available');
@@ -75,14 +65,11 @@ function initializeAboutDialog() {
   // Close on ESC key
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      console.log('[About] ESC key pressed');
       if (window.aboutAPI) {
         window.aboutAPI.close();
       }
     }
   });
-
-  console.log('[About] Initialization complete');
 }
 
 // Try multiple ways to ensure the dialog is initialized
@@ -98,7 +85,6 @@ window.addEventListener('load', () => {
   // Re-initialize if close button still doesn't have handler
   const closeBtn = document.querySelector('[data-action="close"]');
   if (closeBtn && !closeBtn.onclick) {
-    console.log('[About] Re-initializing handlers on window load');
     initializeAboutDialog();
   }
 });

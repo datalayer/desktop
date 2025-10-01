@@ -54,6 +54,14 @@ try {
 
 // Make Backbone available globally for widgets
 window.Backbone = Backbone;
+globalThis.Backbone = Backbone;
+
+// CRITICAL: Make numbered variations of Backbone available globally
+// This prevents "Class extends value undefined" errors when bundler creates numbered variations
+for (let i = 1; i <= 20; i++) {
+  globalThis[`Backbone$${i}`] = Backbone;
+  window[`Backbone$${i}`] = Backbone;
+}
 
 // Export for use by other modules
 export { lodash, Backbone };

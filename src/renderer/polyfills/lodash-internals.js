@@ -31,6 +31,26 @@ const NativePromise = globalThis.Promise;
 const NativeSymbol = globalThis.Symbol;
 const NativeUint8Array = globalThis.Uint8Array;
 
+// CRITICAL: Make numbered variations of constructors available globally
+// This prevents "Class extends value undefined" errors in production builds
+for (let i = 1; i <= 20; i++) {
+  globalThis[`Map$${i}`] = NativeMap;
+  globalThis[`Set$${i}`] = NativeSet;
+  globalThis[`WeakMap$${i}`] = NativeWeakMap;
+  globalThis[`WeakSet$${i}`] = NativeWeakSet;
+  globalThis[`DataView$${i}`] = NativeDataView;
+  globalThis[`Promise$${i}`] = NativePromise;
+  globalThis[`Symbol$${i}`] = NativeSymbol;
+  globalThis[`Uint8Array$${i}`] = NativeUint8Array;
+  // Also add other common constructors that might be extended
+  globalThis[`Object$${i}`] = Object;
+  globalThis[`Array$${i}`] = Array;
+  globalThis[`Function$${i}`] = Function;
+  globalThis[`Error$${i}`] = Error;
+  globalThis[`RegExp$${i}`] = RegExp;
+  globalThis[`Date$${i}`] = Date;
+}
+
 // Ensure Symbol.for is available
 if (NativeSymbol && !NativeSymbol.for) {
   NativeSymbol.for = function (key) {
@@ -126,59 +146,9 @@ ListCache.prototype.set = function (key, value) {
 
 // Make ListCache available globally for all variations
 globalThis.ListCache = ListCache;
-globalThis.ListCache$1 = ListCache;
-globalThis.ListCache$2 = ListCache;
-globalThis.ListCache$3 = ListCache;
-globalThis.ListCache$4 = ListCache;
-
-// Make native constructors available for all variations
-globalThis.Map$1 = NativeMap;
-globalThis.Map$2 = NativeMap;
-globalThis.Map$3 = NativeMap;
-globalThis.Map$4 = NativeMap;
-globalThis.Map$5 = NativeMap;
-globalThis.Map$6 = NativeMap;
-
-globalThis.Set$1 = NativeSet;
-globalThis.Set$2 = NativeSet;
-globalThis.Set$3 = NativeSet;
-globalThis.Set$4 = NativeSet;
-globalThis.Set$5 = NativeSet;
-globalThis.Set$6 = NativeSet;
-
-globalThis.WeakMap$1 = NativeWeakMap;
-globalThis.WeakMap$2 = NativeWeakMap;
-globalThis.WeakMap$3 = NativeWeakMap;
-globalThis.WeakMap$4 = NativeWeakMap;
-
-globalThis.WeakSet$1 = NativeWeakSet;
-globalThis.WeakSet$2 = NativeWeakSet;
-globalThis.WeakSet$3 = NativeWeakSet;
-globalThis.WeakSet$4 = NativeWeakSet;
-
-globalThis.DataView$1 = NativeDataView;
-globalThis.DataView$2 = NativeDataView;
-globalThis.DataView$3 = NativeDataView;
-globalThis.DataView$4 = NativeDataView;
-
-globalThis.Promise$1 = NativePromise;
-globalThis.Promise$2 = NativePromise;
-globalThis.Promise$3 = NativePromise;
-globalThis.Promise$4 = NativePromise;
-
-globalThis.Symbol$1 = NativeSymbol;
-globalThis.Symbol$2 = NativeSymbol;
-globalThis.Symbol$3 = NativeSymbol;
-globalThis.Symbol$4 = NativeSymbol;
-globalThis.Symbol$5 = NativeSymbol;
-globalThis.Symbol$6 = NativeSymbol;
-
-globalThis.Uint8Array$1 = NativeUint8Array;
-globalThis.Uint8Array$2 = NativeUint8Array;
-globalThis.Uint8Array$3 = NativeUint8Array;
-globalThis.Uint8Array$4 = NativeUint8Array;
-globalThis.Uint8Array$5 = NativeUint8Array;
-globalThis.Uint8Array$6 = NativeUint8Array;
+for (let i = 1; i <= 10; i++) {
+  globalThis[`ListCache$${i}`] = ListCache;
+}
 
 // MapCache implementation that uses Map or ListCache
 function MapCache(entries) {
@@ -286,10 +256,9 @@ function isKeyable(value) {
 
 // Make MapCache available globally
 globalThis.MapCache = MapCache;
-globalThis.MapCache$1 = MapCache;
-globalThis.MapCache$2 = MapCache;
-globalThis.MapCache$3 = MapCache;
-globalThis.MapCache$4 = MapCache;
+for (let i = 1; i <= 10; i++) {
+  globalThis[`MapCache$${i}`] = MapCache;
+}
 
 // Stack implementation
 function Stack(entries) {
@@ -336,10 +305,9 @@ Stack.prototype.set = function (key, value) {
 
 // Make Stack available globally
 globalThis.Stack = Stack;
-globalThis.Stack$1 = Stack;
-globalThis.Stack$2 = Stack;
-globalThis.Stack$3 = Stack;
-globalThis.Stack$4 = Stack;
+for (let i = 1; i <= 10; i++) {
+  globalThis[`Stack$${i}`] = Stack;
+}
 
 // BaseGetTag function (lodash internal)
 function baseGetTag(value) {

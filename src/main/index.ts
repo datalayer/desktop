@@ -305,6 +305,12 @@ function registerIPCHandlers(): void {
     return user; // Returns User directly, throws on error
   });
 
+  // Configuration handlers
+  ipcMain.handle('datalayer:get-spacer-run-url', async () => {
+    const config = sdkBridge.getConfig();
+    return config.spacerRunUrl;
+  });
+
   // GitHub user handler removed - use whoami instead
   // Generic request handler removed - use specific SDK methods instead
 
@@ -461,8 +467,6 @@ async function main(): Promise<void> {
         }
       }, 2000); // Wait 2 seconds for renderer to be fully ready
     }
-
-    console.log('Datalayer Desktop application started successfully');
   } catch (error) {
     console.error('Failed to start application:', error);
     process.exit(1);

@@ -196,6 +196,9 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 
   // User API
   whoami: () => ipcRenderer.invoke('datalayer:whoami'),
+
+  // Configuration
+  getSpacerRunUrl: () => ipcRenderer.invoke('datalayer:get-spacer-run-url'),
 });
 
 /**

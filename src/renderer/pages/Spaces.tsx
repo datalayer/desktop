@@ -24,9 +24,9 @@ import {
   groupDocumentsByType,
   createDataHash,
   getDocumentIcon,
-} from '../utils/library';
+} from '../utils/spaces';
 import Header from '../components/spaces/Header';
-import ErrorMessage from '../components/spaces/ErrorMessage';
+import ErrorMessage from '../components/common/ErrorMessage';
 import SpaceSection from '../components/spaces/SpaceSection';
 import DeleteConfirmationDialog from '../components/spaces/DeleteConfirmationDialog';
 import CreateDocumentDialog from '../components/spaces/CreateDocumentDialog';
@@ -507,29 +507,21 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleUpdateItem = async (
-    uid: string,
-    name: string,
-    description: string
+    _uid: string,
+    _name: string,
+    _description: string
   ) => {
     if (!spaceId) {
       throw new Error('No space selected');
     }
 
-    const itemType = itemToEdit?.type?.toLowerCase();
-
     // TODO: Implement update methods in DatalayerIPCClient
+    // const itemType = itemToEdit?.type?.toLowerCase();
     // if (itemType === 'notebook') {
-    //   await window.datalayerClient.updateNotebook(uid, name, description);
+    //   await window.datalayerClient.updateNotebook(_uid, _name, _description);
     // } else {
-    //   await window.datalayerClient.updateLexical(uid, name, description);
+    //   await window.datalayerClient.updateLexical(_uid, _name, _description);
     // }
-
-    console.warn('Update functionality not yet implemented:', {
-      itemType,
-      uid,
-      name,
-      description,
-    });
 
     // Refresh the space items to show the updated document
     await fetchDocuments(spaceId);
@@ -554,7 +546,10 @@ const Documents: React.FC<DocumentsListProps> = ({
         onRefresh={handleManualRefresh}
       />
 
-      <ErrorMessage error={error} warning={warningMessage} />
+      <ErrorMessage
+        error={error || undefined}
+        warning={warningMessage || undefined}
+      />
 
       <SpaceSection
         title="Notebooks"
