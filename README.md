@@ -61,6 +61,15 @@ If you want to contribute or build from source, please see:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and architecture
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [RELEASE.md](RELEASE.md) - Release and packaging instructions
+- [CLAUDE.md](CLAUDE.md) - AI assistant context and troubleshooting guide
+
+### Recent Production Build Fixes (January 2025)
+
+✅ **JupyterLab Services Loading**: Fixed production build module loading by handling Vite's `__require` wrapper
+✅ **Lexical Collaboration**: Fixed WebSocket URL duplication for document collaboration
+✅ **Notebook Execution**: Production builds now properly connect to runtimes and execute cells
+
+See [CLAUDE.md](CLAUDE.md) for detailed technical information about these fixes.
 
 ## 📄 License
 

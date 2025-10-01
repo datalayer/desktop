@@ -1566,3 +1566,90 @@ These refactoring achievements represent significant improvements in:
 - **Developer Experience**: Clear separation of concerns and better organization
 - **Architectural Consistency**: Both follow identical atomic design patterns
 - **Future Scalability**: New features can leverage existing atomic components
+
+## Production Build Module Loading Fixes (CRITICAL - January 2025)
+
+### ServiceManager Loading in Production Builds
+
+**Problem**: Production builds failed with `ServiceManager not found in @jupyterlab/services` because Vite wraps CommonJS modules with a `__require` function wrapper.
+
+**Root Cause**: 
+- In production, Vite bundles `@jupyterlab/services/lib/manager` as `{ __require: function }`
+- The `__require` function must be called with the module path to get the actual exports
+- Development builds work fine because modules aren't wrapped
+
+**Solution** (`src/renderer/services/serviceManagerLoader.ts`):
+
+```typescript
+// Handle Vite's __require wrapper (CommonJS interop)
+if (!ServiceManager && (managerModule as any).__require && typeof (managerModule as any).__require === 'function') {
+  console.log('[ServiceManagerLoader] Found __require wrapper, calling it');
+  try {
+    const unwrapped = (managerModule as any).__require('@jupyterlab/services/lib/manager');
+    ServiceManager = unwrapped?.ServiceManager || unwrapped?.default?.ServiceManager || unwrapped?.default || unwrapped;
+  } catch (e) {
+    console.error('[ServiceManagerLoader] Failed to use __require:', e);
+  }
+}
+```
+
+**Key Points**:
+1. Always import from specific lib paths: `@jupyterlab/services/lib/manager` and `@jupyterlab/services/lib/serverconnection`
+2. Check for `__require` wrapper and call it if present
+3. Handle multiple export patterns (ServiceManager, default.ServiceManager, default, or the module itself)
+4. This fix is CRITICAL for production builds - notebooks won't work without it
+
+### Lexical Collaboration WebSocket URL Fix (January 2025)
+
+**Problem**: Lexical document collaboration WebSocket URLs were duplicated: `wss://run.datalayer.io/api/spacer/v1/lexical/ws/01K6FJV94DBGK9VVJHTCJ58ERM/01K6FJV94DBGK9VVJHTCJ58ERM`
+
+**Root Cause**: 
+- `LoroCollaborationPlugin` receives both `websocketUrl` and `id` props
+- Internally, `WebsocketProvider` constructs the full URL as `${websocketUrl}/${id}`
+- We were passing `websocketUrl={`${collaborationWebSocketUrl}/${documentId}`}` which already included the documentId
+- This caused the documentId to appear twice in the final URL
+
+**Solution** (`src/renderer/pages/DocumentEditor.tsx:398`):
+
+```typescript
+// BEFORE (WRONG)
+<LoroCollaborationPlugin
+  id={documentId}
+  websocketUrl={`${collaborationWebSocketUrl}/${documentId}`}  // ❌ Already includes documentId
+  ...
+/>
+
+// AFTER (CORRECT)
+<LoroCollaborationPlugin
+  id={documentId}
+  websocketUrl={collaborationWebSocketUrl}  // ✅ Base URL only
+  ...
+/>
+```
+
+**Key Points**:
+1. `LoroCollaborationPlugin` automatically appends the `id` prop to the `websocketUrl`
+2. Always pass the base WebSocket URL without the document/room ID
+3. The `id` prop is used for both the Loro document ID and the WebSocket path
+4. Final URL becomes: `wss://run.datalayer.io/api/spacer/v1/lexical/ws/01K6FJV94DBGK9VVJHTCJ58ERM`
+
+### Production Build Testing
+
+After these fixes, production builds now work correctly:
+
+```bash
+# Build and test production app
+npm run build
+npm run dist:dev-prod:mac  # Build with DevTools enabled for testing
+
+# Verify functionality:
+# ✅ Notebooks load and connect to runtimes
+# ✅ Cells execute properly with kernel connection
+# ✅ Lexical documents connect to collaboration server
+# ✅ WebSocket URLs are correct (single document ID)
+```
+
+**Files Modified**:
+- `src/renderer/services/serviceManagerLoader.ts` - Added __require wrapper handling
+- `src/renderer/pages/DocumentEditor.tsx` - Fixed WebSocket URL construction
+
