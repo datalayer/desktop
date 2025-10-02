@@ -63,6 +63,29 @@ If you want to contribute or build from source, please see:
 - [RELEASE.md](RELEASE.md) - Release and packaging instructions
 - [CLAUDE.md](CLAUDE.md) - AI assistant context and troubleshooting guide
 
+### Testing (January 2025) 🧪
+
+A comprehensive test suite has been implemented with **40+ test assertions** covering:
+
+- **Unit Tests**: Components, utilities, and stores
+- **Integration Tests**: IPC communication and service integration
+- **E2E Tests**: Full user flows with Playwright
+
+**Quick Start**:
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode for development
+npm run test:coverage # Generate coverage report
+npm run test:ui       # Visual test runner
+```
+
+**Documentation**:
+- [TESTING_QUICK_START.md](TESTING_QUICK_START.md) - Get started in 5 minutes
+- [tests/README.md](tests/README.md) - Complete testing guide
+- [TEST_SUMMARY.md](TEST_SUMMARY.md) - Implementation details
+
+**Coverage Goals**: 70%+ overall, 90%+ critical path
+
 ### Recent Production Build Fixes (January 2025)
 
 ✅ **JupyterLab Services Loading**: Fixed production build module loading by handling Vite's `__require` wrapper

@@ -148,21 +148,27 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # Get the previous tag
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          # Check for manual release notes first
+          if [ -f "RELEASE_NOTES.md" ]; then
+            echo "Using manual RELEASE_NOTES.md"
+            cp RELEASE_NOTES.md CHANGELOG.txt
+          else
+            echo "Auto-generating changelog from git history"
+            # Get the previous tag
+            PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
 
-          if [ -z "$PREVIOUS_TAG" ]; then
-            echo "No previous tag found, using initial commit"
-            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-          fi
+            if [ -z "$PREVIOUS_TAG" ]; then
+              echo "No previous tag found, using initial commit"
+              PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+            fi
 
-          echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
+            echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
 
-          # Generate changelog
-          CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)" --no-merges)
+            # Generate changelog
+            CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)" --no-merges)
 
-          # Save to file
-          cat > CHANGELOG.txt << 'EOF'
+            # Save to file
+            cat > CHANGELOG.txt << 'EOF'
           ## What's Changed
 
           $CHANGELOG
@@ -202,6 +208,7 @@ jobs:
           sudo rpm -i datalayer-desktop-*.x86_64.rpm
           ```
           EOF
+          fi
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
