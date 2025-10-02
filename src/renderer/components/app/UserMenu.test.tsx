@@ -17,6 +17,10 @@ import UserMenu from './UserMenu';
 
 describe('UserMenu', () => {
   const mockUser = {
+    id: 'user-123',
+    uid: 'uid-123',
+    firstName: 'John',
+    lastName: 'Doe',
     displayName: 'John Doe',
     email: 'john.doe@example.com',
     avatarUrl: 'https://example.com/avatar.jpg',
@@ -104,9 +108,13 @@ describe('UserMenu', () => {
         email: '',
       };
 
-      render(<UserMenu {...defaultProps} user={userWithoutEmail} isOpen={true} />);
+      render(
+        <UserMenu {...defaultProps} user={userWithoutEmail} isOpen={true} />
+      );
 
-      expect(screen.queryByText('john.doe@example.com')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('john.doe@example.com')
+      ).not.toBeInTheDocument();
     });
 
     it('should display user info in dropdown', () => {
@@ -157,7 +165,9 @@ describe('UserMenu', () => {
     });
 
     it('should have aria-expanded attribute', () => {
-      const { rerender } = render(<UserMenu {...defaultProps} isOpen={false} />);
+      const { rerender } = render(
+        <UserMenu {...defaultProps} isOpen={false} />
+      );
 
       let button = screen.getByRole('button', { name: /user menu/i });
       expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -240,7 +250,9 @@ describe('UserMenu', () => {
     it('should add event listener when menu opens', () => {
       const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
 
-      const { rerender } = render(<UserMenu {...defaultProps} isOpen={false} />);
+      const { rerender } = render(
+        <UserMenu {...defaultProps} isOpen={false} />
+      );
 
       expect(addEventListenerSpy).not.toHaveBeenCalledWith(
         'keydown',
@@ -339,7 +351,9 @@ describe('UserMenu', () => {
       render(<UserMenu {...defaultProps} isOpen={true} />);
 
       // Main button
-      expect(screen.getByRole('button', { name: /user menu/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /user menu/i })
+      ).toBeInTheDocument();
 
       // Sign out button
       const signOutButton = screen.getByText('Sign out').closest('button');
@@ -383,7 +397,11 @@ describe('UserMenu', () => {
       };
 
       render(
-        <UserMenu {...defaultProps} user={userWithUndefinedEmail as any} isOpen={true} />
+        <UserMenu
+          {...defaultProps}
+          user={userWithUndefinedEmail as any}
+          isOpen={true}
+        />
       );
 
       expect(screen.getByText('John Doe')).toBeInTheDocument();

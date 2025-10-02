@@ -84,5 +84,19 @@ export interface IRuntimeService extends ILifecycle {
   /**
    * Subscribe to runtime state changes.
    */
-  onRuntimeStateChanged(callback: (change: RuntimeStateChange) => void): () => void;
+  onRuntimeStateChanged(
+    callback: (change: RuntimeStateChange) => void
+  ): () => void;
+
+  /**
+   * List all runtimes on the platform (not just notebook-specific ones).
+   * Used for runtime selection/browsing.
+   */
+  listAllRuntimes(): Promise<Runtime[]>;
+
+  /**
+   * Refresh the list of all platform runtimes.
+   * Forces a fresh fetch even if cached.
+   */
+  refreshAllRuntimes(): Promise<Runtime[]>;
 }

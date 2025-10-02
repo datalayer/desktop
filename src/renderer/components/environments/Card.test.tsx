@@ -29,14 +29,17 @@ vi.mock('./TypeLabel', () => ({
 
 vi.mock('./Description', () => ({
   default: ({ environment }: any) => (
-    <div data-testid="description">{environment.description || 'No description'}</div>
+    <div data-testid="description">
+      {environment.description || 'No description'}
+    </div>
   ),
 }));
 
 vi.mock('./Resources', () => ({
   default: ({ resources }: any) => (
     <div data-testid="resources">
-      CPU: {resources?.cpu?.default || 0}, Memory: {resources?.memory?.default || 0}
+      CPU: {resources?.cpu?.default || 0}, Memory:{' '}
+      {resources?.memory?.default || 0}
     </div>
   ),
 }));
@@ -225,7 +228,9 @@ describe('Environment Card', () => {
 
   describe('layout and styling', () => {
     it('should render as a bordered box', () => {
-      const { container } = render(<Card environment={baseEnvironment} />);
+      const { container } = render(
+        <Card environment={baseEnvironment} />
+      );
 
       const card = container.firstChild;
       expect(card).toBeInTheDocument();
@@ -309,7 +314,9 @@ describe('Environment Card', () => {
       render(<Card environment={specialImageEnv} />);
 
       expect(
-        screen.getByText(/registry.example.com\/namespace\/python:3.11-slim-bullseye/)
+        screen.getByText(
+          /registry.example.com\/namespace\/python:3.11-slim-bullseye/
+        )
       ).toBeInTheDocument();
     });
 
@@ -326,8 +333,16 @@ describe('Environment Card', () => {
     });
 
     it('should render multiple cards independently', () => {
-      const env1 = { ...baseEnvironment, name: 'env-1', title: 'Environment 1' };
-      const env2 = { ...baseEnvironment, name: 'env-2', title: 'Environment 2' };
+      const env1 = {
+        ...baseEnvironment,
+        name: 'env-1',
+        title: 'Environment 1',
+      };
+      const env2 = {
+        ...baseEnvironment,
+        name: 'env-2',
+        title: 'Environment 2',
+      };
 
       const { container } = render(
         <>

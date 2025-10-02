@@ -25,11 +25,11 @@ import {
   CellSidebarButton,
 } from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core/lib/state';
+import { useService } from '../contexts/ServiceContext';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { createMockServiceManager } from '../services/mockServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { Notebook2Toolbar } from '../components/notebook/Toolbar';
-import { useRuntimeStore } from '../stores/runtimeStore';
 
 interface NotebookEditorProps {
   notebookId: string;
@@ -41,7 +41,8 @@ interface NotebookEditorProps {
  */
 const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   const { configuration, setConfiguration } = useCoreStore();
-  const { refreshRuntimes, allRuntimes } = useRuntimeStore();
+  const runtimeService = useService('runtimeService');
+
   const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [runtimeInfo, setRuntimeInfo] = useState<{
@@ -51,12 +52,21 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     token: string;
   } | null>(null);
   const [serviceManager, setServiceManager] = useState<any>(null);
+  const [allRuntimes, _setAllRuntimes] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Refresh runtimes when notebook opens
+  // Initialize RuntimeService
   useEffect(() => {
-    refreshRuntimes();
-  }, [refreshRuntimes]);
+    if (!runtimeService) return;
+
+    const initService = async () => {
+      if (runtimeService.state === 'uninitialized') {
+        await runtimeService.initialize();
+      }
+    };
+
+    initService();
+  }, [runtimeService]);
 
   // Watch for runtime expiration - clear runtime selection if current runtime disappears
   useEffect(() => {

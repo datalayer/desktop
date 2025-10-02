@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BrowserWindow } from 'electron';
-import WebSocket from 'ws';
+// import WebSocket from 'ws';
 import { setupElectronMocks } from '../../../tests/mocks';
 
 // Setup Electron mocks
@@ -113,10 +113,13 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const mockWs = mockWebSocketInstances[0];
       mockWs.triggerEvent('open');
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'open',
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'open',
+        }
+      );
     });
 
     it('should handle message events and forward to renderer', () => {
@@ -129,11 +132,14 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const testMessage = JSON.stringify({ msg_type: 'kernel_info_reply' });
       mockWs.triggerEvent('message', Buffer.from(testMessage));
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'message',
-        data: testMessage,
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'message',
+          data: testMessage,
+        }
+      );
     });
 
     it('should handle binary messages correctly', () => {
@@ -146,14 +152,17 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const binaryData = Buffer.from([1, 2, 3, 4, 5]);
       mockWs.triggerEvent('message', binaryData);
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'message',
-        data: {
-          type: 'Buffer',
-          data: [1, 2, 3, 4, 5],
-        },
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'message',
+          data: {
+            type: 'Buffer',
+            data: [1, 2, 3, 4, 5],
+          },
+        }
+      );
     });
 
     it('should handle close event and cleanup', () => {
@@ -165,13 +174,16 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const mockWs = mockWebSocketInstances[0];
       mockWs.triggerEvent('close', 1000, Buffer.from('Normal closure'));
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'close',
-        code: 1000,
-        reason: 'Normal closure',
-        wasClean: true,
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'close',
+          code: 1000,
+          reason: 'Normal closure',
+          wasClean: true,
+        }
+      );
     });
 
     it('should handle error event', () => {
@@ -184,12 +196,15 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const testError = new Error('Connection failed');
       mockWs.triggerEvent('error', testError);
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'error',
-        error: 'Connection failed',
-        message: testError.toString(),
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'error',
+          error: 'Connection failed',
+          message: testError.toString(),
+        }
+      );
     });
 
     it('should not send events if window is destroyed', () => {
@@ -417,7 +432,10 @@ describe('WebSocketProxyService - Integration Tests', () => {
         'ws://localhost:8888/api/kernels/test'
       );
 
-      expect(mockWindow.once).toHaveBeenCalledWith('closed', expect.any(Function));
+      expect(mockWindow.once).toHaveBeenCalledWith(
+        'closed',
+        expect.any(Function)
+      );
     });
 
     it('should close all window connections when window closes', () => {
@@ -580,14 +598,17 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const arrayBuffer = new ArrayBuffer(8);
       mockWs.triggerEvent('message', arrayBuffer);
 
-      expect(mockWindow.webContents.send).toHaveBeenCalledWith('websocket-event', {
-        id: result.id,
-        type: 'message',
-        data: {
-          type: 'ArrayBuffer',
-          data: expect.any(Array),
-        },
-      });
+      expect(mockWindow.webContents.send).toHaveBeenCalledWith(
+        'websocket-event',
+        {
+          id: result.id,
+          type: 'message',
+          data: {
+            type: 'ArrayBuffer',
+            data: expect.any(Array),
+          },
+        }
+      );
     });
   });
 

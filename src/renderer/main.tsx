@@ -178,6 +178,7 @@ if (Prism && Prism.languages) {
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { ServiceProvider } from './contexts/ServiceContext';
 import './index.css';
 
 // Suppress widget detachment errors that occur during cleanup
@@ -250,7 +251,9 @@ const init = async () => {
 
   root.render(
     <React.StrictMode>
-      <App />
+      <ServiceProvider>
+        <App />
+      </ServiceProvider>
     </React.StrictMode>
   );
 };

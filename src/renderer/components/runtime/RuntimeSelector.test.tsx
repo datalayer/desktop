@@ -56,11 +56,7 @@ describe('RuntimeSelector', () => {
 
   describe('rendering', () => {
     it('should render select dropdown', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -68,22 +64,14 @@ describe('RuntimeSelector', () => {
     });
 
     it('should show loading spinner while fetching runtimes', () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       // Spinner should be visible initially
       expect(screen.getByText('Loading')).toBeInTheDocument();
     });
 
     it('should hide spinner after runtimes are loaded', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -95,11 +83,7 @@ describe('RuntimeSelector', () => {
     });
 
     it('should display placeholder text when no runtime selected', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(screen.getByText('Runtimes')).toBeInTheDocument();
@@ -123,11 +107,7 @@ describe('RuntimeSelector', () => {
 
   describe('runtime list display', () => {
     it('should display all available runtimes', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -141,11 +121,7 @@ describe('RuntimeSelector', () => {
     });
 
     it('should show environment titles in runtime display', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -158,11 +134,7 @@ describe('RuntimeSelector', () => {
     });
 
     it('should show remaining time for each runtime', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -188,11 +160,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -215,11 +183,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -243,11 +207,7 @@ describe('RuntimeSelector', () => {
     });
 
     it('should display "Create New Runtime" option', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(screen.getByText('Create New Runtime')).toBeInTheDocument();
@@ -260,11 +220,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -279,11 +235,7 @@ describe('RuntimeSelector', () => {
     it('should call onRuntimeSelected with runtime when selected', async () => {
       const user = userEvent.setup();
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -303,11 +255,7 @@ describe('RuntimeSelector', () => {
     it('should call onRuntimeSelected with null for "Create New"', async () => {
       const user = userEvent.setup();
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -336,11 +284,7 @@ describe('RuntimeSelector', () => {
 
       const user = userEvent.setup();
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(screen.getByText(/Snake Runtime/)).toBeInTheDocument();
@@ -371,22 +315,14 @@ describe('RuntimeSelector', () => {
     });
 
     it('should disable select while loading', () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       const select = screen.getByRole('combobox');
       expect(select).toBeDisabled();
     });
 
     it('should enable select after loading completes', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -401,11 +337,7 @@ describe('RuntimeSelector', () => {
 
   describe('runtime refresh', () => {
     it('should fetch runtimes on mount', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalledTimes(1);
@@ -439,11 +371,7 @@ describe('RuntimeSelector', () => {
     it('should handle refresh errors gracefully', async () => {
       mockRefreshRuntimes.mockRejectedValue(new Error('Fetch failed'));
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();
@@ -470,11 +398,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -498,11 +422,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -525,11 +445,7 @@ describe('RuntimeSelector', () => {
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
 
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -540,11 +456,7 @@ describe('RuntimeSelector', () => {
 
   describe('accessibility', () => {
     it('should have proper combobox role', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         const select = screen.getByRole('combobox');
@@ -553,22 +465,14 @@ describe('RuntimeSelector', () => {
     });
 
     it('should show loading indicator with proper semantics', () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       // Spinner should have accessible text
       expect(screen.getByText('Loading')).toBeInTheDocument();
     });
 
     it('should have appropriate size for touch targets', async () => {
-      render(
-        <RuntimeSelector
-          onRuntimeSelected={mockOnRuntimeSelected}
-        />
-      );
+      render(<RuntimeSelector onRuntimeSelected={mockOnRuntimeSelected} />);
 
       await waitFor(() => {
         expect(mockRefreshRuntimes).toHaveBeenCalled();

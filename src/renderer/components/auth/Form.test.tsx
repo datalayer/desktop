@@ -13,16 +13,17 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Form from './Form';
+import type { LoginFormProps } from '../../../shared/types';
 
 describe('Form component', () => {
-  const defaultProps = {
+  const defaultProps: LoginFormProps = {
     formData: {
       runUrl: '',
       token: '',
     },
     state: {
       loading: false,
-      error: null,
+      error: "",
     },
     onFormDataChange: vi.fn(),
     onSubmit: vi.fn(),
@@ -39,8 +40,12 @@ describe('Form component', () => {
   it('should display placeholders for empty fields', () => {
     render(<Form {...defaultProps} />);
 
-    expect(screen.getByPlaceholderText(/https:\/\/prod1\.datalayer\.run/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter your api token/i)).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/https:\/\/prod1\.datalayer\.run/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/enter your api token/i)
+    ).toBeInTheDocument();
   });
 
   it('should render with pre-filled values', () => {
@@ -54,7 +59,9 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    expect(screen.getByDisplayValue('https://test.datalayer.run')).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue('https://test.datalayer.run')
+    ).toBeInTheDocument();
     expect(screen.getByDisplayValue('test-token')).toBeInTheDocument();
   });
 
@@ -76,7 +83,9 @@ describe('Form component', () => {
 
     render(<Form {...defaultProps} onFormDataChange={onFormDataChange} />);
 
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
     await user.type(tokenInput, 'my-token');
 
     expect(onFormDataChange).toHaveBeenCalledWith('token', expect.any(String));
@@ -97,7 +106,9 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    const form = screen.getByRole('form', { name: /datalayer authentication form/i });
+    const _form = screen.getByRole('form', {
+      name: /datalayer authentication form/i,
+    });
     await user.click(screen.getByRole('button', { name: /connect/i }));
 
     expect(onSubmit).toHaveBeenCalled();
@@ -118,7 +129,7 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    const form = screen.getByRole('form');
+    const _form = screen.getByRole('form');
     await user.click(screen.getByRole('button', { name: /connect/i }));
 
     // Form should not reload the page
@@ -179,14 +190,16 @@ describe('Form component', () => {
       },
       state: {
         loading: true,
-        error: null,
+        error: "",
       },
     };
 
     render(<Form {...props} />);
 
     const urlInput = screen.getByLabelText(/datalayer instance url/i);
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
     const button = screen.getByRole('button');
 
     expect(urlInput).toBeDisabled();
@@ -203,7 +216,7 @@ describe('Form component', () => {
       },
       state: {
         loading: true,
-        error: null,
+        error: "",
       },
     };
 
@@ -215,14 +228,18 @@ describe('Form component', () => {
   it('should have password type for token input', () => {
     render(<Form {...defaultProps} />);
 
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
     expect(tokenInput).toHaveAttribute('type', 'password');
   });
 
   it('should have autocomplete attribute for token input', () => {
     render(<Form {...defaultProps} />);
 
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
     expect(tokenInput).toHaveAttribute('autocomplete', 'current-password');
   });
 
@@ -237,7 +254,9 @@ describe('Form component', () => {
     render(<Form {...defaultProps} />);
 
     const urlInput = screen.getByLabelText(/datalayer instance url/i);
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
 
     expect(urlInput).toHaveAttribute('aria-describedby', 'run-url-help');
     expect(tokenInput).toHaveAttribute('aria-describedby', 'api-token-help');
@@ -255,7 +274,9 @@ describe('Form component', () => {
     render(<Form {...props} />);
 
     const urlInput = screen.getByLabelText(/datalayer instance url/i);
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
 
     expect(urlInput).toHaveAttribute('aria-invalid', 'true');
     expect(tokenInput).toHaveAttribute('aria-invalid', 'true');
@@ -266,7 +287,10 @@ describe('Form component', () => {
 
     const link = screen.getByRole('link', { name: /get a token/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', 'https://datalayer.app/settings/iam/tokens');
+    expect(link).toHaveAttribute(
+      'href',
+      'https://datalayer.app/settings/iam/tokens'
+    );
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
@@ -274,7 +298,9 @@ describe('Form component', () => {
   it('should display help text for both fields', () => {
     render(<Form {...defaultProps} />);
 
-    expect(screen.getByText(/the url of your datalayer instance/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/the url of your datalayer instance/i)
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/your datalayer api token for authentication/i)
     ).toBeInTheDocument();
@@ -298,7 +324,9 @@ describe('Form component', () => {
 
     render(<Form {...defaultProps} onKeyPress={onKeyPress} />);
 
-    const tokenInput = screen.getByLabelText(/datalayer api authentication token/i);
+    const tokenInput = screen.getByLabelText(
+      /datalayer api authentication token/i
+    );
     await user.type(tokenInput, 'a');
 
     expect(onKeyPress).toHaveBeenCalled();
@@ -334,6 +362,8 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    expect(screen.getByRole('button', { name: /connect/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /connect/i })
+    ).toBeInTheDocument();
   });
 });

@@ -10,7 +10,7 @@
  * @module renderer/utils/spaces.test
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FileIcon, BookIcon } from '@primer/octicons-react';
 import {
   formatDate,
@@ -100,43 +100,43 @@ describe('spaces utilities', () => {
 
   describe('getDocumentIcon', () => {
     it('should return BookIcon for notebook type', () => {
-      const notebook: DocumentItem = {
+      const notebook = {
         id: 'nb-1',
         name: 'My Notebook',
         type: 'notebook',
         createdAt: new Date().toISOString(),
-      };
+      } as unknown as DocumentItem;
 
-      const icon = getDocumentIcon(notebook);
+      const icon = getDocumentIcon(notebook as DocumentItem);
       expect(icon).toBe(BookIcon);
     });
 
     it('should return BookIcon for "Notebook" with capital N', () => {
-      const notebook: DocumentItem = {
+      const notebook = {
         id: 'nb-2',
         name: 'Notebook 2',
         type: 'Notebook',
         createdAt: new Date().toISOString(),
       };
 
-      const icon = getDocumentIcon(notebook);
+      const icon = getDocumentIcon(notebook as DocumentItem);
       expect(icon).toBe(BookIcon);
     });
 
     it('should return BookIcon for "NOTEBOOK" all caps', () => {
-      const notebook: DocumentItem = {
+      const notebook = {
         id: 'nb-3',
         name: 'Notebook 3',
         type: 'NOTEBOOK',
         createdAt: new Date().toISOString(),
       };
 
-      const icon = getDocumentIcon(notebook);
+      const icon = getDocumentIcon(notebook as DocumentItem);
       expect(icon).toBe(BookIcon);
     });
 
     it('should return FileIcon for document type', () => {
-      const document: DocumentItem = {
+      const document = {
         id: 'doc-1',
         name: 'Document',
         type: 'document',
@@ -148,7 +148,7 @@ describe('spaces utilities', () => {
     });
 
     it('should return FileIcon for undefined type', () => {
-      const document: DocumentItem = {
+      const document = {
         id: 'doc-2',
         name: 'Unknown',
         createdAt: new Date().toISOString(),
@@ -159,7 +159,7 @@ describe('spaces utilities', () => {
     });
 
     it('should return FileIcon for empty type', () => {
-      const document: DocumentItem = {
+      const document = {
         id: 'doc-3',
         name: 'Empty Type',
         type: '',
@@ -171,7 +171,7 @@ describe('spaces utilities', () => {
     });
 
     it('should return FileIcon for other types', () => {
-      const document: DocumentItem = {
+      const document = {
         id: 'doc-4',
         name: 'Spreadsheet',
         type: 'spreadsheet',
@@ -186,8 +186,8 @@ describe('spaces utilities', () => {
   describe('createDataHash', () => {
     it('should create hash from document data', () => {
       const data = [
-        { id: 'doc-1', name: 'Document 1', last_update_ts_dt: '2025-01-15' },
-        { id: 'doc-2', name: 'Document 2', last_update_ts_dt: '2025-01-14' },
+        { id: 'doc-1', name: 'Document 1', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
+        { id: 'doc-2', name: 'Document 2', last_update_ts_dt: '2025-01-14' } as unknown as DocumentItem,
       ];
 
       const hash = createDataHash(data);
@@ -198,7 +198,7 @@ describe('spaces utilities', () => {
 
     it('should use uid when id not present', () => {
       const data = [
-        { uid: 'uid-1', name: 'Doc', last_update_ts_dt: '2025-01-15' },
+        { uid: 'uid-1', name: 'Doc', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
       ];
 
       const hash = createDataHash(data);
@@ -207,7 +207,7 @@ describe('spaces utilities', () => {
 
     it('should use name_t when name not present', () => {
       const data = [
-        { id: 'doc-1', name_t: 'Named Doc', last_update_ts_dt: '2025-01-15' },
+        { id: 'doc-1', name_t: 'Named Doc', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
       ];
 
       const hash = createDataHash(data);
@@ -216,7 +216,7 @@ describe('spaces utilities', () => {
 
     it('should use modified_at when last_update_ts_dt not present', () => {
       const data = [
-        { id: 'doc-1', name: 'Doc', modified_at: '2025-01-15T10:00:00Z' },
+        { id: 'doc-1', name: 'Doc', modified_at: '2025-01-15T10:00:00Z' } as unknown as DocumentItem,
       ];
 
       const hash = createDataHash(data);
@@ -230,7 +230,7 @@ describe('spaces utilities', () => {
 
     it('should produce same hash for same data', () => {
       const data = [
-        { id: 'doc-1', name: 'Document 1', last_update_ts_dt: '2025-01-15' },
+        { id: 'doc-1', name: 'Document 1', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
       ];
 
       const hash1 = createDataHash(data);
@@ -240,8 +240,12 @@ describe('spaces utilities', () => {
     });
 
     it('should produce different hash for different data', () => {
-      const data1 = [{ id: 'doc-1', name: 'Doc 1', last_update_ts_dt: '2025-01-15' }];
-      const data2 = [{ id: 'doc-2', name: 'Doc 2', last_update_ts_dt: '2025-01-15' }];
+      const data1 = [
+        { id: 'doc-1', name: 'Doc 1', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
+      ];
+      const data2 = [
+        { id: 'doc-2', name: 'Doc 2', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
+      ];
 
       const hash1 = createDataHash(data1);
       const hash2 = createDataHash(data2);
@@ -251,8 +255,8 @@ describe('spaces utilities', () => {
 
     it('should handle mixed property formats', () => {
       const data = [
-        { id: 'doc-1', name: 'Doc 1', last_update_ts_dt: '2025-01-15' },
-        { uid: 'uid-2', name_t: 'Doc 2', modified_at: '2025-01-14' },
+        { id: 'doc-1', name: 'Doc 1', last_update_ts_dt: '2025-01-15' } as unknown as DocumentItem,
+        { uid: 'uid-2', name_t: 'Doc 2', modified_at: '2025-01-14' } as unknown as DocumentItem,
       ];
 
       const hash = createDataHash(data);
@@ -263,71 +267,71 @@ describe('spaces utilities', () => {
 
   describe('sortByModifiedDate', () => {
     it('should sort by updatedAt when available', () => {
-      const doc1: DocumentItem = {
+      const doc1 = {
         id: 'doc-1',
         name: 'Doc 1',
         updatedAt: '2025-01-14T12:00:00Z',
         createdAt: '2025-01-10T12:00:00Z',
       };
 
-      const doc2: DocumentItem = {
+      const doc2 = {
         id: 'doc-2',
         name: 'Doc 2',
         updatedAt: '2025-01-15T12:00:00Z',
         createdAt: '2025-01-11T12:00:00Z',
       };
 
-      const result = sortByModifiedDate(doc1, doc2);
+      const result = sortByModifiedDate(doc1, doc2 as DocumentItem[]);
       expect(result).toBeGreaterThan(0); // doc2 is newer, should come first
     });
 
     it('should sort by createdAt when updatedAt not available', () => {
-      const doc1: DocumentItem = {
+      const doc1 = {
         id: 'doc-1',
         name: 'Doc 1',
         createdAt: '2025-01-10T12:00:00Z',
       };
 
-      const doc2: DocumentItem = {
+      const doc2 = {
         id: 'doc-2',
         name: 'Doc 2',
         createdAt: '2025-01-11T12:00:00Z',
       };
 
-      const result = sortByModifiedDate(doc1, doc2);
+      const result = sortByModifiedDate(doc1, doc2 as DocumentItem[]);
       expect(result).toBeGreaterThan(0); // doc2 is newer
     });
 
     it('should handle equal dates', () => {
-      const doc1: DocumentItem = {
+      const doc1 = {
         id: 'doc-1',
         name: 'Doc 1',
         updatedAt: '2025-01-15T12:00:00Z',
       };
 
-      const doc2: DocumentItem = {
+      const doc2 = {
         id: 'doc-2',
         name: 'Doc 2',
         updatedAt: '2025-01-15T12:00:00Z',
       };
 
-      const result = sortByModifiedDate(doc1, doc2);
+      const result = sortByModifiedDate(doc1, doc2 as DocumentItem[]);
       expect(result).toBe(0);
     });
 
     it('should handle missing dates gracefully', () => {
-      const doc1: DocumentItem = {
+      const doc1 = {
         id: 'doc-1',
         name: 'Doc 1',
         updatedAt: '2025-01-15T12:00:00Z',
       };
 
-      const doc2: DocumentItem = {
+      const doc2 = {
         id: 'doc-2',
         name: 'Doc 2',
       };
 
-      const result = sortByModifiedDate(doc1, doc2);
+      const result = sortByModifiedDate(doc1, doc2 as DocumentItem[]);
       // When one doc has no date, result is NaN (new Date('') is invalid)
       // This is acceptable behavior - documents without dates go to end
       expect(isNaN(result) || result < 0).toBe(true);
@@ -335,9 +339,9 @@ describe('spaces utilities', () => {
 
     it('should sort array correctly (newest first)', () => {
       const docs: DocumentItem[] = [
-        { id: '1', name: 'Old', updatedAt: '2025-01-10T12:00:00Z' },
-        { id: '2', name: 'Newest', updatedAt: '2025-01-15T12:00:00Z' },
-        { id: '3', name: 'Middle', updatedAt: '2025-01-13T12:00:00Z' },
+        { id: '1', name: 'Old', updatedAt: '2025-01-10T12:00:00Z' } as unknown as DocumentItem,
+        { id: '2', name: 'Newest', updatedAt: '2025-01-15T12:00:00Z' } as unknown as DocumentItem,
+        { id: '3', name: 'Middle', updatedAt: '2025-01-13T12:00:00Z' } as unknown as DocumentItem,
       ];
 
       const sorted = docs.sort(sortByModifiedDate);
@@ -356,19 +360,19 @@ describe('spaces utilities', () => {
           name: 'Notebook 1',
           type: 'notebook',
           updatedAt: '2025-01-15T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
         {
           id: 'doc-1',
           name: 'Document 1',
           type: 'document',
           updatedAt: '2025-01-14T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
         {
           id: 'nb-2',
           name: 'Notebook 2',
           type: 'notebook',
           updatedAt: '2025-01-13T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -381,8 +385,8 @@ describe('spaces utilities', () => {
 
     it('should handle all notebooks', () => {
       const items: DocumentItem[] = [
-        { id: 'nb-1', name: 'Notebook 1', type: 'notebook', createdAt: '' },
-        { id: 'nb-2', name: 'Notebook 2', type: 'notebook', createdAt: '' },
+        { id: 'nb-1', name: 'Notebook 1', type: 'notebook', createdAt: '' } as unknown as DocumentItem,
+        { id: 'nb-2', name: 'Notebook 2', type: 'notebook', createdAt: '' } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -393,8 +397,8 @@ describe('spaces utilities', () => {
 
     it('should handle all documents', () => {
       const items: DocumentItem[] = [
-        { id: 'doc-1', name: 'Document 1', type: 'document', createdAt: '' },
-        { id: 'doc-2', name: 'Document 2', type: 'file', createdAt: '' },
+        { id: 'doc-1', name: 'Document 1', type: 'document', createdAt: '' } as unknown as DocumentItem,
+        { id: 'doc-2', name: 'Document 2', type: 'file', createdAt: '' } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -417,25 +421,25 @@ describe('spaces utilities', () => {
           name: 'Old Notebook',
           type: 'notebook',
           updatedAt: '2025-01-10T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
         {
           id: 'nb-2',
           name: 'New Notebook',
           type: 'notebook',
           updatedAt: '2025-01-15T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
         {
           id: 'doc-1',
           name: 'Old Doc',
           type: 'document',
           updatedAt: '2025-01-11T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
         {
           id: 'doc-2',
           name: 'New Doc',
           type: 'document',
           updatedAt: '2025-01-14T12:00:00Z',
-        },
+        } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -448,9 +452,9 @@ describe('spaces utilities', () => {
 
     it('should handle case-insensitive notebook type', () => {
       const items: DocumentItem[] = [
-        { id: 'nb-1', name: 'Notebook 1', type: 'NOTEBOOK', createdAt: '' },
-        { id: 'nb-2', name: 'Notebook 2', type: 'Notebook', createdAt: '' },
-        { id: 'nb-3', name: 'Notebook 3', type: 'notebook', createdAt: '' },
+        { id: 'nb-1', name: 'Notebook 1', type: 'NOTEBOOK', createdAt: '' } as unknown as DocumentItem,
+        { id: 'nb-2', name: 'Notebook 2', type: 'Notebook', createdAt: '' } as unknown as DocumentItem,
+        { id: 'nb-3', name: 'Notebook 3', type: 'notebook', createdAt: '' } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -461,7 +465,7 @@ describe('spaces utilities', () => {
 
     it('should treat undefined type as document', () => {
       const items: DocumentItem[] = [
-        { id: 'doc-1', name: 'No Type', createdAt: '' },
+        { id: 'doc-1', name: 'No Type', createdAt: '' } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);
@@ -472,7 +476,7 @@ describe('spaces utilities', () => {
 
     it('should treat empty type as document', () => {
       const items: DocumentItem[] = [
-        { id: 'doc-1', name: 'Empty Type', type: '', createdAt: '' },
+        { id: 'doc-1', name: 'Empty Type', type: '', createdAt: '' } as unknown as DocumentItem,
       ];
 
       const grouped = groupDocumentsByType(items);

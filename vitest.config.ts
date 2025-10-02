@@ -20,7 +20,7 @@ export default defineConfig({
     // Global test configuration
     globals: true,
     environment: 'happy-dom', // Fast DOM environment for React components
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup.ts', './src/renderer/test-setup.ts'],
 
     // Coverage configuration
     coverage: {

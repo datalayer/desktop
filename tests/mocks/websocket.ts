@@ -19,10 +19,10 @@ export class MockWebSocket {
   public readyState: number = MockWebSocket.CONNECTING;
   public url: string;
   public protocol: string;
-  public onopen: ((event: Event) => void) | null = null;
-  public onclose: ((event: CloseEvent) => void) | null = null;
-  public onerror: ((event: Event) => void) | null = null;
-  public onmessage: ((event: MessageEvent) => void) | null = null;
+  public onopen: ((_event: Event) => void) | null = null;
+  public onclose: ((_event: CloseEvent) => void) | null = null;
+  public onerror: ((_event: Event) => void) | null = null;
+  public onmessage: ((_event: MessageEvent) => void) | null = null;
 
   static readonly CONNECTING = 0;
   static readonly OPEN = 1;
@@ -109,7 +109,7 @@ export class MockWebSocket {
  * Mock Proxy API for WebSocket connections (window.proxyAPI).
  */
 export const mockProxyAPI = {
-  websocketOpen: vi.fn((config: any) =>
+  websocketOpen: vi.fn((_config: any) =>
     Promise.resolve({
       id: `ws-${Math.random().toString(36).substring(7)}`,
     })
@@ -124,14 +124,14 @@ export const mockProxyAPI = {
       success: true,
     })
   ),
-  websocketCloseRuntime: vi.fn((runtimeId: string) =>
+  websocketCloseRuntime: vi.fn((_runtimeId: string) =>
     Promise.resolve({
       success: true,
     })
   ),
 
   // HTTP proxy
-  httpRequest: vi.fn((config: any) =>
+  httpRequest: vi.fn((_config: any) =>
     Promise.resolve({
       status: 200,
       statusText: 'OK',
@@ -160,12 +160,12 @@ export const mockElectronAPI = {
     })
   ),
   openExternal: vi.fn((url: string) => Promise.resolve()),
-  notifyRuntimeTerminated: vi.fn((runtimeId: string) =>
+  notifyRuntimeTerminated: vi.fn((_runtimeId: string) =>
     Promise.resolve({
       success: true,
     })
   ),
-  showNotification: vi.fn((options: any) => {}),
+  showNotification: vi.fn((_options: any) => {}),
 };
 
 /**

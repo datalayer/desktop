@@ -12,7 +12,11 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { DatalayerSDKBridge } from './datalayer-sdk-bridge';
-import { mockUser, mockEnvironments, mockRuntimes } from '../../../tests/fixtures';
+import {
+  mockUser,
+  mockEnvironments,
+  mockRuntimes,
+} from '../../../tests/fixtures';
 import { setupElectronMocks } from '../../../tests/mocks';
 
 // Setup Electron mocks
@@ -288,7 +292,9 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
       const sdk = bridge.getSDK() as any;
       sdk.listEnvironments = vi.fn().mockRejectedValue(new Error('API Error'));
 
-      await expect(bridge.call('listEnvironments')).rejects.toThrow('API Error');
+      await expect(bridge.call('listEnvironments')).rejects.toThrow(
+        'API Error'
+      );
     });
 
     it('should handle network errors gracefully', async () => {

@@ -18,10 +18,10 @@ import { mockUser, mockEnvironments, mockRuntimes, mockSpaces, mockNotebooks } f
  */
 export const mockDatalayerClient = {
   // Authentication
-  login: vi.fn((token: string) => Promise.resolve(mockUser)),
+  login: vi.fn((_token: string) => Promise.resolve(mockUser)),
   logout: vi.fn(() => Promise.resolve()),
   whoami: vi.fn(() => Promise.resolve(mockUser)),
-  setToken: vi.fn((token: string) => Promise.resolve()),
+  setToken: vi.fn((_token: string) => Promise.resolve()),
 
   // Environments
   listEnvironments: vi.fn(() => Promise.resolve(mockEnvironments)),
@@ -31,18 +31,18 @@ export const mockDatalayerClient = {
     Promise.resolve(mockRuntimes[0])
   ),
   listRuntimes: vi.fn(() => Promise.resolve(mockRuntimes)),
-  getRuntime: vi.fn((runtimeId: string) => Promise.resolve(mockRuntimes[0])),
-  deleteRuntime: vi.fn((runtimeId: string) => Promise.resolve()),
+  getRuntime: vi.fn((_runtimeId: string) => Promise.resolve(mockRuntimes[0])),
+  deleteRuntime: vi.fn((_runtimeId: string) => Promise.resolve()),
 
   // Spaces
   getMySpaces: vi.fn(() => Promise.resolve(mockSpaces)),
-  getSpaceItems: vi.fn((spaceId: string) => Promise.resolve(mockNotebooks)),
+  getSpaceItems: vi.fn((_spaceId: string) => Promise.resolve(mockNotebooks)),
 
   // Notebooks
-  createNotebook: vi.fn((spaceId: string, name: string, description?: string) =>
+  createNotebook: vi.fn((_spaceId: string, name: string, description?: string) =>
     Promise.resolve(mockNotebooks[0])
   ),
-  getContent: vi.fn((itemId: string) =>
+  getContent: vi.fn((_itemId: string) =>
     Promise.resolve({
       cells: [
         {
@@ -60,7 +60,7 @@ export const mockDatalayerClient = {
   ),
 
   // Lexical documents
-  createLexical: vi.fn((spaceId: string, name: string, description?: string) =>
+  createLexical: vi.fn((_spaceId: string, name: string, description?: string) =>
     Promise.resolve({
       id: 'lexical-1',
       name,
@@ -73,7 +73,7 @@ export const mockDatalayerClient = {
   ),
 
   // Collaboration
-  getCollaborationSessionId: vi.fn((documentId: string) => Promise.resolve(documentId)),
+  getCollaborationSessionId: vi.fn((_documentId: string) => Promise.resolve(_documentId)),
 
   // Configuration
   getConfig: vi.fn(() => ({
@@ -88,7 +88,7 @@ export const mockDatalayerClient = {
  */
 export const mockDatalayerAPI = {
   // Authentication
-  login: vi.fn((token: string) =>
+  login: vi.fn((_token: string) =>
     Promise.resolve({
       success: true,
       data: {
@@ -147,18 +147,18 @@ export const mockDatalayerAPI = {
       data: mockRuntimes,
     })
   ),
-  getRuntime: vi.fn((runtimeId: string) =>
+  getRuntime: vi.fn((_runtimeId: string) =>
     Promise.resolve({
       success: true,
       data: mockRuntimes[0],
     })
   ),
-  deleteRuntime: vi.fn((podName: string) =>
+  deleteRuntime: vi.fn((_podName: string) =>
     Promise.resolve({
       success: true,
     })
   ),
-  isRuntimeActive: vi.fn((podName: string) =>
+  isRuntimeActive: vi.fn((_podName: string) =>
     Promise.resolve({
       success: true,
       isActive: true,
@@ -173,7 +173,7 @@ export const mockDatalayerAPI = {
       data: mockSpaces,
     })
   ),
-  getSpaceItems: vi.fn((spaceId: string) =>
+  getSpaceItems: vi.fn((_spaceId: string) =>
     Promise.resolve({
       success: true,
       data: mockNotebooks,
@@ -181,7 +181,7 @@ export const mockDatalayerAPI = {
   ),
 
   // Notebooks
-  createNotebook: vi.fn((spaceId: string, name: string, description?: string) =>
+  createNotebook: vi.fn((_spaceId: string, name: string, description?: string) =>
     Promise.resolve({
       success: true,
       data: mockNotebooks[0],
@@ -189,7 +189,7 @@ export const mockDatalayerAPI = {
   ),
 
   // Space items
-  deleteSpaceItem: vi.fn((itemId: string) =>
+  deleteSpaceItem: vi.fn((_itemId: string) =>
     Promise.resolve({
       success: true,
     })

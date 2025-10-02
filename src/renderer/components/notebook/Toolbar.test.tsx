@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+// import userEvent from "@testing-library/user-event"; // Unused
 import { Notebook2Toolbar } from './Toolbar';
 import { mockEnvironments } from '../../../tests/fixtures';
 
@@ -74,7 +74,9 @@ describe('Notebook2Toolbar', () => {
   });
 
   it('should render RuntimeProgressBar when runtime pod name is provided', () => {
-    render(<Notebook2Toolbar {...defaultProps} runtimePodName="test-pod-123" />);
+    render(
+      <Notebook2Toolbar {...defaultProps} runtimePodName="test-pod-123" />
+    );
 
     // RuntimeProgressBar should be rendered (we'd need to check for its elements)
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
@@ -97,7 +99,9 @@ describe('Notebook2Toolbar', () => {
   it('should call onRuntimeCreated when provided', async () => {
     const onRuntimeCreated = vi.fn();
 
-    render(<Notebook2Toolbar {...defaultProps} onRuntimeCreated={onRuntimeCreated} />);
+    render(
+      <Notebook2Toolbar {...defaultProps} onRuntimeCreated={onRuntimeCreated} />
+    );
 
     // onRuntimeCreated would be called by child components (RuntimeSelector)
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
@@ -106,7 +110,12 @@ describe('Notebook2Toolbar', () => {
   it('should call onRuntimeSelected when provided', () => {
     const onRuntimeSelected = vi.fn();
 
-    render(<Notebook2Toolbar {...defaultProps} onRuntimeSelected={onRuntimeSelected} />);
+    render(
+      <Notebook2Toolbar
+        {...defaultProps}
+        onRuntimeSelected={onRuntimeSelected}
+      />
+    );
 
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
   });
@@ -114,7 +123,12 @@ describe('Notebook2Toolbar', () => {
   it('should call onRuntimeTerminated when provided', () => {
     const onRuntimeTerminated = vi.fn();
 
-    render(<Notebook2Toolbar {...defaultProps} onRuntimeTerminated={onRuntimeTerminated} />);
+    render(
+      <Notebook2Toolbar
+        {...defaultProps}
+        onRuntimeTerminated={onRuntimeTerminated}
+      />
+    );
 
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
   });

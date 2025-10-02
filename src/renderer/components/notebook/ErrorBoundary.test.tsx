@@ -72,14 +72,14 @@ describe('ErrorBoundary', () => {
   it('should display error message in monospace font', () => {
     const testError = new Error('Detailed error message');
 
-    const { container } = render(
+    const { container: _container } = render(
       <ErrorBoundary onError={mockOnError}>
         <ThrowError error={testError} />
       </ErrorBoundary>
     );
 
     const errorText = screen.getByText(/detailed error message/i);
-    const parentBox = errorText.closest('div');
+    const _parentBox = errorText.closest('div');
 
     // Check that error is displayed (styling check would need more setup)
     expect(errorText).toBeInTheDocument();
@@ -94,7 +94,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    const resetButton = screen.getByRole('button', { name: /reset notebook component/i });
+    const resetButton = screen.getByRole('button', {
+      name: /reset notebook component/i,
+    });
     expect(resetButton).toBeInTheDocument();
     expect(resetButton).toHaveAttribute('tabIndex', '0');
   });
@@ -108,7 +110,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    const refreshButton = screen.getByRole('button', { name: /refresh the entire page/i });
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh the entire page/i,
+    });
     expect(refreshButton).toBeInTheDocument();
     expect(refreshButton).toHaveAttribute('tabIndex', '0');
   });
@@ -125,7 +129,9 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
-    const resetButton = screen.getByRole('button', { name: /reset notebook component/i });
+    const resetButton = screen.getByRole('button', {
+      name: /reset notebook component/i,
+    });
     await user.click(resetButton);
 
     // After reset, children should render normally (without error)
@@ -156,7 +162,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    const refreshButton = screen.getByRole('button', { name: /refresh the entire page/i });
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh the entire page/i,
+    });
     await user.click(refreshButton);
 
     expect(reloadMock).toHaveBeenCalledTimes(1);
@@ -172,7 +180,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    const resetButton = screen.getByRole('button', { name: /reset notebook component/i });
+    const resetButton = screen.getByRole('button', {
+      name: /reset notebook component/i,
+    });
 
     // Test Enter key
     resetButton.focus();
@@ -203,7 +213,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    const refreshButton = screen.getByRole('button', { name: /refresh the entire page/i });
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh the entire page/i,
+    });
 
     // Test Space key
     refreshButton.focus();

@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box } from '@primer/react';
+import type { RuntimeJSON } from '@datalayer/core/lib/client';
 
 export interface RuntimeProgressBarProps {
   /** Runtime pod name - used to fetch runtime details */
@@ -44,7 +45,7 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
     // Bridge returns plain JSON object (RuntimeJSON), not SDK model
     window.datalayerClient
       .getRuntime(runtimePodName)
-      .then((runtimeJSON: any) => {
+      .then((runtimeJSON: RuntimeJSON) => {
         // Bridge already serialized to RuntimeJSON with camelCase and ISO strings
         if (runtimeJSON.startedAt && runtimeJSON.expiredAt) {
           setRuntimeDetails({

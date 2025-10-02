@@ -102,7 +102,12 @@ describe('notebook utilities', () => {
     });
 
     it('should handle empty notebook', () => {
-      const emptyNotebook = { nbformat: 4, nbformat_minor: 5, cells: [], metadata: {} };
+      const emptyNotebook = {
+        nbformat: 4,
+        nbformat_minor: 5,
+        cells: [],
+        metadata: {},
+      };
       const result = parseNotebookContent(emptyNotebook);
 
       expect(result).toEqual(emptyNotebook);
@@ -245,12 +250,20 @@ describe('notebook utilities', () => {
 
   describe('createStableNotebookKey', () => {
     it('should use notebookId when provided', () => {
-      const key = createStableNotebookKey('notebook-123', 'path/to/nb.ipynb', 'MyNotebook');
+      const key = createStableNotebookKey(
+        'notebook-123',
+        'path/to/nb.ipynb',
+        'MyNotebook'
+      );
       expect(key).toBe('notebook-123');
     });
 
     it('should use notebookPath when no ID', () => {
-      const key = createStableNotebookKey(undefined, 'path/to/nb.ipynb', 'MyNotebook');
+      const key = createStableNotebookKey(
+        undefined,
+        'path/to/nb.ipynb',
+        'MyNotebook'
+      );
       expect(key).toBe('path/to/nb.ipynb');
     });
 

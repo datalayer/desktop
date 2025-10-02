@@ -12,6 +12,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Box } from '@primer/react';
+import { useService } from '../contexts/ServiceContext';
 import iconImage from '../assets/icon.png';
 import Header from '../components/auth/Header';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -34,6 +35,7 @@ interface LoginProps {
  * @returns The login page component
  */
 const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
+  const authService = useService('authService');
   const [formData, setFormData] = useState<LoginFormData>({
     runUrl: 'https://prod1.datalayer.run',
     token: '',
@@ -66,20 +68,25 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
         return;
       }
 
+      if (!authService) {
+        setState(prev => ({
+          ...prev,
+          error: 'Authentication service not ready',
+        }));
+        return;
+      }
+
       setState(prev => ({ ...prev, loading: true, error: '' }));
 
-      // Use secure IPC to login
-      await window.datalayerClient.login(formData.token.trim());
+      // Use AuthService to login
+      const user = await authService.login(
+        formData.runUrl,
+        formData.token.trim()
+      );
 
-      // If login succeeds, fetch user data if callback is provided
-      if (onUserDataFetched) {
-        try {
-          const userData = await window.datalayerClient.whoami();
-          // Call the callback which will update auth state in App.tsx
-          await onUserDataFetched(userData as any); // User model will be handled in processUserData
-        } catch (userError) {
-          // Login succeeded but user data fetch failed - not critical
-        }
+      // Call the callback if provided (for backwards compatibility)
+      if (onUserDataFetched && user) {
+        await onUserDataFetched(user as any);
       }
 
       // Don't set loading to false here - let the auth state update handle navigation
@@ -92,7 +99,7 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
         error: formatLoginError(error),
       }));
     }
-  }, [formData, onUserDataFetched]);
+  }, [formData, authService, onUserDataFetched]);
 
   const handleKeyPress = useCallback(
     (event: React.KeyboardEvent) => {

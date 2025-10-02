@@ -18,7 +18,9 @@ describe('Button component', () => {
   it('should render with "Connect" text by default', () => {
     render(<Button loading={false} disabled={false} onClick={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: /connect/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /connect/i })
+    ).toBeInTheDocument();
   });
 
   it('should show "Connecting..." when loading is true', () => {
@@ -65,7 +67,7 @@ describe('Button component', () => {
   it('should have proper accessibility attributes', () => {
     render(<Button loading={false} disabled={false} onClick={vi.fn()} />);
 
-    const button = screen.getByRole('button');
+    const _button = screen.getByRole('button');
     // Primer Button component may not forward aria-describedby in test environment
     // Instead verify the help text is present and associated
     const helpText = screen.getByText(/submit form to authenticate/i);
@@ -79,7 +81,9 @@ describe('Button component', () => {
     );
 
     expect(
-      screen.getByText(/complete both url and token fields to enable connection/i)
+      screen.getByText(
+        /complete both url and token fields to enable connection/i
+      )
     ).toBeInTheDocument();
 
     rerender(<Button loading={false} disabled={false} onClick={vi.fn()} />);

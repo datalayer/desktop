@@ -19,8 +19,9 @@ import React, {
   Suspense,
 } from 'react';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
-import { useCoreStore } from '@datalayer/core/lib/state';
+// import { useCoreStore } from '@datalayer/core/lib/state'; // Unused for now
 import { useParallelPreload } from './hooks/usePreload';
+import { useService } from './contexts/ServiceContext';
 import Login from './pages/Login';
 import Environments from './pages/Environments';
 import LoadingScreen from './components/app/LoadingScreen';
@@ -52,15 +53,11 @@ const App: React.FC = () => {
     return cleanup;
   }, []);
 
+  // Use AuthService for authentication state
+  const authService = useService('authService');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [authState, setAuthState] = useState<{
-    isAuthenticated: boolean;
-    user: any | null;
-    token: string | null;
-    runUrl: string;
-  } | null>(null);
 
   // Support multiple open notebooks and documents
   const [openNotebooks, setOpenNotebooks] = useState<NotebookData[]>([]);
@@ -68,40 +65,19 @@ const App: React.FC = () => {
   const [activeTabId, setActiveTabId] = useState<string>('environments');
 
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
-  const { configuration } = useCoreStore();
+  // const { configuration } = useCoreStore(); // Unused for now
 
-  // Handle user data from login - update auth state when login succeeds
+  // Handle user data from login - AuthService will update state automatically
   const handleUserDataFetched = useCallback(
     async (userData: Record<string, unknown>) => {
       logger.debug('[Auth] User data received from login:', userData);
 
-      // Since window.electronAPI.onAuthStateChanged may not be available in browser mode,
-      // we need to manually update the auth state after successful login
+      // AuthService onAuthStateChanged callback will update isAuthenticated and user
+      // No manual state updates needed - the service handles it
       if (userData) {
-        // Get the current auth state from the main process
-        try {
-          if (window.datalayerClient?.getAuthState) {
-            const currentAuthState =
-              await window.datalayerClient.getAuthState();
-            logger.debug(
-              '[Auth] Got auth state after login:',
-              currentAuthState
-            );
-
-            // Update our local auth state
-            if (currentAuthState?.isAuthenticated) {
-              setAuthState(currentAuthState);
-              setIsAuthenticated(true);
-
-              // User is already a plain JSON object from bridge
-              if (currentAuthState.user) {
-                setUser(currentAuthState.user);
-              }
-            }
-          }
-        } catch (error) {
-          logger.error('Failed to get auth state after login:', error);
-        }
+        logger.debug(
+          '[Auth] Login successful, auth state will update automatically'
+        );
       }
     },
     []
@@ -123,7 +99,7 @@ const App: React.FC = () => {
         preloadFn: async () => {
           // Skip preloading environments if not authenticated
           // This prevents "Server Error" when not authenticated
-          if (!authState?.isAuthenticated || !authState?.token) {
+          if (!authService || !authService.isAuthenticated()) {
             logger.debug('Skipping environments preload - not authenticated');
             return;
           }
@@ -142,80 +118,61 @@ const App: React.FC = () => {
         },
       },
     ],
-    [authState?.token]
+    [authService, isAuthenticated]
   );
 
   const { preloadStates, startAllPreloads, isAllPreloaded } =
     useParallelPreload(preloadConfigs);
 
+  // Initialize AuthService and listen for state changes
   useEffect(() => {
-    // Set up auth state change listener
-    const handleAuthStateChange = (newAuthState: {
-      isAuthenticated: boolean;
-      user: any | null;
-      token: string | null;
-      runUrl: string;
-    }) => {
-      logger.debug('[Auth] Auth state changed:', newAuthState);
-      setAuthState(newAuthState);
-      setIsAuthenticated(newAuthState.isAuthenticated);
+    if (!authService) {
+      logger.debug('[Auth] AuthService not ready yet');
+      return;
+    }
 
-      // User is already a plain JSON object from bridge
-      if (newAuthState.user) {
-        setUser(newAuthState.user);
-      } else {
+    let unsubscribe: (() => void) | null = null;
+
+    const initializeAuth = async () => {
+      try {
+        // Initialize auth service
+        await authService.initialize();
+        logger.debug('[Auth] AuthService initialized');
+
+        // Subscribe to auth state changes
+        unsubscribe = authService.onAuthStateChanged(change => {
+          logger.debug('[Auth] Auth state changed:', change.current);
+          setIsAuthenticated(change.current.isAuthenticated);
+          setUser(change.current.user);
+        });
+
+        // Get initial auth state
+        const initialState = await authService.getAuthState();
+        setIsAuthenticated(initialState.isAuthenticated);
+        setUser(initialState.user);
+      } catch (error) {
+        logger.error('[Auth] Failed to initialize AuthService:', error);
+        setIsAuthenticated(false);
         setUser(null);
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
 
-    // Listen for auth state changes from main process
-    if (window.electronAPI?.onAuthStateChanged) {
-      window.electronAPI.onAuthStateChanged(handleAuthStateChange);
-    } else {
-      logger.error('[Auth] electronAPI.onAuthStateChanged is not available');
-    }
+    initializeAuth();
 
-    // Start all operations in parallel for faster startup
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [authService]);
+
+  // Preload components and listen for menu actions
+  useEffect(() => {
     const initializeApp = async () => {
-      setIsCheckingAuth(true);
-
-      // Start preloading components immediately
-      const preloadPromise = startAllPreloads();
-
-      // Get initial auth state from main process (secure ElectronStorage)
-      const authPromise = (async () => {
-        try {
-          if (window.datalayerClient?.getAuthState) {
-            const initialAuthState =
-              await window.datalayerClient.getAuthState();
-            handleAuthStateChange(initialAuthState);
-          } else {
-            logger.error(
-              '[Auth] datalayerClient.getAuthState is not available'
-            );
-            handleAuthStateChange({
-              isAuthenticated: false,
-              user: null,
-              token: null,
-              runUrl: configuration?.runUrl || '',
-            });
-          }
-        } catch (error) {
-          logger.error('Failed to get initial auth state:', error);
-          // Set logged out state
-          handleAuthStateChange({
-            isAuthenticated: false,
-            user: null,
-            token: null,
-            runUrl: '',
-          });
-        } finally {
-          setIsCheckingAuth(false);
-        }
-      })();
-
-      // Wait for both auth check and preloading to complete
-      await Promise.allSettled([authPromise, preloadPromise]);
+      // Start preloading components
+      await startAllPreloads();
       setComponentsPreloaded(true);
     };
 
@@ -251,7 +208,6 @@ const App: React.FC = () => {
     return () => {
       if (window.electronAPI) {
         window.electronAPI.removeMenuActionListener();
-        window.electronAPI.removeAuthStateListener();
       }
     };
   }, [startAllPreloads]);
@@ -306,16 +262,16 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      // Use secure IPC to logout
-      if (window.datalayerClient?.logout) {
-        await window.datalayerClient.logout();
+      if (authService) {
+        await authService.logout();
+        logger.debug('[Auth] Logged out successfully');
       }
-      setIsAuthenticated(false);
+      // Clean up app state
       setOpenNotebooks([]);
       setOpenDocuments([]);
       setActiveTabId('environments');
     } catch (error) {
-      logger.error('Logout failed:', error);
+      logger.error('[Auth] Logout failed:', error);
     }
   };
 

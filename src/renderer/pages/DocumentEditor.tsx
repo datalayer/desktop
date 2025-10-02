@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box } from '@primer/react';
+import { ServiceManager } from '@jupyterlab/services';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -37,15 +38,16 @@ import type { EditorState } from 'lexical';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { createMockServiceManager } from '../services/mockServiceManager';
 import { Notebook2Toolbar } from '../components/notebook/Toolbar';
-import { useRuntimeStore } from '../stores/runtimeStore';
 import { DocumentViewProps } from '../../shared/types';
+import { useService } from '../contexts/ServiceContext';
 
 /**
  * Document editor that creates a fresh service manager when runtime changes.
  * Each runtime selection completely remounts the editor component.
  */
 const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
-  const { refreshRuntimes, allRuntimes } = useRuntimeStore();
+  const runtimeService = useService('runtimeService');
+  const [allRuntimes, setAllRuntimes] = useState<any[]>([]);
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
     podName: string;
@@ -64,10 +66,21 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
     setSpacerUrl('https://run.datalayer.io');
   }, []);
 
-  // Refresh runtimes when document opens
+  // Initialize runtime service and fetch runtimes
   useEffect(() => {
-    refreshRuntimes();
-  }, [refreshRuntimes]);
+    const init = async () => {
+      if (!runtimeService) return;
+
+      if (runtimeService.state === 'uninitialized') {
+        await runtimeService.initialize();
+      }
+
+      const runtimes = await runtimeService.refreshAllRuntimes();
+      setAllRuntimes(runtimes);
+    };
+
+    init();
+  }, [runtimeService]);
 
   // Watch for runtime expiration
   useEffect(() => {
@@ -115,7 +128,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   // Create service manager when runtime info changes
   useEffect(() => {
     let mounted = true;
-    let currentManager: any = null;
+    let currentManager: ServiceManager.IManager | null = null;
 
     const createServiceManager = async () => {
       // Clear service manager first

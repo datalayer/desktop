@@ -10,7 +10,7 @@
  * @module RuntimeProgressBar.test
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { RuntimeProgressBar } from './RuntimeProgressBar';
 
@@ -77,7 +77,9 @@ describe('RuntimeProgressBar', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       mockGetRuntime.mockRejectedValue(new Error('API Error'));
 
       const { container } = render(
@@ -162,7 +164,9 @@ describe('RuntimeProgressBar', () => {
       // Should be roughly 50% (some variance due to timing)
       const progressBar = container.querySelector('[style*="width"]');
       expect(progressBar).toBeInTheDocument();
-      const width = progressBar?.getAttribute('style')?.match(/width: (\d+(\.\d+)?)%/)?.[1];
+      const width = progressBar
+        ?.getAttribute('style')
+        ?.match(/width: (\d+(\.\d+)?)%/)?.[1];
       expect(parseFloat(width || '0')).toBeGreaterThan(45);
       expect(parseFloat(width || '0')).toBeLessThan(55);
     });
@@ -186,7 +190,9 @@ describe('RuntimeProgressBar', () => {
       });
 
       const progressBar = container.querySelector('[style*="width"]');
-      const width = progressBar?.getAttribute('style')?.match(/width: (\d+(\.\d+)?)%/)?.[1];
+      const width = progressBar
+        ?.getAttribute('style')
+        ?.match(/width: (\d+(\.\d+)?)%/)?.[1];
       expect(parseFloat(width || '0')).toBeLessThan(5);
     });
 
@@ -210,7 +216,9 @@ describe('RuntimeProgressBar', () => {
 
       const getWidth = () => {
         const progressBar = container.querySelector('[style*="width"]');
-        const width = progressBar?.getAttribute('style')?.match(/width: (\d+(\.\d+)?)%/)?.[1];
+        const width = progressBar
+          ?.getAttribute('style')
+          ?.match(/width: (\d+(\.\d+)?)%/)?.[1];
         return parseFloat(width || '0');
       };
 
@@ -245,7 +253,9 @@ describe('RuntimeProgressBar', () => {
         expect(mockGetRuntime).toHaveBeenCalled();
       });
 
-      const progressBar = container.querySelector('[style*="background-color"]');
+      const progressBar = container.querySelector(
+        '[style*="background-color"]'
+      );
       expect(progressBar?.getAttribute('style')).toContain('16A085'); // Green
     });
 
@@ -267,7 +277,9 @@ describe('RuntimeProgressBar', () => {
         expect(mockGetRuntime).toHaveBeenCalled();
       });
 
-      const progressBar = container.querySelector('[style*="background-color"]');
+      const progressBar = container.querySelector(
+        '[style*="background-color"]'
+      );
       expect(progressBar?.getAttribute('style')).toContain('FFA500'); // Orange
     });
 
@@ -289,7 +301,9 @@ describe('RuntimeProgressBar', () => {
         expect(mockGetRuntime).toHaveBeenCalled();
       });
 
-      const progressBar = container.querySelector('[style*="background-color"]');
+      const progressBar = container.querySelector(
+        '[style*="background-color"]'
+      );
       expect(progressBar?.getAttribute('style')).toContain('DC3545'); // Red
     });
 
@@ -311,7 +325,9 @@ describe('RuntimeProgressBar', () => {
         expect(mockGetRuntime).toHaveBeenCalled();
       });
 
-      const progressBar = container.querySelector('[style*="background-color"]');
+      const progressBar = container.querySelector(
+        '[style*="background-color"]'
+      );
       expect(progressBar?.getAttribute('style')).toContain('DC3545'); // Red
     });
   });
@@ -406,7 +422,9 @@ describe('RuntimeProgressBar', () => {
         expect(mockGetRuntime).toHaveBeenCalled();
       });
 
-      const progressContainer = container.querySelector('[style*="height: 3px"]');
+      const progressContainer = container.querySelector(
+        '[style*="height: 3px"]'
+      );
       expect(progressContainer).toBeInTheDocument();
     });
 

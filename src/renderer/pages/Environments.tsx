@@ -12,8 +12,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Heading, Text } from '@primer/react';
-import { useCoreStore } from '@datalayer/core/lib/state';
-import { useEnvironments } from '../stores/environmentStore';
+import { useService } from '../contexts/ServiceContext';
 import { logger } from '../utils/logger';
 
 import AuthWarning from '../components/environments/AuthWarning';
@@ -21,6 +20,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorState from '../components/environments/ErrorState';
 import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
+import type { Environment } from '../services/interfaces/IEnvironmentService';
 
 interface EnvironmentsProps {
   isAuthenticated?: boolean;
@@ -35,83 +35,75 @@ interface EnvironmentsProps {
  * @returns The rendered environments page
  */
 const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
-  const [authState, setAuthState] = useState<{
-    isAuthenticated: boolean;
-    user: any | null;
-    token: string | null;
-    runUrl: string;
-  } | null>(null);
-  const { configuration } = useCoreStore();
+  const authService = useService('authService');
+  const environmentService = useService('environmentService');
 
-  // Use the environment store for caching
-  const {
-    environments,
-    isLoading: loading,
-    error,
-    fetchIfNeeded,
-  } = useEnvironments();
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
 
-  // Set up auth state listener
+  // Listen for auth state changes via AuthService
   useEffect(() => {
-    const handleAuthStateChange = (newAuthState: {
-      isAuthenticated: boolean;
-      user: any | null;
-      token: string | null;
-      runUrl: string;
-    }) => {
-      logger.debug('[Environments] Auth state changed:', newAuthState);
-      setAuthState(newAuthState);
+    if (!authService) return;
+
+    const updateAuthState = async () => {
+      try {
+        const state = await authService.getAuthState();
+        setUserAuthenticated(state.isAuthenticated || !!isAuthenticated);
+      } catch (err) {
+        logger.error('[Environments] Failed to get auth state:', err);
+        setUserAuthenticated(false);
+      }
     };
 
-    // Listen for auth state changes from main process
-    window.electronAPI?.onAuthStateChanged?.(handleAuthStateChange);
+    updateAuthState();
 
-    // Get initial auth state
-    window.datalayerClient
-      ?.getAuthState?.()
-      .then(initialAuthState => {
-        handleAuthStateChange(initialAuthState);
-      })
-      .catch(error => {
-        logger.error('[Environments] Failed to get initial auth state:', error);
-        setAuthState({
-          isAuthenticated: false,
-          user: null,
-          token: null,
-          runUrl: '',
-        });
-      });
+    const unsubscribe = authService.onAuthStateChanged(change => {
+      logger.debug('[Environments] Auth state changed:', change.current);
+      setUserAuthenticated(change.current.isAuthenticated || !!isAuthenticated);
+    });
 
-    return () => {
-      window.electronAPI?.removeAuthStateListener?.();
-    };
-  }, []);
+    return unsubscribe;
+  }, [authService, isAuthenticated]);
 
   const fetchEnvironments = useCallback(async () => {
+    if (!environmentService) {
+      logger.debug('[Environments] EnvironmentService not ready');
+      return;
+    }
+
+    if (!userAuthenticated) {
+      logger.debug(
+        '[Environments] Not authenticated, skipping environments fetch'
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Check if user is authenticated (prefer event-driven auth state)
-      const isUserAuthenticated =
-        authState?.isAuthenticated || isAuthenticated || !!configuration?.token;
-      if (!isUserAuthenticated) {
-        logger.debug(
-          '[Environments] Not authenticated, skipping environments fetch'
-        );
-        return;
+      setLoading(true);
+      setError(null);
+
+      // Initialize service if needed
+      if (environmentService.state === 'uninitialized') {
+        await environmentService.initialize();
       }
 
-      // Use the cached store fetch which handles caching automatically
-      await fetchIfNeeded();
+      // Fetch environments (uses caching automatically)
+      const envs = await environmentService.listEnvironments();
+      setEnvironments(envs);
+      setLoading(false);
+
+      logger.debug(`[Environments] Loaded ${envs.length} environments`);
     } catch (err) {
-      // Failed to fetch environments
-      // Error is handled by the store
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load environments';
+      logger.error('[Environments] Failed to fetch:', err);
+      setError(errorMessage);
+      setLoading(false);
     }
-  }, [
-    authState?.isAuthenticated,
-    authState?.token,
-    isAuthenticated,
-    configuration?.token,
-    fetchIfNeeded,
-  ]);
+  }, [environmentService, userAuthenticated]);
 
   useEffect(() => {
     fetchEnvironments();
@@ -131,11 +123,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
         </Text>
       </Box>
 
-      {!(
-        authState?.isAuthenticated ||
-        isAuthenticated ||
-        configuration?.token
-      ) && <AuthWarning />}
+      {!userAuthenticated && <AuthWarning />}
 
       {loading && (
         <LoadingSpinner
@@ -151,7 +139,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
 
       {!loading && environments.length > 0 && (
         <Box>
-          {environments.map(env => (
+          {environments.map(env => ({ ...env, name: env.title } as any) (
             <Card key={env.name} environment={env} />
           ))}
         </Box>

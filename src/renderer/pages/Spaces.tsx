@@ -13,13 +13,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
-import { useRuntimeStore } from '../stores/runtimeStore';
 import {
   DocumentsListProps,
   SpaceInfo,
   GroupedDocuments,
   DocumentItem,
 } from '../../shared/types';
+import { useService } from '../contexts/ServiceContext';
 import {
   groupDocumentsByType,
   createDataHash,
@@ -50,7 +50,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
   const [spaceId, setSpaceId] = useState<string | null>(null);
-  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const [warningMessage, _setWarningMessage] = useState<string | null>(null);
 
   const [userSpaces, setUserSpaces] = useState<SpaceInfo[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<SpaceInfo | null>(null);
@@ -79,8 +79,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   const [previousNotebookCount, setPreviousNotebookCount] = useState(0);
   const [previousDocumentCount, setPreviousDocumentCount] = useState(0);
 
-  const { canOpenNotebook, getRuntimeForNotebook, setActiveNotebook } =
-    useRuntimeStore();
+  const runtimeService = useService('runtimeService');
 
   const isInitializedRef = useRef(false);
   const autoRefreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -320,21 +319,15 @@ const Documents: React.FC<DocumentsListProps> = ({
   const handleOpenNotebook = (notebook: DocumentItem) => {
     // Opening notebook
 
-    const canOpen = canOpenNotebook(notebook.id);
-
-    if (!canOpen.allowed) {
-      setWarningMessage(canOpen.message || 'Cannot open this notebook');
-      setTimeout(() => setWarningMessage(null), 5000);
-      return;
-    }
-
-    const existingRuntime = getRuntimeForNotebook(notebook.id);
-    if (existingRuntime) {
-      // Reconnecting to existing runtime for notebook
+    // Check if runtime service is ready
+    if (runtimeService && runtimeService.state === 'ready') {
+      const existingRuntime = runtimeService.getRuntimeForNotebook(notebook.id);
+      if (existingRuntime) {
+        // Reconnecting to existing runtime for notebook
+      }
     }
 
     setSelectedNotebook(notebook.id);
-    setActiveNotebook(notebook.id);
 
     if (onNotebookSelect) {
       onNotebookSelect({

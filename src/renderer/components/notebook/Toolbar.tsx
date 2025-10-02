@@ -31,7 +31,8 @@ import { notebookStore2 } from '@datalayer/jupyter-react';
 import type { EnvironmentJSON } from '@datalayer/core/lib/client/models';
 import { RuntimeProgressBar } from '../runtime/RuntimeProgressBar';
 import { RuntimeSelector } from '../runtime/RuntimeSelector';
-import { useRuntimeStore } from '../../stores/runtimeStore';
+import { useService } from '../../contexts/ServiceContext';
+import type { Runtime } from '../../services/interfaces/IRuntimeService';
 
 export interface INotebook2ToolbarProps {
   notebookId?: string;
@@ -60,7 +61,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   onRuntimeSelected,
   onRuntimeTerminated,
 }) => {
-  const { fetchAllRuntimes } = useRuntimeStore();
+  const runtimeService = useService('runtimeService');
   const [cellType, setCellType] = useState('code');
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
@@ -133,7 +134,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
     if (notebookId) notebookStore2.getState().delete(notebookId);
   };
 
-  const handleRuntimeSelectorChange = async (runtime: any | null) => {
+  const handleRuntimeSelectorChange = async (runtime: Runtime | null) => {
     if (!runtime) {
       // User chose "Create New" - show dialog
       setShowRuntimeDialog(true);
@@ -173,7 +174,9 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
 
       // Refresh runtime list to include newly created runtime FIRST
       // This ensures the runtime appears in the selector before we select it
-      await fetchAllRuntimes();
+      if (runtimeService) {
+        await runtimeService.refreshAllRuntimes();
+      }
 
       // Now notify parent component to automatically select the runtime
       if (onRuntimeCreated && runtime) {
@@ -219,7 +222,9 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       await window.datalayerClient.deleteRuntime(runtimePodName);
 
       // Refresh global runtime list so ALL notebooks see the updated list
-      await fetchAllRuntimes();
+      if (runtimeService) {
+        await runtimeService.refreshAllRuntimes();
+      }
 
       if (onRuntimeTerminated) {
         onRuntimeTerminated();

@@ -52,8 +52,13 @@ describe('logger utility', () => {
   });
 
   it('should export module-specific loggers', async () => {
-    const { apiLogger, proxyLogger, runtimeLogger, notebookLogger, collaborationLogger } =
-      await import('./logger');
+    const {
+      apiLogger,
+      proxyLogger,
+      runtimeLogger,
+      notebookLogger,
+      collaborationLogger,
+    } = await import('./logger');
 
     expect(apiLogger).toBeDefined();
     expect(proxyLogger).toBeDefined();
