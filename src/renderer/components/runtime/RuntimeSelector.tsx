@@ -10,16 +10,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Box, Select, Spinner, Text } from '@primer/react';
-import { RocketIcon, CheckIcon } from '@primer/octicons-react';
-import { useService } from '../../contexts/ServiceContext';
-import type { Runtime } from '../../services/interfaces/IRuntimeService';
+import { Box, Select, Spinner } from '@primer/react';
+import { useRuntimeStore } from '../stores/runtimeStore';
 
 export interface RuntimeSelectorProps {
   /** Currently selected runtime pod name */
   selectedRuntimePodName?: string;
   /** Callback when runtime is selected (null = create new) */
-  onRuntimeSelected: (runtime: Runtime | null) => void;
+  onRuntimeSelected: (runtime: any | null) => void;
   /** Disable the selector */
   disabled?: boolean;
 }
@@ -33,34 +31,25 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   onRuntimeSelected,
   disabled = false,
 }) => {
-  const runtimeService = useService('runtimeService');
-  const [allRuntimes, setAllRuntimes] = useState<Runtime[]>([]);
+  const { allRuntimes, refreshRuntimes } = useRuntimeStore();
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch runtimes on mount and when selectedRuntimePodName changes
   useEffect(() => {
-    if (!runtimeService) return;
-
     const fetchRuntimes = async () => {
       setIsLoading(true);
       try {
-        // Initialize service if needed
-        if (runtimeService.state === 'uninitialized') {
-          await runtimeService.initialize();
-        }
-
-        const runtimes = await runtimeService.refreshAllRuntimes();
-        setAllRuntimes(runtimes);
+        await refreshRuntimes();
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRuntimes();
-  }, [selectedRuntimePodName, runtimeService]);
+  }, [selectedRuntimePodName, refreshRuntimes]);
 
   // Calculate remaining time for a runtime
-  const getRemainingTime = (runtime: Runtime): string => {
+  const getRemainingTime = (runtime: any): string => {
     try {
       const parseTimestamp = (value: string | number) => {
         if (typeof value === 'string' && !value.includes('-')) {
@@ -70,7 +59,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
       };
 
       const expiresAt = parseTimestamp(
-        (runtime.expired_at || runtime.expiredAt) as string
+        runtime.expired_at || runtime.expiredAt || ''
       ).getTime();
       const now = Date.now();
       const remainingMs = Math.max(0, expiresAt - now);
@@ -89,7 +78,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   };
 
   // Format display name for runtime
-  const getDisplayName = (runtime: Runtime): string => {
+  const getDisplayName = (runtime: any, includeCheckmark = false): string => {
     const name =
       runtime.given_name ||
       runtime.givenName ||
@@ -98,7 +87,8 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
     const envTitle =
       runtime.environment_title || runtime.environmentTitle || 'Unknown Env';
     const remaining = getRemainingTime(runtime);
-    return `${name} - ${envTitle} (${remaining})`;
+    const checkmark = includeCheckmark ? '✓ ' : '';
+    return `${checkmark}${name} - ${envTitle} (${remaining})`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -158,17 +148,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
               const isActive = podName === selectedRuntimePodName;
               return (
                 <Select.Option key={podName} value={podName}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text>{getDisplayName(runtime)}</Text>
-                    {isActive && <CheckIcon size={16} />}
-                  </Box>
+                  {getDisplayName(runtime, isActive)}
                 </Select.Option>
               );
             })}
@@ -176,10 +156,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
         )}
 
         <Select.Option value="__create_new__">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <RocketIcon size={16} />
-            <Text>Create New Runtime</Text>
-          </Box>
+          🚀 Create New Runtime
         </Select.Option>
       </Select>
     </Box>
