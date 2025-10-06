@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
-import { RuntimeProgressBar } from './RuntimeProgressBar';
+import { RuntimeProgressBar } from '../RuntimeProgressBar';
 
 describe('RuntimeProgressBar', () => {
   let mockGetRuntime: ReturnType<typeof vi.fn>;

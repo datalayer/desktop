@@ -13,13 +13,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BrowserWindow } from 'electron';
 // import WebSocket from 'ws';
-import { setupElectronMocks } from '../../../tests/mocks';
+import { setupElectronMocks } from '../../../../tests/mocks';
 
 // Setup Electron mocks
 setupElectronMocks();
 
 // Import after mocks are set up
-import { websocketProxy } from './websocket-proxy';
+import { websocketProxy } from '../websocket-proxy';
 
 // Define mock WebSocket interface
 interface MockWebSocket {

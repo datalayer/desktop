@@ -12,8 +12,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Form from './Form';
-import type { LoginFormProps } from '../../../shared/types';
+import Form from '../Form';
+import type { LoginFormProps } from '../../../../shared/types';
 
 describe('Form component', () => {
   const defaultProps: LoginFormProps = {

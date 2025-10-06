@@ -51,7 +51,10 @@ export default defineConfig({
     },
 
     // Test file patterns
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/**/__tests__/**/*.{ts,tsx}',
+    ],
     exclude: ['node_modules', 'dist', 'dist-electron'],
 
     // Test timeout

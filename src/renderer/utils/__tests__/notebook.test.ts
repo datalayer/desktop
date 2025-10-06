@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { ServiceManager } from '@jupyterlab/services';
-import type { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
+import type { ElectronCollaborationProvider } from '../../services/electronCollaborationProvider';
 import {
   parseNotebookContent,
   validateNotebookContent,
@@ -28,7 +28,7 @@ import {
   safelyDisposeServiceManager,
   formatErrorMessage,
   createNotebookProps,
-} from './notebook';
+} from '../notebook';
 
 describe('notebook utilities', () => {
   beforeEach(() => {

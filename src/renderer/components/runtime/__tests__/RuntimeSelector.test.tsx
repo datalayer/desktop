@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RuntimeSelector } from './RuntimeSelector';
+import { RuntimeSelector } from '../RuntimeSelector';
 
 // Mock the runtime store
 const mockUseRuntimeStore = vi.fn();

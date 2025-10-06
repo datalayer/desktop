@@ -11,13 +11,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { DatalayerSDKBridge } from './datalayer-sdk-bridge';
+import { DatalayerSDKBridge } from '../datalayer-sdk-bridge';
 import {
   mockUser,
   mockEnvironments,
   mockRuntimes,
-} from '../../../tests/fixtures';
-import { setupElectronMocks } from '../../../tests/mocks';
+} from '../../../../tests/fixtures';
+import { setupElectronMocks } from '../../../../tests/mocks';
 
 // Setup Electron mocks
 setupElectronMocks();

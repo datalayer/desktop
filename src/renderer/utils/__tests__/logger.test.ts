@@ -43,7 +43,7 @@ describe('logger utility', () => {
   });
 
   it('should export a default logger', async () => {
-    const { logger } = await import('./logger');
+    const { logger } = await import('../logger');
     expect(logger).toBeDefined();
     expect(typeof logger.debug).toBe('function');
     expect(typeof logger.info).toBe('function');
@@ -58,7 +58,7 @@ describe('logger utility', () => {
       runtimeLogger,
       notebookLogger,
       collaborationLogger,
-    } = await import('./logger');
+    } = await import('../logger');
 
     expect(apiLogger).toBeDefined();
     expect(proxyLogger).toBeDefined();
@@ -68,19 +68,19 @@ describe('logger utility', () => {
   });
 
   it('should create scoped loggers', async () => {
-    const { logger } = await import('./logger');
+    const { logger } = await import('../logger');
     expect(logger.scope).toBeDefined();
     expect(typeof logger.scope).toBe('function');
   });
 
   it('should configure console transport based on environment', async () => {
-    const { logger } = await import('./logger');
+    const { logger } = await import('../logger');
     expect(logger.transports.console).toBeDefined();
     expect(logger.transports.console.level).toBeDefined();
   });
 
   it('should allow custom scoping', async () => {
-    const { logger } = await import('./logger');
+    const { logger } = await import('../logger');
     const customLogger = logger.scope('custom');
     expect(customLogger).toBeDefined();
     expect(typeof customLogger.debug).toBe('function');

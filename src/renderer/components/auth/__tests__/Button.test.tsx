@@ -12,7 +12,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from './Button';
+import Button from '../Button';
 
 describe('Button component', () => {
   it('should render with "Connect" text by default', () => {

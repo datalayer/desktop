@@ -18,8 +18,8 @@ import {
   createDataHash,
   sortByModifiedDate,
   groupDocumentsByType,
-} from './spaces';
-import { DocumentItem } from '../../shared/types';
+} from '../spaces';
+import { DocumentItem } from '../../../shared/types';
 
 describe('spaces utilities', () => {
   beforeEach(() => {

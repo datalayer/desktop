@@ -12,8 +12,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 // import userEvent from "@testing-library/user-event"; // Unused
-import { Notebook2Toolbar } from './Toolbar';
-import { mockEnvironments } from '../../../../tests/fixtures/index';
+import { Notebook2Toolbar } from '../Toolbar';
+import { mockEnvironments } from '../../../../../tests/fixtures/index';
 
 // Mock the notebookStore2
 vi.mock('@datalayer/jupyter-react', () => ({
