@@ -11,13 +11,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Select, Spinner } from '@primer/react';
-import { useRuntimeStore } from '../stores/runtimeStore';
+import type { Runtime } from '../../services/interfaces/IRuntimeService';
 
 export interface RuntimeSelectorProps {
   /** Currently selected runtime pod name */
   selectedRuntimePodName?: string;
   /** Callback when runtime is selected (null = create new) */
-  onRuntimeSelected: (runtime: any | null) => void;
+  onRuntimeSelected: (runtime: Runtime | null) => void;
   /** Disable the selector */
   disabled?: boolean;
 }
@@ -31,7 +31,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   onRuntimeSelected,
   disabled = false,
 }) => {
-  const { allRuntimes, refreshRuntimes } = useRuntimeStore();
+  const [allRuntimes, setAllRuntimes] = useState<Runtime[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch runtimes on mount and when selectedRuntimePodName changes
@@ -39,17 +39,18 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
     const fetchRuntimes = async () => {
       setIsLoading(true);
       try {
-        await refreshRuntimes();
+        const runtimes = await window.datalayerClient?.listRuntimes();
+        setAllRuntimes((runtimes as unknown as Runtime[]) || []);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRuntimes();
-  }, [selectedRuntimePodName, refreshRuntimes]);
+  }, [selectedRuntimePodName]);
 
   // Calculate remaining time for a runtime
-  const getRemainingTime = (runtime: any): string => {
+  const getRemainingTime = (runtime: Runtime): string => {
     try {
       const parseTimestamp = (value: string | number) => {
         if (typeof value === 'string' && !value.includes('-')) {
@@ -59,7 +60,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
       };
 
       const expiresAt = parseTimestamp(
-        runtime.expired_at || runtime.expiredAt || ''
+        (runtime.expired_at || runtime.expiredAt || '') as string | number
       ).getTime();
       const now = Date.now();
       const remainingMs = Math.max(0, expiresAt - now);
@@ -78,7 +79,10 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   };
 
   // Format display name for runtime
-  const getDisplayName = (runtime: any, includeCheckmark = false): string => {
+  const getDisplayName = (
+    runtime: Runtime,
+    includeCheckmark = false
+  ): string => {
     const name =
       runtime.given_name ||
       runtime.givenName ||
@@ -143,8 +147,10 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 
         {allRuntimes.length > 0 && (
           <Select.OptGroup label="Running Runtimes">
-            {allRuntimes.map((runtime: any) => {
-              const podName = runtime.pod_name || runtime.podName;
+            {allRuntimes.map(runtime => {
+              const podName = (runtime.pod_name ||
+                runtime.podName ||
+                '') as string;
               const isActive = podName === selectedRuntimePodName;
               return (
                 <Select.Option key={podName} value={podName}>

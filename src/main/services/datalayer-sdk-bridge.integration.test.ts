@@ -206,7 +206,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     });
 
     it('should handle null/undefined values', async () => {
-      const sdk = bridge.getSDK() as any;
+      const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       sdk.someMethod = vi.fn().mockResolvedValue(null);
 
       const result = await bridge.call('someMethod');
@@ -232,7 +232,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
 
       expect(result).toEqual(mockRuntimes[0]);
 
-      const sdk = bridge.getSDK() as any;
+      const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       expect(sdk.createRuntime).toHaveBeenCalledWith(
         'python-cpu-env',
         'notebook',
@@ -251,7 +251,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should delete runtime by pod name', async () => {
       await bridge.call('deleteRuntime', 'pod-name-123');
 
-      const sdk = bridge.getSDK() as any;
+      const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       expect(sdk.deleteRuntime).toHaveBeenCalledWith('pod-name-123');
     });
   });
@@ -296,7 +296,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     });
 
     it('should propagate SDK errors', async () => {
-      const sdk = bridge.getSDK() as any;
+      const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       sdk.listEnvironments = vi.fn().mockRejectedValue(new Error('API Error'));
 
       await expect(bridge.call('listEnvironments')).rejects.toThrow(
@@ -305,7 +305,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      const sdk = bridge.getSDK() as any;
+      const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       sdk.createRuntime = vi.fn().mockRejectedValue(new Error('Network error'));
 
       await expect(
@@ -345,8 +345,12 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should restore authentication state after initialization', async () => {
       // Mock stored token
       const fs = await import('fs');
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readFileSync as any).mockReturnValue(Buffer.from('stored-token'));
+      (fs.existsSync as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+        true
+      );
+      (fs.readFileSync as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+        Buffer.from('stored-token')
+      );
 
       const newBridge = new DatalayerSDKBridge();
       await newBridge.initialize();

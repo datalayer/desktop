@@ -12,8 +12,12 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box } from '@primer/react';
-import { ServiceManager } from '@jupyterlab/services';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import type { ServiceManager } from '@jupyterlab/services';
+import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
+import {
+  LexicalComposer,
+  type InitialConfigType,
+} from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -47,14 +51,15 @@ import { useService } from '../contexts/ServiceContext';
  */
 const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   const runtimeService = useService('runtimeService');
-  const [allRuntimes, setAllRuntimes] = useState<any[]>([]);
+  const [allRuntimes, setAllRuntimes] = useState<RuntimeJSON[]>([]);
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
     podName: string;
     ingress: string;
     token: string;
   } | null>(null);
-  const [serviceManager, setServiceManager] = useState<any>(null);
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
   const [spacerUrl, setSpacerUrl] = useState<string>('');
 
   const documentId = selectedDocument?.id || '';
@@ -76,7 +81,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
       }
 
       const runtimes = await runtimeService.refreshAllRuntimes();
-      setAllRuntimes(runtimes);
+      setAllRuntimes(runtimes as unknown as RuntimeJSON[]);
     };
 
     init();
@@ -86,7 +91,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   useEffect(() => {
     if (runtimeInfo) {
       const currentRuntimeExists = allRuntimes.some(
-        r => (r.pod_name || r.podName) === runtimeInfo.podName
+        r => r.podName === runtimeInfo.podName
       );
 
       if (!currentRuntimeExists) {
@@ -278,7 +283,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
 const DocumentEditorInner: React.FC<{
   documentId: string;
   editorKey: string;
-  editorConfig: any;
+  editorConfig: InitialConfigType;
   collaborationWebSocketUrl: string;
   runtimeInfo: {
     id: string;

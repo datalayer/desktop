@@ -21,7 +21,7 @@ export interface LoadingScreenProps {
 
 export interface NavigationTabProps {
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number }>;
   isActive: boolean;
   onClick: () => void;
   'aria-label'?: string;

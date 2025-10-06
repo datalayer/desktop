@@ -39,7 +39,7 @@ vi.mock('electron-log/renderer', () => {
 describe('logger utility', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (global.window as any)?.logger;
+    delete (global.window as unknown as Record<string, unknown>)?.logger;
   });
 
   it('should export a default logger', async () => {

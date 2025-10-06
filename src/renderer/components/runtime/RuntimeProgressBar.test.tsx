@@ -22,7 +22,7 @@ describe('RuntimeProgressBar', () => {
     vi.useFakeTimers();
 
     mockGetRuntime = vi.fn();
-    (window as any).datalayerClient = {
+    (window as unknown as Record<string, unknown>).datalayerClient = {
       getRuntime: mockGetRuntime,
     };
   });

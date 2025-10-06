@@ -21,23 +21,37 @@ setupElectronMocks();
 // Import after mocks are set up
 import { websocketProxy } from './websocket-proxy';
 
+// Define mock WebSocket interface
+interface MockWebSocket {
+  url: string;
+  protocol?: string;
+  readyState: number;
+  on: ReturnType<typeof vi.fn>;
+  once: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+  close: ReturnType<typeof vi.fn>;
+  eventHandlers: Record<string, (...args: unknown[]) => void>;
+  onceHandlers: Record<string, (...args: unknown[]) => void>;
+  triggerEvent: (event: string, ...args: unknown[]) => void;
+}
+
 // Mock WebSocket
-const mockWebSocketInstances: any[] = [];
+const mockWebSocketInstances: MockWebSocket[] = [];
 
 vi.mock('ws', () => {
   return {
     default: vi.fn().mockImplementation((url: string, protocol?: string) => {
-      const mockWs = {
+      const mockWs: MockWebSocket = {
         url,
         protocol,
         readyState: 1, // OPEN
-        on: vi.fn((event: string, handler: Function) => {
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           mockWs.eventHandlers[event] = handler;
         }),
-        once: vi.fn((event: string, handler: Function) => {
+        once: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
           mockWs.onceHandlers[event] = handler;
         }),
-        send: vi.fn((_data: any) => {
+        send: vi.fn((_data: unknown) => {
           // Simulate successful send
         }),
         close: vi.fn((code?: number, reason?: string) => {
@@ -47,10 +61,10 @@ vi.mock('ws', () => {
             mockWs.eventHandlers.close(code || 1000, Buffer.from(reason || ''));
           }
         }),
-        eventHandlers: {} as Record<string, Function>,
-        onceHandlers: {} as Record<string, Function>,
+        eventHandlers: {} as Record<string, (...args: unknown[]) => void>,
+        onceHandlers: {} as Record<string, (...args: unknown[]) => void>,
         // Helper to trigger events
-        triggerEvent: (event: string, ...args: any[]) => {
+        triggerEvent: (event: string, ...args: unknown[]) => {
           if (mockWs.eventHandlers[event]) {
             mockWs.eventHandlers[event](...args);
           }
@@ -63,8 +77,18 @@ vi.mock('ws', () => {
   };
 });
 
+// Define mock BrowserWindow interface
+interface MockBrowserWindow {
+  isDestroyed: ReturnType<typeof vi.fn>;
+  webContents: {
+    send: ReturnType<typeof vi.fn>;
+    isDestroyed: ReturnType<typeof vi.fn>;
+  };
+  once: ReturnType<typeof vi.fn>;
+}
+
 describe('WebSocketProxyService - Integration Tests', () => {
-  let mockWindow: any;
+  let mockWindow: MockBrowserWindow;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -81,7 +105,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
     };
 
     // Clear global runtime cleanup registry
-    (global as any).__datalayerRuntimeCleanup = new Map();
+    (global as Record<string, unknown>).__datalayerRuntimeCleanup = new Map();
   });
 
   afterEach(() => {
@@ -92,7 +116,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('connection lifecycle', () => {
     it('should open a WebSocket connection and return connection ID', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -106,7 +130,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should trigger open event and notify renderer', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -124,7 +148,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should handle message events and forward to renderer', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -144,7 +168,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should handle binary messages correctly', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -167,7 +191,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should handle close event and cleanup', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -188,7 +212,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should handle error event', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -211,7 +235,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       mockWindow.isDestroyed = vi.fn(() => true);
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -225,7 +249,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('runtime association and tracking', () => {
     it('should associate connection with runtime ID', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test',
         undefined,
         undefined,
@@ -240,12 +264,12 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const runtimeId = 'runtime-terminated';
 
       // Mark runtime as terminated
-      (global as any).__datalayerRuntimeCleanup = new Map([
+      (global as Record<string, unknown>).__datalayerRuntimeCleanup = new Map([
         [runtimeId, { terminated: true }],
       ]);
 
-      const result: any = websocketProxy.open(
-        mockWindow as BrowserWindow,
+      const result: Record<string, unknown> = websocketProxy.open(
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test',
         undefined,
         undefined,
@@ -262,7 +286,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const runtimeId = 'runtime-123';
 
       const conn1 = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1',
         undefined,
         undefined,
@@ -270,7 +294,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       );
 
       const conn2 = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2',
         undefined,
         undefined,
@@ -286,7 +310,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
       // Create multiple connections for the runtime
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1',
         undefined,
         undefined,
@@ -294,7 +318,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2',
         undefined,
         undefined,
@@ -321,7 +345,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const runtime2 = 'runtime-2';
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1',
         undefined,
         undefined,
@@ -329,7 +353,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2',
         undefined,
         undefined,
@@ -346,7 +370,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('message sending', () => {
     it('should send string messages', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -359,7 +383,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should send buffer messages', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -381,7 +405,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should stringify objects', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -396,7 +420,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('connection closing', () => {
     it('should close connection by ID', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -408,7 +432,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should close connection with code and reason', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -428,7 +452,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('window lifecycle integration', () => {
     it('should register window close handler', () => {
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -440,12 +464,12 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should close all window connections when window closes', () => {
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1'
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2'
       );
 
@@ -468,7 +492,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       };
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1'
       );
 
@@ -489,17 +513,17 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('bulk operations', () => {
     it('should close all connections', () => {
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1'
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2'
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel3'
       );
 
@@ -515,7 +539,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const runtime2 = 'runtime-2';
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1',
         undefined,
         undefined,
@@ -523,7 +547,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       );
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2',
         undefined,
         undefined,
@@ -550,7 +574,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       };
 
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test',
         undefined,
         headers
@@ -561,7 +585,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should pass protocol to WebSocket constructor', () => {
       websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test',
         'v1.kernel.jupyter.org'
       );
@@ -573,7 +597,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
   describe('error handling', () => {
     it('should handle WebSocket send errors gracefully', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -590,7 +614,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
 
     it('should handle ArrayBuffer messages', () => {
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
 
@@ -617,12 +641,12 @@ describe('WebSocketProxyService - Integration Tests', () => {
       const runtimeId = 'runtime-cleanup-test';
 
       // Initialize runtime as active
-      (global as any).__datalayerRuntimeCleanup = new Map([
+      (global as Record<string, unknown>).__datalayerRuntimeCleanup = new Map([
         [runtimeId, { terminated: false }],
       ]);
 
       const result1 = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test',
         undefined,
         undefined,
@@ -633,13 +657,18 @@ describe('WebSocketProxyService - Integration Tests', () => {
       expect(mockWebSocketInstances).toHaveLength(1);
 
       // Mark as terminated
-      (global as any).__datalayerRuntimeCleanup.set(runtimeId, {
+      (
+        (global as Record<string, unknown>).__datalayerRuntimeCleanup as Map<
+          string,
+          unknown
+        >
+      ).set(runtimeId, {
         terminated: true,
       });
 
       // Try to create new connection - should be blocked
-      const result2: any = websocketProxy.open(
-        mockWindow as BrowserWindow,
+      const result2: Record<string, unknown> = websocketProxy.open(
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test2',
         undefined,
         undefined,
@@ -651,12 +680,12 @@ describe('WebSocketProxyService - Integration Tests', () => {
     });
 
     it('should allow connections without runtime ID even if cleanup registry exists', () => {
-      (global as any).__datalayerRuntimeCleanup = new Map([
+      (global as Record<string, unknown>).__datalayerRuntimeCleanup = new Map([
         ['some-runtime', { terminated: true }],
       ]);
 
       const result = websocketProxy.open(
-        mockWindow as BrowserWindow,
+        mockWindow as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
         // No runtime ID
       );

@@ -213,7 +213,7 @@ export class ProxyWebSocket extends EventTarget {
       this._id = result.id;
 
       // Set up event listener for WebSocket events
-      const eventHandler = (event: Record<string, any>) => {
+      const eventHandler = (event: Record<string, unknown>) => {
         if (event.id !== this._id) {
           return;
         }
@@ -239,40 +239,42 @@ export class ProxyWebSocket extends EventTarget {
             // Convert Buffer representation back to proper format for JupyterLab
             if (isBufferLike(messageData)) {
               // First check if this is actually a JSON message incorrectly sent as Buffer
+              const bufferData = messageData as { data: number[] };
               try {
-                const str = String.fromCharCode(...messageData.data);
+                const str = String.fromCharCode(...bufferData.data);
                 JSON.parse(str); // Just validate it's JSON
                 messageData = str; // Send as string instead of binary
               } catch (jsonError) {
                 // Not JSON, handle as actual binary data (likely heartbeat)
                 try {
                   // Create ArrayBuffer with proper size and copy data
-                  const buffer = new ArrayBuffer(messageData.data.length);
+                  const buffer = new ArrayBuffer(bufferData.data.length);
                   const uint8View = new Uint8Array(buffer);
 
                   // Copy each byte individually to ensure correct transfer
-                  for (let i = 0; i < messageData.data.length; i++) {
-                    uint8View[i] = messageData.data[i] & 0xff; // Ensure it's a valid byte
+                  for (let i = 0; i < bufferData.data.length; i++) {
+                    uint8View[i] = bufferData.data[i] & 0xff; // Ensure it's a valid byte
                   }
 
                   messageData = buffer;
                 } catch (error) {
                   proxyLogger.error(`Error converting Buffer:`, error);
                   // Fallback to original behavior
-                  messageData = new Uint8Array(messageData.data).buffer;
+                  messageData = new Uint8Array(bufferData.data).buffer;
                 }
               }
             } else if (isArrayBufferLike(messageData)) {
+              const arrayData = messageData as { data: number[] };
               try {
-                const buffer = new ArrayBuffer(messageData.data.length);
+                const buffer = new ArrayBuffer(arrayData.data.length);
                 const uint8View = new Uint8Array(buffer);
-                for (let i = 0; i < messageData.data.length; i++) {
-                  uint8View[i] = messageData.data[i] & 0xff;
+                for (let i = 0; i < arrayData.data.length; i++) {
+                  uint8View[i] = arrayData.data[i] & 0xff;
                 }
                 messageData = buffer;
               } catch (error) {
                 proxyLogger.error(`Error converting ArrayBuffer:`, error);
-                messageData = new Uint8Array(messageData.data).buffer;
+                messageData = new Uint8Array(arrayData.data).buffer;
               }
             }
 
@@ -289,8 +291,8 @@ export class ProxyWebSocket extends EventTarget {
           case 'close': {
             this._readyState = ProxyWebSocket.CLOSED;
             const closeEvent = new CloseEvent('close', {
-              code: event.code ?? 1000,
-              reason: event.reason ?? '',
+              code: (event.code as number | undefined) ?? 1000,
+              reason: (event.reason as string | undefined) ?? '',
               wasClean: true,
             });
             this.dispatchEvent(closeEvent);
@@ -438,7 +440,11 @@ export async function createProxyServiceManager(
     }
   };
 
-  const settings = ServerConnection.makeSettings({
+  const settings = (
+    (ServerConnection as Record<string, unknown>).makeSettings as (
+      ...args: unknown[]
+    ) => unknown
+  )({
     baseUrl: normalizedBaseUrl,
     token,
     appUrl: '',
@@ -451,7 +457,9 @@ export async function createProxyServiceManager(
     appendToken: true,
   });
 
-  return new ServiceManager({
+  return new (ServiceManager as unknown as new (
+    ...args: unknown[]
+  ) => Record<string, unknown>)({
     serverSettings: settings,
-  });
+  }) as unknown as import('@jupyterlab/services').ServiceManager.IManager;
 }

@@ -16,30 +16,46 @@ import Card from './Card';
 
 // Mock child components
 vi.mock('./Icon', () => ({
-  default: ({ environment }: any) => (
-    <div data-testid="environment-icon">{environment.name}-icon</div>
+  default: ({
+    environment,
+  }: {
+    environment: Partial<Record<string, unknown>>;
+  }) => (
+    <div data-testid="environment-icon">{environment.name as string}-icon</div>
   ),
 }));
 
 vi.mock('./TypeLabel', () => ({
-  default: ({ environment }: any) => (
-    <div data-testid="type-label">{environment.type || 'cpu'}-label</div>
+  default: ({
+    environment,
+  }: {
+    environment: Partial<Record<string, unknown>>;
+  }) => (
+    <div data-testid="type-label">
+      {(environment.type as string) || 'cpu'}-label
+    </div>
   ),
 }));
 
 vi.mock('./Description', () => ({
-  default: ({ environment }: any) => (
+  default: ({
+    environment,
+  }: {
+    environment: Partial<Record<string, unknown>>;
+  }) => (
     <div data-testid="description">
-      {environment.description || 'No description'}
+      {(environment.description as string) || 'No description'}
     </div>
   ),
 }));
 
 vi.mock('./Resources', () => ({
-  default: ({ resources }: any) => (
+  default: ({ resources }: { resources: Partial<Record<string, unknown>> }) => (
     <div data-testid="resources">
-      CPU: {resources?.cpu?.default || 0}, Memory:{' '}
-      {resources?.memory?.default || 0}
+      CPU:{' '}
+      {((resources?.cpu as Record<string, unknown>)?.default as number) || 0},
+      Memory:{' '}
+      {((resources?.memory as Record<string, unknown>)?.default as number) || 0}
     </div>
   ),
 }));
@@ -76,7 +92,11 @@ describe('Environment Card', () => {
         title: undefined,
       };
 
-      render(<Card environment={envWithoutTitle as any} />);
+      render(
+        <Card
+          environment={{ ...envWithoutTitle, name: baseEnvironment.name }}
+        />
+      );
 
       expect(screen.getByText('python-cpu-env')).toBeInTheDocument();
     });
@@ -126,7 +146,11 @@ describe('Environment Card', () => {
         image: undefined,
       };
 
-      render(<Card environment={envWithoutImage as any} />);
+      render(
+        <Card
+          environment={{ ...envWithoutImage, name: baseEnvironment.name }}
+        />
+      );
 
       expect(screen.queryByText(/Image:/)).not.toBeInTheDocument();
     });
@@ -165,7 +189,9 @@ describe('Environment Card', () => {
         type: undefined,
       };
 
-      render(<Card environment={envWithoutType as any} />);
+      render(
+        <Card environment={{ ...envWithoutType, name: baseEnvironment.name }} />
+      );
 
       expect(screen.getByTestId('type-label')).toBeInTheDocument();
     });
@@ -218,7 +244,11 @@ describe('Environment Card', () => {
         resources: undefined,
       };
 
-      render(<Card environment={envWithoutResources as any} />);
+      render(
+        <Card
+          environment={{ ...envWithoutResources, name: baseEnvironment.name }}
+        />
+      );
 
       const resources = screen.getByTestId('resources');
       expect(resources).toHaveTextContent('CPU: 0');
@@ -324,7 +354,11 @@ describe('Environment Card', () => {
         description: undefined,
       };
 
-      render(<Card environment={noDescriptionEnv as any} />);
+      render(
+        <Card
+          environment={{ ...noDescriptionEnv, name: baseEnvironment.name }}
+        />
+      );
 
       const description = screen.getByTestId('description');
       expect(description).toHaveTextContent('No description');

@@ -23,6 +23,8 @@ module.exports = [
         ecmaFeatures: {
           jsx: true,
         },
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
       },
       globals: {
         window: 'readonly',
@@ -54,8 +56,8 @@ module.exports = [
       'jsx-a11y': jsxA11y,
     },
     rules: {
-      // TypeScript rules - enforce type safety
-      '@typescript-eslint/no-explicit-any': 'error', // Changed from 'off' to 'error'
+      // TypeScript rules - ZERO TOLERANCE FOR ANY - BUILD FAILS IF ANY FOUND
+      '@typescript-eslint/no-explicit-any': 'error', // BAN all explicit any types - NO EXCEPTIONS
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -101,6 +103,7 @@ module.exports = [
       '*.config.js',
       '*.config.ts',
       'scripts/**',
+      'src/**/*.js', // Polyfill files - legacy JS, not TS
     ],
   },
 ];

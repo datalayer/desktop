@@ -21,6 +21,7 @@ import Footer from '../components/auth/Footer';
 import Version from '../components/auth/Version';
 import { LoginFormData, LoginState } from '../../shared/types';
 import { validateLoginForm, formatLoginError } from '../utils/login';
+// UserJSON type not exported, using Record from '@datalayer/core/lib/client/models';
 
 interface LoginProps {
   onUserDataFetched?: (userData: Record<string, unknown>) => void;
@@ -86,7 +87,7 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
 
       // Call the callback if provided (for backwards compatibility)
       if (onUserDataFetched && user) {
-        await onUserDataFetched(user as any);
+        await onUserDataFetched(user as unknown as Record<string, unknown>);
       }
 
       // Don't set loading to false here - let the auth state update handle navigation

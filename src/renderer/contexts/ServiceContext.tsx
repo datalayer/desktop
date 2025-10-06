@@ -48,7 +48,9 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   useEffect(() => {
     const initializeServices = async (): Promise<void> => {
       // Wait for window.datalayerClient to be available (set by main process SDK bridge)
-      if (!window.datalayerClient) {
+      if (
+        !(window.datalayerClient as unknown as import('@datalayer/core/lib/client').DatalayerClient)
+      ) {
         console.warn('ServiceProvider: SDK not available yet, waiting...');
         // Retry in a moment
         setTimeout(initializeServices, 100);
@@ -58,7 +60,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       try {
         // Create and initialize service container
         const serviceContainer = new ServiceContainer(
-          window.datalayerClient as any
+          window.datalayerClient as unknown as import('@datalayer/core/lib/client').DatalayerClient
         );
         await serviceContainer.initialize();
 

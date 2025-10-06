@@ -11,6 +11,20 @@
  */
 
 /**
+ * Vite module wrapper interface with __require for CommonJS interop.
+ */
+interface ViteModuleWrapper {
+  ServiceManager?: unknown;
+  ServerConnection?: unknown;
+  default?: {
+    ServiceManager?: unknown;
+    ServerConnection?: unknown;
+  } & unknown;
+  __require?: (path: string) => unknown;
+  [key: string]: unknown;
+}
+
+/**
  * Load ServiceManager and ServerConnection from @jupyterlab/services.
  * This function exists to allow dynamic imports and proper module resolution
  * through the Vite proxy configuration.
@@ -28,21 +42,29 @@ export async function loadServiceManager() {
 
     // Extract the exports (handle both CJS and ESM)
     // Vite's module interop requires dynamic property access
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const managerWrapper = managerModule as ViteModuleWrapper;
     let ServiceManager =
-      (managerModule as any).ServiceManager ||
-      (managerModule as any).default?.ServiceManager ||
-      (managerModule as any).default;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (managerWrapper.ServiceManager as
+        | typeof import('@jupyterlab/services').ServiceManager
+        | undefined) ||
+      ((managerWrapper.default as ViteModuleWrapper['default'])
+        ?.ServiceManager as
+        | typeof import('@jupyterlab/services').ServiceManager
+        | undefined) ||
+      (managerWrapper.default as
+        | typeof import('@jupyterlab/services').ServiceManager
+        | undefined);
+
+    const serverConnectionWrapper = serverConnectionModule as ViteModuleWrapper;
     let ServerConnection =
-      (serverConnectionModule as any).ServerConnection ||
-      (serverConnectionModule as any).default?.ServerConnection ||
-      (serverConnectionModule as any).default;
+      (serverConnectionWrapper.ServerConnection as typeof import('@jupyterlab/services').ServerConnection) ||
+      ((serverConnectionWrapper.default as Record<string, unknown>)
+        ?.ServerConnection as typeof import('@jupyterlab/services').ServerConnection) ||
+      (serverConnectionWrapper.default as typeof import('@jupyterlab/services').ServerConnection);
 
     // Handle Vite's __require wrapper (CommonJS interop)
     // This is necessary for production builds with Vite's module wrapping
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const managerModuleAny = managerModule as any;
+    const managerModuleAny = managerWrapper;
     if (
       !ServiceManager &&
       managerModuleAny.__require &&
@@ -52,19 +74,19 @@ export async function loadServiceManager() {
       try {
         const unwrapped = managerModuleAny.__require(
           '@jupyterlab/services/lib/manager'
-        );
+        ) as Record<string, unknown>;
         ServiceManager =
-          unwrapped?.ServiceManager ||
-          unwrapped?.default?.ServiceManager ||
-          unwrapped?.default ||
-          unwrapped;
+          (unwrapped?.ServiceManager as typeof import('@jupyterlab/services').ServiceManager) ||
+          ((unwrapped?.default as Record<string, unknown>)
+            ?.ServiceManager as typeof import('@jupyterlab/services').ServiceManager) ||
+          (unwrapped?.default as typeof import('@jupyterlab/services').ServiceManager) ||
+          (unwrapped as unknown as typeof import('@jupyterlab/services').ServiceManager);
       } catch (e) {
         console.error('[ServiceManagerLoader] Failed to use __require:', e);
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serverConnectionModuleAny = serverConnectionModule as any;
+    const serverConnectionModuleAny = serverConnectionWrapper;
     if (
       !ServerConnection &&
       serverConnectionModuleAny.__require &&
@@ -76,12 +98,13 @@ export async function loadServiceManager() {
       try {
         const unwrapped = serverConnectionModuleAny.__require(
           '@jupyterlab/services/lib/serverconnection'
-        );
+        ) as Record<string, unknown>;
         ServerConnection =
-          unwrapped?.ServerConnection ||
-          unwrapped?.default?.ServerConnection ||
-          unwrapped?.default ||
-          unwrapped;
+          (unwrapped?.ServerConnection as typeof import('@jupyterlab/services').ServerConnection) ||
+          ((unwrapped?.default as Record<string, unknown>)
+            ?.ServerConnection as typeof import('@jupyterlab/services').ServerConnection) ||
+          (unwrapped?.default as typeof import('@jupyterlab/services').ServerConnection) ||
+          (unwrapped as typeof import('@jupyterlab/services').ServerConnection);
       } catch (e) {
         console.error(
           '[ServiceManagerLoader] Failed to use __require for ServerConnection:',
@@ -115,7 +138,7 @@ export async function loadServiceManager() {
         'ServerConnection not found in @jupyterlab/services/lib/serverconnection'
       );
     }
-    if (!ServerConnection.makeSettings) {
+    if (!(ServerConnection as Record<string, unknown>).makeSettings) {
       throw new Error('ServerConnection.makeSettings not found');
     }
 

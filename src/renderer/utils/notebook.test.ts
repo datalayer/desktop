@@ -38,12 +38,13 @@ describe('notebook utilities', () => {
     // Clear window cache
     Object.keys(window).forEach(key => {
       if (key.startsWith('serviceManager-')) {
-        delete (window as any)[key];
+        delete (window as unknown as Record<string, unknown>)[key];
       }
     });
 
     // Clear cleanup registry
-    (window as any).__datalayerRuntimeCleanup = new Map();
+    (window as unknown as Record<string, unknown>).__datalayerRuntimeCleanup =
+      new Map();
   });
 
   afterEach(() => {
@@ -221,7 +222,8 @@ describe('notebook utilities', () => {
 
   describe('isRuntimeInCleanupRegistry', () => {
     it('should return false when registry does not exist', () => {
-      delete (window as any).__datalayerRuntimeCleanup;
+      delete (window as unknown as Record<string, unknown>)
+        .__datalayerRuntimeCleanup;
       expect(isRuntimeInCleanupRegistry('runtime-123')).toBe(false);
     });
 
@@ -230,7 +232,10 @@ describe('notebook utilities', () => {
     });
 
     it('should return true when runtime is terminated', () => {
-      (window as any).__datalayerRuntimeCleanup.set('runtime-terminated', {
+      (
+        (window as unknown as Record<string, unknown>)
+          .__datalayerRuntimeCleanup as Map<string, unknown>
+      ).set('runtime-terminated', {
         terminated: true,
       });
 
@@ -238,7 +243,10 @@ describe('notebook utilities', () => {
     });
 
     it('should return false when runtime is not terminated', () => {
-      (window as any).__datalayerRuntimeCleanup.set('runtime-active', {
+      (
+        (window as unknown as Record<string, unknown>)
+          .__datalayerRuntimeCleanup as Map<string, unknown>
+      ).set('runtime-active', {
         terminated: false,
       });
 
@@ -301,7 +309,9 @@ describe('notebook utilities', () => {
         } as unknown as ServiceManager.IManager;
         cacheServiceManager('runtime-456', mockManager);
 
-        const cached = (window as any)['serviceManager-runtime-456'];
+        const cached = (window as unknown as Record<string, unknown>)[
+          'serviceManager-runtime-456'
+        ];
         expect(cached).toEqual(mockManager);
       });
 

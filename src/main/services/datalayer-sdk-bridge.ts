@@ -265,7 +265,7 @@ export class DatalayerSDKBridge {
 
     // Handle plain objects
     if (typeof data === 'object' && data.constructor === Object) {
-      const serialized: any = {};
+      const serialized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(data)) {
         serialized[key] = this.serializeForIPC(value);
       }

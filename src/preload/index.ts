@@ -331,7 +331,7 @@ export interface DatalayerIPCClient {
   getSpaceItems: (
     spaceId: string
   ) => Promise<Array<NotebookJSON | LexicalJSON>>;
-  getContent: (itemId: string) => Promise<any>;
+  getContent: (itemId: string) => Promise<unknown>;
   createLexical: (
     spaceId: string,
     name: string,

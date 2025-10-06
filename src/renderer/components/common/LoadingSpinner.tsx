@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { Box, Text, Spinner } from '@primer/react';
+import type { SxProp } from '@primer/react';
 import { COLORS } from '../../../shared/constants/colors';
 
 /**
@@ -29,7 +30,7 @@ export interface LoadingSpinnerProps {
   /** Additional content to show below the message */
   children?: React.ReactNode;
   /** Custom styles for the container */
-  sx?: Record<string, any>;
+  sx?: SxProp;
   /** Hide spinner and only show message */
   hideSpinner?: boolean;
   /** Show as minimal inline loading state */

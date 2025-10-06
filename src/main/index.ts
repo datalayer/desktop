@@ -44,7 +44,7 @@ interface HTTPRequestConfig {
   url: string;
   method?: string;
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
 }
 
 interface WebSocketConfig {
@@ -81,11 +81,18 @@ function registerIPCHandlers(): void {
     };
   });
 
+  interface AuthState {
+    isAuthenticated: boolean;
+    user: unknown;
+    token: string | null;
+    runUrl: string;
+  }
+
   /**
    * Broadcast authentication state changes to renderer process.
    * @param authState - Authentication state to broadcast
    */
-  function broadcastAuthState(authState: any) {
+  function broadcastAuthState(authState: AuthState) {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('auth-state-changed', authState);
@@ -104,11 +111,11 @@ function registerIPCHandlers(): void {
     const user = await sdkBridge.call('whoami');
     const config = sdkBridge.getConfig();
 
-    const authState = {
+    const authState: AuthState = {
       isAuthenticated: true,
       user: user,
-      token: config.token,
-      runUrl: config.iamRunUrl,
+      token: config.token || null,
+      runUrl: config.iamRunUrl || '',
     };
 
     broadcastAuthState(authState);
@@ -347,7 +354,7 @@ function registerIPCHandlers(): void {
           'Content-Type': 'application/json',
         };
       } else {
-        requestOptions.body = body;
+        requestOptions.body = body as BodyInit;
       }
     }
 

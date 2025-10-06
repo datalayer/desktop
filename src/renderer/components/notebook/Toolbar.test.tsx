@@ -45,8 +45,8 @@ const mockDatalayerClient = {
 beforeEach(() => {
   vi.clearAllMocks();
 
-  (global as any).window = {
-    ...((global as any).window || {}),
+  (global as unknown as Record<string, unknown>).window = {
+    ...((global as unknown as Record<string, unknown>).window || {}),
     datalayerClient: mockDatalayerClient,
     datalayerAPI: {
       createRuntime: vi.fn(),

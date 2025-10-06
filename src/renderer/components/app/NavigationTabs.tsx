@@ -66,14 +66,14 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
       {/* Fixed tabs - cannot be closed */}
       <NavigationTab
         label="Environments"
-        icon={DatabaseIcon}
+        icon={DatabaseIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'environments'}
         onClick={() => onTabChange('environments')}
       />
 
       <NavigationTab
         label="Spaces"
-        icon={BookIcon}
+        icon={BookIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'spaces'}
         onClick={() => onTabChange('spaces')}
       />

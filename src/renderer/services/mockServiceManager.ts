@@ -267,7 +267,7 @@ export function createMockServiceManager(): ServiceManager.IManager {
       Headers: Headers,
       Request: Request,
       WebSocket: WebSocket,
-    } as any,
+    },
   } as unknown as ServiceManager.IManager;
 
   return mockServiceManager;

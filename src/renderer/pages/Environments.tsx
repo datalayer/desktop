@@ -126,11 +126,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
       {!userAuthenticated && <AuthWarning />}
 
       {loading && (
-        <LoadingSpinner
-          message="Loading environments..."
-          variant="inline"
-          sx={{ py: 6 }}
-        />
+        <LoadingSpinner message="Loading environments..." variant="inline" />
       )}
 
       {error && !loading && (
@@ -140,10 +136,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
       {!loading && environments.length > 0 && (
         <Box>
           {environments.map(env => (
-            <Card
-              key={env.name as string}
-              environment={{ ...env, name: env.title } as any}
-            />
+            <Card key={env.uid} environment={{ ...env, name: env.title }} />
           ))}
         </Box>
       )}

@@ -18,6 +18,8 @@ import React, {
   useMemo,
 } from 'react';
 import { Box } from '@primer/react';
+import type { ServiceManager, Kernel } from '@jupyterlab/services';
+import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
 import {
   Notebook2,
   notebookStore2,
@@ -43,7 +45,8 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   const { configuration, setConfiguration } = useCoreStore();
   const runtimeService = useService('runtimeService');
 
-  const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
+  const [collaborationProvider, setCollaborationProvider] =
+    useState<unknown>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
@@ -51,8 +54,9 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     ingress: string;
     token: string;
   } | null>(null);
-  const [serviceManager, setServiceManager] = useState<any>(null);
-  const [allRuntimes, _setAllRuntimes] = useState<any[]>([]);
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
+  const [allRuntimes, _setAllRuntimes] = useState<RuntimeJSON[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize RuntimeService
@@ -72,7 +76,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   useEffect(() => {
     if (runtimeInfo) {
       const currentRuntimeExists = allRuntimes.some(
-        r => (r.pod_name || r.podName) === runtimeInfo.podName
+        r => r.podName === runtimeInfo.podName
       );
 
       if (!currentRuntimeExists) {
@@ -148,7 +152,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       runtimeId: undefined,
     });
 
-    setCollaborationProvider(provider);
+    setCollaborationProvider(provider as unknown);
 
     return () => {
       if (provider && typeof provider.dispose === 'function') {
@@ -160,7 +164,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   // Create service manager when runtime info changes
   useEffect(() => {
     let mounted = true;
-    let currentManager: any = null;
+    let currentManager: ServiceManager.IManager | null = null;
 
     const createServiceManager = async () => {
       // Immediately clear service manager to prevent race conditions
@@ -205,18 +209,22 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     };
 
     // Comprehensive cleanup function for service manager
-    const cleanupServiceManager = async (manager: any) => {
+    const cleanupServiceManager = async (manager: ServiceManager.IManager) => {
       if (!manager) return;
 
       try {
         // Step 1: Shutdown all running kernels first
         if (manager.kernels?.running) {
-          const runningKernels = Array.from(manager.kernels.running()) as any[];
+          const runningKernels = Array.from(
+            manager.kernels.running()
+          ) as Kernel.IModel[];
 
           for (const kernel of runningKernels) {
             try {
-              if (kernel?.shutdown && typeof kernel.shutdown === 'function') {
-                await (kernel.shutdown as () => Promise<void>)();
+              const shutdownFn = (kernel as unknown as Record<string, unknown>)
+                .shutdown;
+              if (typeof shutdownFn === 'function') {
+                await (shutdownFn as () => Promise<void>)();
               }
             } catch (kernelError) {
               // Kernel may already be shutdown on server - this is expected
@@ -228,12 +236,14 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         if (manager.sessions?.running) {
           const runningSessions = Array.from(
             manager.sessions.running()
-          ) as any[];
+          ) as Kernel.IModel[];
 
           for (const session of runningSessions) {
             try {
-              if (session?.shutdown && typeof session.shutdown === 'function') {
-                await (session.shutdown as () => Promise<void>)();
+              const shutdownFn = (session as unknown as Record<string, unknown>)
+                .shutdown;
+              if (typeof shutdownFn === 'function') {
+                await (shutdownFn as () => Promise<void>)();
               }
             } catch (sessionError) {
               // Session shutdown failed
@@ -415,7 +425,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           height="100%"
           maxHeight="100%"
           serviceManager={serviceManager}
-          collaborationProvider={collaborationProvider}
+          collaborationProvider={collaborationProvider as unknown as never}
           readonly={false}
           cellSidebarMargin={120}
           startDefaultKernel={!!runtimeInfo}

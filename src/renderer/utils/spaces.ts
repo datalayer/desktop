@@ -41,12 +41,13 @@ export const formatDate = (dateString: string): string => {
  * @param document - Document item
  * @returns Icon component
  */
-export const getDocumentIcon = (document: DocumentItem) => {
-  const itemType = document.type || '';
-  if (itemType.toLowerCase() === 'notebook') {
-    return BookIcon;
+export const getDocumentIcon = (
+  document: DocumentItem
+): React.ComponentType<{ size?: number }> => {
+  if (document.type.toLowerCase() === 'notebook') {
+    return BookIcon as unknown as React.ComponentType<{ size?: number }>;
   }
-  return FileIcon;
+  return FileIcon as unknown as React.ComponentType<{ size?: number }>;
 };
 
 /**
@@ -54,12 +55,11 @@ export const getDocumentIcon = (document: DocumentItem) => {
  * @param data - Array of document items
  * @returns JSON hash string
  */
-export const createDataHash = (data: any[]): string => {
+export const createDataHash = (data: DocumentItem[]): string => {
   return JSON.stringify(
     data.map(item => ({
-      id: item.id || item.uid,
-      name: item.name || item.name_t,
-      modified: item.last_update_ts_dt || item.modified_at,
+      id: item.uid,
+      name: item.name,
     }))
   );
 };
@@ -86,13 +86,11 @@ export const sortByModifiedDate = (
  */
 export const groupDocumentsByType = (documentItems: DocumentItem[]) => {
   const notebooks = documentItems.filter(item => {
-    const itemType = item.type || '';
-    return itemType.toLowerCase() === 'notebook';
+    return item.type.toLowerCase() === 'notebook';
   });
 
   const documents = documentItems.filter(item => {
-    const itemType = item.type || '';
-    return itemType.toLowerCase() !== 'notebook'; // Everything else is a document
+    return item.type.toLowerCase() !== 'notebook'; // Everything else is a document
   });
 
   return {

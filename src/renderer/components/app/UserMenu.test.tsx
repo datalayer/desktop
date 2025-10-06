@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UserMenu from './UserMenu';
+import type { User } from '../../../shared/types';
 
 describe('UserMenu', () => {
   const mockUser = {
@@ -398,7 +399,7 @@ describe('UserMenu', () => {
       render(
         <UserMenu
           {...defaultProps}
-          user={userWithUndefinedEmail as any}
+          user={userWithUndefinedEmail as unknown as User}
           isOpen={true}
         />
       );

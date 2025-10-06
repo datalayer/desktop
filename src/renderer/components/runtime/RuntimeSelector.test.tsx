@@ -16,9 +16,9 @@ import userEvent from '@testing-library/user-event';
 import { RuntimeSelector } from './RuntimeSelector';
 
 // Mock the runtime store
-const useRuntimeStore = vi.fn();
+const mockUseRuntimeStore = vi.fn();
 vi.mock('../../stores/runtimeStore', () => ({
-  useRuntimeStore,
+  useRuntimeStore: mockUseRuntimeStore,
 }));
 
 describe('RuntimeSelector', () => {
@@ -50,7 +50,7 @@ describe('RuntimeSelector', () => {
     vi.clearAllMocks();
 
     // Setup default mock implementation
-    (useRuntimeStore as any).mockReturnValue({
+    mockUseRuntimeStore.mockReturnValue({
       allRuntimes: mockRuntimes,
       refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
     });
@@ -157,7 +157,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: shortRuntime,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -180,7 +180,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: longRuntime,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -217,7 +217,7 @@ describe('RuntimeSelector', () => {
     });
 
     it('should handle empty runtime list', async () => {
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: [],
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -279,7 +279,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: snakeCaseRuntimes,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -395,7 +395,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: expiredRuntime,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -419,7 +419,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: unixRuntime,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });
@@ -442,7 +442,7 @@ describe('RuntimeSelector', () => {
         },
       ];
 
-      (useRuntimeStore as any).mockReturnValue({
+      mockUseRuntimeStore.mockReturnValue({
         allRuntimes: invalidRuntime,
         refreshRuntimes: mockRefreshRuntimes.mockResolvedValue(undefined),
       });

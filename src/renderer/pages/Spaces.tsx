@@ -13,6 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
+import type { SpaceJSON } from '@datalayer/core/lib/client/models';
 import {
   DocumentsListProps,
   SpaceInfo,
@@ -149,19 +150,11 @@ const Documents: React.FC<DocumentsListProps> = ({
 
       if (spacesData && spacesData.length > 0) {
         // Processing spaces (basic info only)
-        const spaces: SpaceInfo[] = spacesData.map((space: any) => ({
-          id: String(space.id || space.uid || ''),
-          uid: space.uid as string | undefined,
-          name: String(
-            space.name_t ||
-              space.name ||
-              space.handle_s ||
-              space.handle ||
-              space.title ||
-              space.display_name ||
-              'Unknown Space'
-          ),
-          handle: (space.handle_s || space.handle) as string | undefined,
+        const spaces: SpaceInfo[] = spacesData.map((space: SpaceJSON) => ({
+          id: space.uid,
+          uid: space.uid,
+          name: space.name,
+          handle: space.handle,
         }));
 
         setUserSpaces(spaces);
@@ -378,13 +371,8 @@ const Documents: React.FC<DocumentsListProps> = ({
           ? content
           : JSON.stringify(content, null, 2);
 
-      // Determine the file extension - use item.extension if available
-      let extension = item.extension || '';
-      if (!extension) {
-        // Fallback: determine extension based on item type
-        const isNotebook = item.type?.toLowerCase() === 'notebook';
-        extension = isNotebook ? '.ipynb' : '.json';
-      }
+      // SDK must always provide extension
+      let extension = item.extension;
 
       // Ensure extension starts with a dot
       if (extension && !extension.startsWith('.')) {
@@ -571,11 +559,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         onItemEdit={handleEditItem}
         onItemDownload={handleDownloadItem}
         onItemDelete={handleDeleteItem}
-        getItemIcon={
-          getDocumentIcon as (
-            item: any
-          ) => React.ComponentType<{ size?: number }>
-        }
+        getItemIcon={getDocumentIcon}
         previousItemCount={previousDocumentCount}
         onCreateNew={handleCreateLexical}
         createButtonLabel="New Lexical Document"
