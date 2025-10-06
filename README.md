@@ -80,9 +80,7 @@ npm run test:ui       # Visual test runner
 ```
 
 **Documentation**:
-- [TESTING_QUICK_START.md](TESTING_QUICK_START.md) - Get started in 5 minutes
-- [tests/README.md](tests/README.md) - Complete testing guide
-- [TEST_SUMMARY.md](TEST_SUMMARY.md) - Implementation details
+- [TESTING.md](TESTING.md) - Testing guide and quick start
 
 **Coverage Goals**: 70%+ overall, 90%+ critical path
 

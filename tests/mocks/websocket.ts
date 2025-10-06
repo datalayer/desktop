@@ -16,6 +16,11 @@ import { vi } from 'vitest';
  * Mock WebSocket class for browser environment.
  */
 export class MockWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
+
   public readyState: number = MockWebSocket.CONNECTING;
   public url: string;
   public protocol: string;
@@ -23,11 +28,6 @@ export class MockWebSocket {
   public onclose: ((_event: CloseEvent) => void) | null = null;
   public onerror: ((_event: Event) => void) | null = null;
   public onmessage: ((_event: MessageEvent) => void) | null = null;
-
-  static readonly CONNECTING = 0;
-  static readonly OPEN = 1;
-  static readonly CLOSING = 2;
-  static readonly CLOSED = 3;
 
   constructor(url: string, protocols?: string | string[]) {
     this.url = url;
@@ -114,12 +114,12 @@ export const mockProxyAPI = {
       id: `ws-${Math.random().toString(36).substring(7)}`,
     })
   ),
-  websocketSend: vi.fn((id: string, data: any) =>
+  websocketSend: vi.fn((_id: string, _data: any) =>
     Promise.resolve({
       success: true,
     })
   ),
-  websocketClose: vi.fn((id: string, code?: number, reason?: string) =>
+  websocketClose: vi.fn((_id: string, _code?: number, _reason?: string) =>
     Promise.resolve({
       success: true,
     })
@@ -159,7 +159,7 @@ export const mockElectronAPI = {
       DATALAYER_TOKEN: '',
     })
   ),
-  openExternal: vi.fn((url: string) => Promise.resolve()),
+  openExternal: vi.fn((_url: string) => Promise.resolve()),
   notifyRuntimeTerminated: vi.fn((_runtimeId: string) =>
     Promise.resolve({
       success: true,

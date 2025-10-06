@@ -145,12 +145,12 @@ export class RuntimeService extends BaseService implements IRuntimeService {
       const runtimeType = 'notebook';
       const minutesLimit = 10;
 
-      const result = await window.datalayerClient.createRuntime(
+      const result = await window.datalayerClient.createRuntime({
         environmentName,
-        runtimeType,
-        runtimeName,
-        minutesLimit
-      );
+        type: runtimeType,
+        givenName: runtimeName,
+        minutesLimit,
+      });
 
       if (!result?.uid) {
         throw new Error('Failed to create runtime: No UID returned');

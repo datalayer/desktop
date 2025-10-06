@@ -70,7 +70,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
       };
 
       const expiresAt = parseTimestamp(
-        runtime.expired_at || runtime.expiredAt
+        (runtime.expired_at || runtime.expiredAt) as string
       ).getTime();
       const now = Date.now();
       const remainingMs = Math.max(0, expiresAt - now);

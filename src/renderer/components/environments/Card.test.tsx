@@ -228,9 +228,7 @@ describe('Environment Card', () => {
 
   describe('layout and styling', () => {
     it('should render as a bordered box', () => {
-      const { container } = render(
-        <Card environment={baseEnvironment} />
-      );
+      const { container } = render(<Card environment={baseEnvironment} />);
 
       const card = container.firstChild;
       expect(card).toBeInTheDocument();
@@ -344,7 +342,7 @@ describe('Environment Card', () => {
         title: 'Environment 2',
       };
 
-      const { container } = render(
+      render(
         <>
           <Card environment={env1} />
           <Card environment={env2} />

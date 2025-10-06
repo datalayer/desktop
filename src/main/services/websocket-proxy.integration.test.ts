@@ -37,7 +37,7 @@ vi.mock('ws', () => {
         once: vi.fn((event: string, handler: Function) => {
           mockWs.onceHandlers[event] = handler;
         }),
-        send: vi.fn((data: any) => {
+        send: vi.fn((_data: any) => {
           // Simulate successful send
         }),
         close: vi.fn((code?: number, reason?: string) => {
@@ -210,7 +210,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
     it('should not send events if window is destroyed', () => {
       mockWindow.isDestroyed = vi.fn(() => true);
 
-      const result = websocketProxy.open(
+      websocketProxy.open(
         mockWindow as BrowserWindow,
         'ws://localhost:8888/api/kernels/test'
       );
@@ -439,12 +439,12 @@ describe('WebSocketProxyService - Integration Tests', () => {
     });
 
     it('should close all window connections when window closes', () => {
-      const conn1 = websocketProxy.open(
+      websocketProxy.open(
         mockWindow as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel1'
       );
 
-      const conn2 = websocketProxy.open(
+      websocketProxy.open(
         mockWindow as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2'
       );
@@ -473,7 +473,7 @@ describe('WebSocketProxyService - Integration Tests', () => {
       );
 
       websocketProxy.open(
-        mockWindow2 as BrowserWindow,
+        mockWindow2 as unknown as BrowserWindow,
         'ws://localhost:8888/api/kernels/kernel2'
       );
 

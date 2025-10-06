@@ -366,7 +366,6 @@ describe('UserMenu', () => {
       render(<UserMenu {...defaultProps} isOpen={true} />);
 
       const menu = screen.getByRole('menu');
-      const styles = getComputedStyle(menu);
 
       // Check for fixed positioning (actual computed styles may vary in test env)
       expect(menu).toBeInTheDocument();

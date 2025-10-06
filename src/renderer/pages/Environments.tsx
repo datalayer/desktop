@@ -139,8 +139,11 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
 
       {!loading && environments.length > 0 && (
         <Box>
-          {environments.map(env => ({ ...env, name: env.title } as any) (
-            <Card key={env.name} environment={env} />
+          {environments.map(env => (
+            <Card
+              key={env.name as string}
+              environment={{ ...env, name: env.title } as any}
+            />
           ))}
         </Box>
       )}

@@ -72,14 +72,13 @@ describe('ErrorBoundary', () => {
   it('should display error message in monospace font', () => {
     const testError = new Error('Detailed error message');
 
-    const { container: _container } = render(
+    render(
       <ErrorBoundary onError={mockOnError}>
         <ThrowError error={testError} />
       </ErrorBoundary>
     );
 
     const errorText = screen.getByText(/detailed error message/i);
-    const _parentBox = errorText.closest('div');
 
     // Check that error is displayed (styling check would need more setup)
     expect(errorText).toBeInTheDocument();

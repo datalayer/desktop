@@ -23,7 +23,7 @@ describe('Form component', () => {
     },
     state: {
       loading: false,
-      error: "",
+      error: '',
     },
     onFormDataChange: vi.fn(),
     onSubmit: vi.fn(),
@@ -106,7 +106,7 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    const _form = screen.getByRole('form', {
+    screen.getByRole('form', {
       name: /datalayer authentication form/i,
     });
     await user.click(screen.getByRole('button', { name: /connect/i }));
@@ -129,7 +129,7 @@ describe('Form component', () => {
 
     render(<Form {...props} />);
 
-    const _form = screen.getByRole('form');
+    screen.getByRole('form');
     await user.click(screen.getByRole('button', { name: /connect/i }));
 
     // Form should not reload the page
@@ -190,7 +190,7 @@ describe('Form component', () => {
       },
       state: {
         loading: true,
-        error: "",
+        error: '',
       },
     };
 
@@ -216,7 +216,7 @@ describe('Form component', () => {
       },
       state: {
         loading: true,
-        error: "",
+        error: '',
       },
     };
 

@@ -18,7 +18,7 @@ vi.mock('electron-log/renderer', () => {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    scope: vi.fn((name: string) => ({
+    scope: vi.fn((_name: string) => ({
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),

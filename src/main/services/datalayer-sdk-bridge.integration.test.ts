@@ -138,7 +138,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should update current user on whoami call', async () => {
       await bridge.call('login', 'test-token');
 
-      const user = await bridge.call('whoami');
+      await bridge.call('whoami');
 
       const authState = bridge.getAuthState();
       expect(authState.user).toEqual(mockUser);

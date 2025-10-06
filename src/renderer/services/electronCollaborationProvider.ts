@@ -142,8 +142,8 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
       const { ydoc, awareness } = sharedModel;
 
-      // Build WebSocket URL
-      const documentURL = URLExt.join(runUrl, '/api/spacer/v1/documents');
+      // Build WebSocket URL for collaboration
+      const documentURL = URLExt.join(runUrl, '/api/spacer/v1/documents/ws');
       const wsUrl = documentURL.replace(/^http/, 'ws');
 
       // Request collaboration session from Datalayer via IPC

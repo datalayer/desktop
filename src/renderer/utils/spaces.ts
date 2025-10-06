@@ -65,7 +65,7 @@ export const createDataHash = (data: any[]): string => {
 };
 
 /**
- * Sort documents by modified date (newest first).
+ * Sort documents by name (alphabetical).
  * @param a - First document
  * @param b - Second document
  * @returns Sort comparison result
@@ -74,9 +74,9 @@ export const sortByModifiedDate = (
   a: DocumentItem,
   b: DocumentItem
 ): number => {
-  const aDate = a.updatedAt || a.createdAt || '';
-  const bDate = b.updatedAt || b.createdAt || '';
-  return new Date(bDate).getTime() - new Date(aDate).getTime();
+  // Note: updatedAt and createdAt were removed from NotebookJSON interface
+  // Sorting by name instead
+  return a.name.localeCompare(b.name);
 };
 
 /**

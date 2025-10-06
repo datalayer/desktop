@@ -14,10 +14,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RuntimeSelector } from './RuntimeSelector';
-import { useRuntimeStore } from '../../stores/runtimeStore';
 
 // Mock the runtime store
-vi.mock('../../stores/runtimeStore');
+const useRuntimeStore = vi.fn();
+vi.mock('../../stores/runtimeStore', () => ({
+  useRuntimeStore,
+}));
 
 describe('RuntimeSelector', () => {
   const mockRefreshRuntimes = vi.fn();

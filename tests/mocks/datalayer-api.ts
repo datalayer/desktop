@@ -27,7 +27,7 @@ export const mockDatalayerClient = {
   listEnvironments: vi.fn(() => Promise.resolve(mockEnvironments)),
 
   // Runtimes
-  createRuntime: vi.fn((envName: string, type: string, name: string, credits: number) =>
+  createRuntime: vi.fn((_envName: string, _type: string, _name: string, _credits: number) =>
     Promise.resolve(mockRuntimes[0])
   ),
   listRuntimes: vi.fn(() => Promise.resolve(mockRuntimes)),
@@ -39,7 +39,7 @@ export const mockDatalayerClient = {
   getSpaceItems: vi.fn((_spaceId: string) => Promise.resolve(mockNotebooks)),
 
   // Notebooks
-  createNotebook: vi.fn((_spaceId: string, name: string, description?: string) =>
+  createNotebook: vi.fn((_spaceId: string, _name: string, _description?: string) =>
     Promise.resolve(mockNotebooks[0])
   ),
   getContent: vi.fn((_itemId: string) =>
@@ -60,13 +60,13 @@ export const mockDatalayerClient = {
   ),
 
   // Lexical documents
-  createLexical: vi.fn((_spaceId: string, name: string, description?: string) =>
+  createLexical: vi.fn((_spaceId: string, _name: string, _description?: string) =>
     Promise.resolve({
       id: 'lexical-1',
-      name,
-      description,
+      name: _name,
+      description: _description,
       type: 'lexical',
-      spaceId,
+      spaceId: _spaceId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
@@ -94,7 +94,7 @@ export const mockDatalayerAPI = {
       data: {
         isAuthenticated: true,
         user: mockUser,
-        token,
+        token: _token,
         runUrl: 'https://prod1.datalayer.run',
       },
     })
@@ -135,7 +135,7 @@ export const mockDatalayerAPI = {
   ),
 
   // Runtimes
-  createRuntime: vi.fn((options: any) =>
+  createRuntime: vi.fn((_options: any) =>
     Promise.resolve({
       success: true,
       data: { runtime: mockRuntimes[0] },
@@ -181,7 +181,7 @@ export const mockDatalayerAPI = {
   ),
 
   // Notebooks
-  createNotebook: vi.fn((_spaceId: string, name: string, description?: string) =>
+  createNotebook: vi.fn((_spaceId: string, _name: string, _description?: string) =>
     Promise.resolve({
       success: true,
       data: mockNotebooks[0],

@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 // import userEvent from "@testing-library/user-event"; // Unused
 import { Notebook2Toolbar } from './Toolbar';
-import { mockEnvironments } from '../../../tests/fixtures';
+import { mockEnvironments } from '../../../../tests/fixtures/index';
 
 // Mock the notebookStore2
 vi.mock('@datalayer/jupyter-react', () => ({
@@ -146,7 +146,7 @@ describe('Notebook2Toolbar', () => {
   });
 
   it('should render toolbar with proper structure', () => {
-    const { container } = render(<Notebook2Toolbar {...defaultProps} />);
+    render(<Notebook2Toolbar {...defaultProps} />);
 
     // Check that toolbar has proper Box container structure
     const toolbar = screen.getByRole('toolbar');

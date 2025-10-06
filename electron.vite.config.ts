@@ -2775,6 +2775,10 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
     },
     server: {
       port: 5173,
+      fs: {
+        strict: false,
+        allow: ['..'],
+      },
       proxy: {
         '/api': {
           target: 'https://prod1.datalayer.run',

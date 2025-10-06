@@ -145,10 +145,10 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
         if (onRuntimeSelected) {
           // runtime is already a plain JSON object from the bridge (RuntimeJSON)
           await onRuntimeSelected({
-            id: runtime.uid,
-            podName: runtime.podName,
-            ingress: runtime.ingress,
-            token: runtime.token,
+            id: runtime.uid as string,
+            podName: runtime.podName as string,
+            ingress: runtime.ingress as string,
+            token: runtime.token as string,
           });
         }
       } catch (error) {

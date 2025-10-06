@@ -67,7 +67,6 @@ describe('Button component', () => {
   it('should have proper accessibility attributes', () => {
     render(<Button loading={false} disabled={false} onClick={vi.fn()} />);
 
-    const _button = screen.getByRole('button');
     // Primer Button component may not forward aria-describedby in test environment
     // Instead verify the help text is present and associated
     const helpText = screen.getByText(/submit form to authenticate/i);
