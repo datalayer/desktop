@@ -11,13 +11,17 @@
 
 import React from 'react';
 import { INotebookContent } from '@jupyterlab/nbformat';
+import type { ServiceManager } from '@jupyterlab/services';
+import type { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 
 /**
  * Parse notebook content from API response.
  * @param responseBody - Raw API response data
  * @returns Parsed notebook content or null if invalid
  */
-export const parseNotebookContent = (responseBody: any): INotebookContent => {
+export const parseNotebookContent = (
+  responseBody: unknown
+): INotebookContent => {
   let content;
 
   if (typeof responseBody === 'string') {
@@ -49,12 +53,13 @@ export const parseNotebookContent = (responseBody: any): INotebookContent => {
  * @param content - Content to validate
  * @returns True if valid notebook structure
  */
-export const validateNotebookContent = (content: any): boolean => {
+export const validateNotebookContent = (content: unknown): boolean => {
   if (
     content &&
-    content.cells &&
+    typeof content === 'object' &&
+    'cells' in content &&
     Array.isArray(content.cells) &&
-    content.nbformat
+    'nbformat' in content
   ) {
     return true;
   }
@@ -96,15 +101,13 @@ export const clearRuntimeTerminationFlag = (notebookId: string): void => {
  * @returns True if in cleanup registry
  */
 export const isRuntimeInCleanupRegistry = (runtimeId: string): boolean => {
-  const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+  const cleanupRegistry = window.__datalayerRuntimeCleanup;
 
-  if (
-    cleanupRegistry &&
-    runtimeId &&
-    cleanupRegistry.has(runtimeId) &&
-    cleanupRegistry.get(runtimeId).terminated
-  ) {
-    return true;
+  if (cleanupRegistry && runtimeId && cleanupRegistry.has(runtimeId)) {
+    const entry = cleanupRegistry.get(runtimeId);
+    if (entry?.terminated) {
+      return true;
+    }
   }
 
   return false;
@@ -139,31 +142,44 @@ export const getServiceManagerCacheKey = (runtimeId: string): string => {
 /**
  * Get cached service manager
  */
-export const getCachedServiceManager = (runtimeId: string): any => {
-  const cacheKey = getServiceManagerCacheKey(runtimeId);
-  return (window as Record<string, any>)[cacheKey];
+export const getCachedServiceManager = (
+  runtimeId: string
+): ServiceManager.IManager | undefined => {
+  const cacheKey = getServiceManagerCacheKey(
+    runtimeId
+  ) as `serviceManager-${string}`;
+  return window[cacheKey];
 };
 
 /**
  * Cache service manager
  */
-export const cacheServiceManager = (runtimeId: string, manager: any): void => {
-  const cacheKey = getServiceManagerCacheKey(runtimeId);
-  (window as Record<string, any>)[cacheKey] = manager;
+export const cacheServiceManager = (
+  runtimeId: string,
+  manager: ServiceManager.IManager
+): void => {
+  const cacheKey = getServiceManagerCacheKey(
+    runtimeId
+  ) as `serviceManager-${string}`;
+  window[cacheKey] = manager;
 };
 
 /**
  * Remove service manager from cache
  */
 export const removeCachedServiceManager = (runtimeId: string): void => {
-  const cacheKey = getServiceManagerCacheKey(runtimeId);
-  delete (window as Record<string, any>)[cacheKey];
+  const cacheKey = getServiceManagerCacheKey(
+    runtimeId
+  ) as `serviceManager-${string}`;
+  delete window[cacheKey];
 };
 
 /**
  * Safely dispose a service manager
  */
-export const safelyDisposeServiceManager = (manager: any): void => {
+export const safelyDisposeServiceManager = (
+  manager: ServiceManager.IManager | null
+): void => {
   try {
     if (
       manager &&
@@ -198,10 +214,10 @@ export const formatErrorMessage = (error: Error): string => {
 export const createNotebookProps = (
   stableNotebookKey: string,
   notebookContent: INotebookContent,
-  serviceManager: any,
-  collaborationProvider: any,
-  extensions: any[],
-  Toolbar?: React.ComponentType<any>
+  serviceManager: ServiceManager.IManager,
+  collaborationProvider: ElectronCollaborationProvider | null,
+  extensions: unknown[],
+  Toolbar?: React.ComponentType<unknown>
 ) => {
   const hasCollaboration = !!collaborationProvider;
 
@@ -226,9 +242,9 @@ export const createNotebookProps = (
  * Log notebook component information
  */
 export const logNotebookInfo = (
-  _serviceManager: any,
+  _serviceManager: ServiceManager.IManager | null,
   _notebookContent: INotebookContent | null,
-  _collaborationProvider: any,
+  _collaborationProvider: ElectronCollaborationProvider | null,
   _notebookId?: string
 ) => {
   // Notebook component information logging function (logging removed)

@@ -54,10 +54,16 @@ module.exports = [
       'jsx-a11y': jsxA11y,
     },
     rules: {
-      // TypeScript rules
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off',
+      // TypeScript rules - enforce type safety
+      '@typescript-eslint/no-explicit-any': 'error', // Changed from 'off' to 'error'
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
 
       // React rules

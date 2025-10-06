@@ -55,21 +55,20 @@ class WebSocketProxyService {
   ): { id: string } | { id: string; blocked: true; reason: string } {
     // Check if this runtime has been terminated
     if (runtimeId) {
-      const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
-      if (
-        cleanupRegistry &&
-        cleanupRegistry.has(runtimeId) &&
-        cleanupRegistry.get(runtimeId).terminated
-      ) {
-        log.debug(
-          `[WebSocket Proxy] 🛑 BLOCKED: Preventing new connection to terminated runtime ${runtimeId}`
-        );
-        // Return a blocked response instead of throwing to avoid IPC error logging
-        return {
-          id: 'blocked-connection',
-          blocked: true,
-          reason: `Runtime ${runtimeId} has been terminated - no new connections allowed`,
-        };
+      const cleanupRegistry = global.__datalayerRuntimeCleanup;
+      if (cleanupRegistry && cleanupRegistry.has(runtimeId)) {
+        const entry = cleanupRegistry.get(runtimeId);
+        if (entry?.terminated) {
+          log.debug(
+            `[WebSocket Proxy] 🛑 BLOCKED: Preventing new connection to terminated runtime ${runtimeId}`
+          );
+          // Return a blocked response instead of throwing to avoid IPC error logging
+          return {
+            id: 'blocked-connection',
+            blocked: true,
+            reason: `Runtime ${runtimeId} has been terminated - no new connections allowed`,
+          };
+        }
       }
     }
 

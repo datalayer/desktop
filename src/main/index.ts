@@ -205,16 +205,27 @@ function registerIPCHandlers(): void {
   ipcMain.handle('datalayer:list-notebooks', async () => {
     // Get all spaces and their items
     const spaces = await sdkBridge.call('get_my_spaces');
-    const allNotebooks: any[] = [];
+    const allNotebooks: unknown[] = [];
 
-    for (const space of spaces || []) {
-      try {
-        const items = await sdkBridge.call('get_space_items', space.id);
-        const notebooks =
-          items?.filter((item: any) => item.type === 'notebook') || [];
-        allNotebooks.push(...notebooks);
-      } catch (error) {
-        // Continue with other spaces if one fails
+    if (Array.isArray(spaces)) {
+      for (const space of spaces) {
+        try {
+          if (space && typeof space === 'object' && 'id' in space) {
+            const items = await sdkBridge.call('get_space_items', space.id);
+            if (Array.isArray(items)) {
+              const notebooks = items.filter(
+                (item): item is Record<string, unknown> =>
+                  typeof item === 'object' &&
+                  item !== null &&
+                  'type' in item &&
+                  item.type === 'notebook'
+              );
+              allNotebooks.push(...notebooks);
+            }
+          }
+        } catch (error) {
+          // Continue with other spaces if one fails
+        }
       }
     }
 
@@ -413,11 +424,11 @@ function registerIPCHandlers(): void {
   // Runtime termination notification handler
   ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
     // Initialize global cleanup registry in main process
-    if (!(global as any).__datalayerRuntimeCleanup) {
-      (global as any).__datalayerRuntimeCleanup = new Map();
+    if (!global.__datalayerRuntimeCleanup) {
+      global.__datalayerRuntimeCleanup = new Map();
     }
 
-    const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+    const cleanupRegistry = global.__datalayerRuntimeCleanup;
     cleanupRegistry.set(runtimeId, { terminated: true });
 
     // Close all WebSocket connections for this runtime

@@ -98,16 +98,15 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       // RACE CONDITION PREVENTION: Check if runtime is terminated before creating WebSocket connections
       const runtimeId = this._config.runtimeId;
       if (runtimeId) {
-        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
-        if (
-          cleanupRegistry &&
-          cleanupRegistry.has(runtimeId) &&
-          cleanupRegistry.get(runtimeId).terminated
-        ) {
-          // RACE CONDITION PREVENTION: Blocking collaboration WebSocket for terminated runtime
-          throw new Error(
-            `Runtime ${runtimeId} has been terminated - no new collaboration connections allowed`
-          );
+        const cleanupRegistry = window.__datalayerRuntimeCleanup;
+        if (cleanupRegistry && cleanupRegistry.has(runtimeId)) {
+          const entry = cleanupRegistry.get(runtimeId);
+          if (entry?.terminated) {
+            // RACE CONDITION PREVENTION: Blocking collaboration WebSocket for terminated runtime
+            throw new Error(
+              `Runtime ${runtimeId} has been terminated - no new collaboration connections allowed`
+            );
+          }
         }
       }
 
@@ -185,16 +184,15 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
       // FINAL RACE CONDITION CHECK: Verify runtime is still not terminated before creating WebSocket
       if (runtimeId) {
-        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
-        if (
-          cleanupRegistry &&
-          cleanupRegistry.has(runtimeId) &&
-          cleanupRegistry.get(runtimeId).terminated
-        ) {
-          // FINAL CHECK: Runtime terminated during connection setup, aborting
-          throw new Error(
-            `Runtime ${runtimeId} has been terminated during collaboration setup - no new connections allowed`
-          );
+        const cleanupRegistry = window.__datalayerRuntimeCleanup;
+        if (cleanupRegistry && cleanupRegistry.has(runtimeId)) {
+          const entry = cleanupRegistry.get(runtimeId);
+          if (entry?.terminated) {
+            // FINAL CHECK: Runtime terminated during connection setup, aborting
+            throw new Error(
+              `Runtime ${runtimeId} has been terminated during collaboration setup - no new connections allowed`
+            );
+          }
         }
       }
 

@@ -21,7 +21,7 @@ import type {
   SpaceJSON,
   LexicalJSON,
 } from '@datalayer/core/lib/client/models';
-import { User } from '@datalayer/core/lib/client/models/User';
+import type { UserJSON } from '@datalayer/core/lib/client/models/User';
 
 /**
  * Electron API for system information and menu actions.
@@ -58,7 +58,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAuthStateChanged: (
     callback: (authState: {
       isAuthenticated: boolean;
-      user: any | null;
+      user: UserJSON | null;
       token: string | null;
       runUrl: string;
     }) => void
@@ -269,7 +269,7 @@ export interface ElectronAPI {
   onAuthStateChanged: (
     callback: (authState: {
       isAuthenticated: boolean;
-      user: any | null;
+      user: UserJSON | null;
       token: string | null;
       runUrl: string;
     }) => void
@@ -296,7 +296,7 @@ export interface DatalayerIPCClient {
   // Auth state - returns complete auth state with user data
   getAuthState: () => Promise<{
     isAuthenticated: boolean;
-    user: any | null;
+    user: UserJSON | null;
     token: string | null;
     runUrl: string;
   }>;
@@ -347,7 +347,7 @@ export interface DatalayerIPCClient {
   }>;
 
   // User methods
-  whoami: () => Promise<User>;
+  whoami: () => Promise<UserJSON>;
 }
 
 /**

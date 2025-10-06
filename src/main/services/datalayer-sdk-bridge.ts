@@ -11,11 +11,13 @@
  */
 
 import { DatalayerClient } from '@datalayer/core/lib/client/index';
+import type { UserJSON } from '@datalayer/core/lib/client/models/User';
 import { safeStorage } from 'electron';
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { app } from 'electron';
 import log from 'electron-log';
+import type { AuthState, SerializedData } from '../../shared/types/ipc.types';
 
 /**
  * Direct SDK bridge with smart method dispatching.
@@ -25,7 +27,7 @@ export class DatalayerSDKBridge {
   private sdk: DatalayerClient;
   private initialized = false;
   private _tokenPath?: string; // Lazy-loaded
-  private currentUser: any = null;
+  private currentUser: UserJSON | null = null;
 
   /**
    * Get the token storage path (lazy-loaded).
@@ -164,7 +166,7 @@ export class DatalayerSDKBridge {
    * @param args - Method arguments
    * @returns Serialized result safe for IPC transmission
    */
-  async call(method: string, ...args: any[]): Promise<any> {
+  async call(method: string, ...args: unknown[]): Promise<unknown> {
     await this.initialize();
 
     const camelMethod = this.toCamelCase(method);
@@ -172,6 +174,9 @@ export class DatalayerSDKBridge {
     // Special handling for login to save token
     if (camelMethod === 'login' && args.length > 0) {
       const token = args[0];
+      if (typeof token !== 'string') {
+        throw new Error('Login token must be a string');
+      }
       const result = await this.sdk.login(token);
 
       // Save the token securely after successful login
@@ -203,7 +208,12 @@ export class DatalayerSDKBridge {
       return this.currentUser;
     }
 
-    if (typeof (this.sdk as any)[camelMethod] !== 'function') {
+    // Dynamic SDK method invocation - necessary for reflective IPC bridge
+    // This allows the renderer to call any SDK method without duplicating interfaces
+    // DatalayerClient interface has index signature [key: string]: unknown
+    const sdkMethod = this.sdk[camelMethod as keyof DatalayerClient];
+
+    if (typeof sdkMethod !== 'function') {
       throw new Error(`SDK method '${camelMethod}' not found`);
     }
 
@@ -211,7 +221,10 @@ export class DatalayerSDKBridge {
       args: args.slice(0, 2),
     });
 
-    const result = await (this.sdk as any)[camelMethod](...args);
+    // Call the SDK method - it's guaranteed to be a function by the check above
+    const result = await (
+      sdkMethod as (...args: unknown[]) => Promise<unknown>
+    ).apply(this.sdk, args);
 
     // Convert models to JSON for IPC transmission
     return this.serializeForIPC(result);
@@ -232,11 +245,16 @@ export class DatalayerSDKBridge {
    * @param data - Data to serialize
    * @returns IPC-safe serialized data
    */
-  private serializeForIPC(data: any): any {
+  private serializeForIPC(data: unknown): SerializedData {
     if (!data) return data;
 
     // Handle SDK models with toJSON method
-    if (data.toJSON && typeof data.toJSON === 'function') {
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      'toJSON' in data &&
+      typeof data.toJSON === 'function'
+    ) {
       return data.toJSON();
     }
 
@@ -286,7 +304,7 @@ export class DatalayerSDKBridge {
    * Get current authentication state.
    * @returns Authentication state with user info and token
    */
-  getAuthState(): any {
+  getAuthState(): AuthState {
     const config = this.sdk.getConfig();
     return {
       isAuthenticated: !!config.token && !!this.currentUser,

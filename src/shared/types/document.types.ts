@@ -10,6 +10,8 @@
  */
 
 import type { LexicalEditor } from 'lexical';
+import type { ServiceManager } from '@jupyterlab/services';
+import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
 
 /**
  * Document data structure for Lexical documents.
@@ -42,7 +44,7 @@ export interface CustomLexicalEditorProps {
   collaborationStatus: CollaborationStatus;
   onCollaborationStatusChange: (status: CollaborationStatus) => void;
   onEditorInit: (editor: LexicalEditor) => void;
-  serviceManager?: any;
+  serviceManager?: ServiceManager.IManager;
 }
 
 // Editor Init Plugin props
@@ -53,8 +55,8 @@ export interface EditorInitPluginProps {
 // Document Header props
 export interface DocumentHeaderProps {
   selectedDocument: DocumentData;
-  serviceManager: any;
-  documentRuntime: any;
+  serviceManager: ServiceManager.IManager | null;
+  documentRuntime: RuntimeJSON | null;
   isTerminatingRuntime: boolean;
   collaborationEnabled: boolean;
   collaborationStatus: CollaborationStatus;
@@ -76,7 +78,7 @@ export interface DocumentTerminateDialogProps {
 export interface DocumentLoadingStateProps {
   isCreatingRuntime: boolean;
   loading: boolean;
-  serviceManager: any;
+  serviceManager: ServiceManager.IManager | null;
 }
 
 // Error State props

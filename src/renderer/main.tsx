@@ -31,7 +31,7 @@ import 'prismjs/components/prism-json';
 /**
  * Make Prism available globally for Lexical code highlighting.
  */
-(window as any).Prism = Prism;
+window.Prism = Prism;
 
 /**
  * Ensure all Prism instances have the 'c' language to prevent extension errors.
@@ -74,10 +74,10 @@ function ensureCLanguageInAllPrismInstances() {
   // Ensuring C language exists in all Prism instances
 
   // Fix the global Prism instance (if exists)
-  if (typeof window !== 'undefined' && (window as any).Prism?.languages) {
-    if (!(window as any).Prism.languages.c) {
+  if (typeof window !== 'undefined' && window.Prism?.languages) {
+    if (!window.Prism.languages.c) {
       // Adding C language to global Prism instance
-      (window as any).Prism.languages.c = cLanguageDefinition;
+      window.Prism.languages.c = cLanguageDefinition;
     }
   }
 
@@ -92,7 +92,7 @@ function ensureCLanguageInAllPrismInstances() {
     // Check all global variables that might be Prism instances
     for (const key in window) {
       try {
-        const obj = (window as any)[key];
+        const obj = window[key as keyof Window];
         if (
           obj &&
           typeof obj === 'object' &&
@@ -228,7 +228,7 @@ const loadDatalayerConfig = async () => {
     const env = await window.electronAPI.getEnv();
     if (env.DATALAYER_RUN_URL && env.DATALAYER_TOKEN) {
       /** Store in window for now (in production, use proper state management) */
-      (window as any).datalayerConfig = {
+      window.datalayerConfig = {
         runUrl: env.DATALAYER_RUN_URL,
         token: env.DATALAYER_TOKEN,
       };

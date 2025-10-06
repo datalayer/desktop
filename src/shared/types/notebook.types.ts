@@ -11,6 +11,7 @@
 
 import type { ServiceManager } from '@jupyterlab/services';
 import { INotebookContent } from '@jupyterlab/nbformat';
+import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
 import type { ElectronCollaborationProvider } from '../../renderer/services/electronCollaborationProvider';
 
 /**
@@ -38,7 +39,7 @@ export interface NotebookContentState {
 
 export interface RuntimeState {
   serviceManager: ServiceManager.IManager | null;
-  runtime: any;
+  runtime: RuntimeJSON | null;
   creating: boolean;
   terminating: boolean;
   terminated: boolean;
@@ -88,7 +89,7 @@ export interface NotebookContentProps {
   notebookError: boolean;
   onNotebookError: (error: Error) => void;
   onResetNotebook: () => void;
-  Toolbar?: React.ComponentType<any>; // Optional toolbar component
+  Toolbar?: React.ComponentType<unknown>; // Optional toolbar component
   hasKernel?: boolean; // Whether a real kernel is connected
   isConnectingKernel?: boolean; // Whether kernel is connecting
   kernelName?: string; // Current kernel name
@@ -116,7 +117,7 @@ export interface UseRuntimeManagementOptions {
 
 export interface UseRuntimeManagementReturn {
   serviceManager: ServiceManager.IManager | null;
-  runtime: any;
+  runtime: RuntimeJSON | null;
   creating: boolean;
   terminating: boolean;
   terminated: boolean;

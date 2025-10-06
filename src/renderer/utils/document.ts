@@ -45,7 +45,7 @@ export async function waitForRuntimeReady(
       // Test Jupyter server connectivity by trying to access /api/kernelspecs
       const testUrl = `${runtimeIngress}/api/kernelspecs`;
 
-      const response = await (window as any).proxyAPI.httpRequest({
+      const response = await window.proxyAPI.httpRequest({
         url: testUrl,
         method: 'GET',
         headers: {

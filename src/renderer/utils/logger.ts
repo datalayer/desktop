@@ -28,5 +28,5 @@ export const logger = log;
 
 // Make available globally for dev tools debugging
 if (typeof window !== 'undefined') {
-  (window as any).logger = log;
+  window.logger = log;
 }

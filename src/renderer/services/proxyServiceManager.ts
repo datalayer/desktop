@@ -12,6 +12,10 @@
 
 import { proxyLogger } from '../utils/logger';
 import { loadServiceManager } from './serviceManagerLoader';
+import {
+  isBufferLike,
+  isArrayBufferLike,
+} from '../../shared/types/websocket.types';
 
 /**
  * Custom fetch function that proxies HTTP requests through IPC.
@@ -30,7 +34,7 @@ async function proxyFetch(
   // Check if this request is to a terminated runtime
   const url = r.url;
   if (url.includes('/api/kernels') || url.includes('/api/sessions')) {
-    const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+    const cleanupRegistry = window.__datalayerRuntimeCleanup;
     if (cleanupRegistry) {
       // Extract runtime ID from URL to check if it's terminated
       const urlParts = url.split('/');
@@ -39,10 +43,8 @@ async function proxyFetch(
       );
       if (serverIndex !== -1 && serverIndex + 1 < urlParts.length) {
         const runtimeId = urlParts[serverIndex + 1];
-        if (
-          cleanupRegistry.has(runtimeId) &&
-          cleanupRegistry.get(runtimeId).terminated
-        ) {
+        const entry = cleanupRegistry.get(runtimeId);
+        if (entry?.terminated) {
           proxyLogger.debug(
             '🛑 [Request Blocked] Blocking request to terminated runtime:',
             runtimeId,
@@ -83,7 +85,7 @@ async function proxyFetch(
   proxyLogger.debug(`HTTP ${method} ${url}`);
 
   // Send through IPC proxy
-  const response = await (window as any).proxyAPI.httpRequest({
+  const response = await window.proxyAPI.httpRequest({
     url,
     method,
     headers,
@@ -184,25 +186,24 @@ export class ProxyWebSocket extends EventTarget {
     try {
       // RACE CONDITION PREVENTION: Check if runtime is terminated before creating WebSocket connection
       if (this._runtimeId) {
-        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
-        if (
-          cleanupRegistry &&
-          cleanupRegistry.has(this._runtimeId) &&
-          cleanupRegistry.get(this._runtimeId).terminated
-        ) {
-          proxyLogger.info(
-            '[ProxyWebSocket] 🛑 RACE CONDITION PREVENTION: Blocking WebSocket connection for terminated runtime:',
-            this._runtimeId
-          );
-          this._readyState = ProxyWebSocket.CLOSED;
-          throw new Error(
-            `Runtime ${this._runtimeId} has been terminated - no new WebSocket connections allowed`
-          );
+        const cleanupRegistry = window.__datalayerRuntimeCleanup;
+        if (cleanupRegistry && cleanupRegistry.has(this._runtimeId)) {
+          const entry = cleanupRegistry.get(this._runtimeId);
+          if (entry?.terminated) {
+            proxyLogger.info(
+              '[ProxyWebSocket] 🛑 RACE CONDITION PREVENTION: Blocking WebSocket connection for terminated runtime:',
+              this._runtimeId
+            );
+            this._readyState = ProxyWebSocket.CLOSED;
+            throw new Error(
+              `Runtime ${this._runtimeId} has been terminated - no new WebSocket connections allowed`
+            );
+          }
         }
       }
 
       // Open connection through IPC
-      const result = await (window as any).proxyAPI.websocketOpen({
+      const result = await window.proxyAPI.websocketOpen({
         url: this._url,
         protocol: this._protocol || undefined,
         headers: this._headers,
@@ -236,57 +237,42 @@ export class ProxyWebSocket extends EventTarget {
             let messageData = event.data;
 
             // Convert Buffer representation back to proper format for JupyterLab
-            if (
-              messageData &&
-              typeof messageData === 'object' &&
-              (messageData as any).type === 'Buffer' &&
-              Array.isArray((messageData as any).data)
-            ) {
+            if (isBufferLike(messageData)) {
               // First check if this is actually a JSON message incorrectly sent as Buffer
               try {
-                const str = String.fromCharCode(...(messageData as any).data);
+                const str = String.fromCharCode(...messageData.data);
                 JSON.parse(str); // Just validate it's JSON
                 messageData = str; // Send as string instead of binary
               } catch (jsonError) {
                 // Not JSON, handle as actual binary data (likely heartbeat)
                 try {
                   // Create ArrayBuffer with proper size and copy data
-                  const buffer = new ArrayBuffer(
-                    (messageData as any).data.length
-                  );
+                  const buffer = new ArrayBuffer(messageData.data.length);
                   const uint8View = new Uint8Array(buffer);
 
                   // Copy each byte individually to ensure correct transfer
-                  for (let i = 0; i < (messageData as any).data.length; i++) {
-                    uint8View[i] = (messageData as any).data[i] & 0xff; // Ensure it's a valid byte
+                  for (let i = 0; i < messageData.data.length; i++) {
+                    uint8View[i] = messageData.data[i] & 0xff; // Ensure it's a valid byte
                   }
 
                   messageData = buffer;
                 } catch (error) {
                   proxyLogger.error(`Error converting Buffer:`, error);
                   // Fallback to original behavior
-                  messageData = new Uint8Array((messageData as any).data)
-                    .buffer;
+                  messageData = new Uint8Array(messageData.data).buffer;
                 }
               }
-            } else if (
-              messageData &&
-              typeof messageData === 'object' &&
-              (messageData as any).type === 'ArrayBuffer' &&
-              Array.isArray((messageData as any).data)
-            ) {
+            } else if (isArrayBufferLike(messageData)) {
               try {
-                const buffer = new ArrayBuffer(
-                  (messageData as any).data.length
-                );
+                const buffer = new ArrayBuffer(messageData.data.length);
                 const uint8View = new Uint8Array(buffer);
-                for (let i = 0; i < (messageData as any).data.length; i++) {
-                  uint8View[i] = (messageData as any).data[i] & 0xff;
+                for (let i = 0; i < messageData.data.length; i++) {
+                  uint8View[i] = messageData.data[i] & 0xff;
                 }
                 messageData = buffer;
               } catch (error) {
                 proxyLogger.error(`Error converting ArrayBuffer:`, error);
-                messageData = new Uint8Array((messageData as any).data).buffer;
+                messageData = new Uint8Array(messageData.data).buffer;
               }
             }
 
@@ -303,9 +289,9 @@ export class ProxyWebSocket extends EventTarget {
           case 'close': {
             this._readyState = ProxyWebSocket.CLOSED;
             const closeEvent = new CloseEvent('close', {
-              code: (event as any).code,
-              reason: (event as any).reason,
-              wasClean: (event as any).wasClean,
+              code: event.code ?? 1000,
+              reason: event.reason ?? '',
+              wasClean: true,
             });
             this.dispatchEvent(closeEvent);
             if (this.onclose) {
@@ -326,11 +312,11 @@ export class ProxyWebSocket extends EventTarget {
         }
       };
 
-      (window as any).proxyAPI.onWebSocketEvent(eventHandler);
+      window.proxyAPI.onWebSocketEvent(eventHandler);
 
       // Store cleanup function
       this._eventListenerCleanup = () => {
-        (window as any).proxyAPI.removeWebSocketEventListener();
+        window.proxyAPI.removeWebSocketEventListener();
       };
     } catch (error) {
       // Only log as error if it's not a terminated runtime error
@@ -380,7 +366,7 @@ export class ProxyWebSocket extends EventTarget {
       sendData = JSON.stringify(data);
     }
 
-    (window as any).proxyAPI.websocketSend({
+    window.proxyAPI.websocketSend({
       id: this._id,
       data: sendData,
     });
@@ -398,7 +384,7 @@ export class ProxyWebSocket extends EventTarget {
 
     if (this._id) {
       proxyLogger.debug(`Closing connection ${this._id}`);
-      (window as any).proxyAPI.websocketClose({
+      window.proxyAPI.websocketClose({
         id: this._id,
         code,
         reason,

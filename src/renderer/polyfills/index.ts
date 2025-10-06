@@ -50,7 +50,7 @@ import './requirejs';
 
 // Global object polyfill for MathJax
 if (typeof global === 'undefined') {
-  (window as any).global = window;
+  (window as unknown as Record<string, unknown>).global = window;
 }
 
 // All polyfills loaded successfully

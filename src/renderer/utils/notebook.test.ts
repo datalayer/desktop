@@ -11,6 +11,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { ServiceManager } from '@jupyterlab/services';
+import type { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import {
   parseNotebookContent,
   validateNotebookContent,
@@ -293,7 +295,10 @@ describe('notebook utilities', () => {
 
     describe('cacheServiceManager', () => {
       it('should cache service manager', () => {
-        const mockManager = { type: 'test-manager', sessions: [] };
+        const mockManager = {
+          type: 'test-manager',
+          sessions: [],
+        } as unknown as ServiceManager.IManager;
         cacheServiceManager('runtime-456', mockManager);
 
         const cached = (window as any)['serviceManager-runtime-456'];
@@ -301,8 +306,8 @@ describe('notebook utilities', () => {
       });
 
       it('should overwrite existing cache', () => {
-        const manager1 = { version: 1 };
-        const manager2 = { version: 2 };
+        const manager1 = { version: 1 } as unknown as ServiceManager.IManager;
+        const manager2 = { version: 2 } as unknown as ServiceManager.IManager;
 
         cacheServiceManager('runtime-789', manager1);
         cacheServiceManager('runtime-789', manager2);
@@ -313,7 +318,9 @@ describe('notebook utilities', () => {
 
     describe('getCachedServiceManager', () => {
       it('should retrieve cached service manager', () => {
-        const mockManager = { type: 'cached-manager' };
+        const mockManager = {
+          type: 'cached-manager',
+        } as unknown as ServiceManager.IManager;
         cacheServiceManager('runtime-get', mockManager);
 
         const retrieved = getCachedServiceManager('runtime-get');
@@ -328,7 +335,9 @@ describe('notebook utilities', () => {
 
     describe('removeCachedServiceManager', () => {
       it('should remove cached service manager', () => {
-        const mockManager = { type: 'to-remove' };
+        const mockManager = {
+          type: 'to-remove',
+        } as unknown as ServiceManager.IManager;
         cacheServiceManager('runtime-remove', mockManager);
 
         expect(getCachedServiceManager('runtime-remove')).toBeDefined();
@@ -351,7 +360,7 @@ describe('notebook utilities', () => {
       const manager = {
         dispose: mockDispose,
         isDisposed: false,
-      };
+      } as unknown as ServiceManager.IManager;
 
       safelyDisposeServiceManager(manager);
       expect(mockDispose).toHaveBeenCalledTimes(1);
@@ -362,14 +371,16 @@ describe('notebook utilities', () => {
       const manager = {
         dispose: mockDispose,
         isDisposed: true,
-      };
+      } as unknown as ServiceManager.IManager;
 
       safelyDisposeServiceManager(manager);
       expect(mockDispose).not.toHaveBeenCalled();
     });
 
     it('should handle manager without dispose method', () => {
-      const manager = { isDisposed: false };
+      const manager = {
+        isDisposed: false,
+      } as unknown as ServiceManager.IManager;
 
       expect(() => {
         safelyDisposeServiceManager(manager);
@@ -384,7 +395,7 @@ describe('notebook utilities', () => {
 
     it('should handle undefined manager', () => {
       expect(() => {
-        safelyDisposeServiceManager(undefined);
+        safelyDisposeServiceManager(null);
       }).not.toThrow();
     });
 
@@ -394,7 +405,7 @@ describe('notebook utilities', () => {
           throw new Error('Disposal failed');
         },
         isDisposed: false,
-      };
+      } as unknown as ServiceManager.IManager;
 
       expect(() => {
         safelyDisposeServiceManager(manager);
@@ -444,7 +455,9 @@ describe('notebook utilities', () => {
       metadata: {},
     };
 
-    const mockServiceManager = { type: 'mock-manager' };
+    const mockServiceManager = {
+      type: 'mock-manager',
+    } as unknown as ServiceManager.IManager;
     const mockExtensions = [{ name: 'ext1' }, { name: 'ext2' }];
     const MockToolbar = () => null;
 
@@ -473,7 +486,9 @@ describe('notebook utilities', () => {
     });
 
     it('should create props with collaboration', () => {
-      const mockCollabProvider = { type: 'collab-provider' };
+      const mockCollabProvider = {
+        type: 'collab-provider',
+      } as unknown as ElectronCollaborationProvider;
 
       const props = createNotebookProps(
         'notebook-collab',

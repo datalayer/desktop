@@ -28,26 +28,29 @@ export function initializeLogging(): void {
  * EPIPE errors occur when the console output pipe is broken in production.
  */
 export function setupConsoleOverrides(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   console.log = (...args: any[]) => {
     try {
       log.info(...args);
-    } catch (e: any) {
+    } catch {
       // Silently ignore EPIPE errors
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   console.error = (...args: any[]) => {
     try {
       log.error(...args);
-    } catch (e: any) {
+    } catch {
       // Silently ignore EPIPE errors
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   console.warn = (...args: any[]) => {
     try {
       log.warn(...args);
-    } catch (e: any) {
+    } catch {
       // Silently ignore EPIPE errors
     }
   };

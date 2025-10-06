@@ -27,24 +27,30 @@ export async function loadServiceManager() {
     ]);
 
     // Extract the exports (handle both CJS and ESM)
+    // Vite's module interop requires dynamic property access
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let ServiceManager =
       (managerModule as any).ServiceManager ||
       (managerModule as any).default?.ServiceManager ||
       (managerModule as any).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let ServerConnection =
       (serverConnectionModule as any).ServerConnection ||
       (serverConnectionModule as any).default?.ServerConnection ||
       (serverConnectionModule as any).default;
 
     // Handle Vite's __require wrapper (CommonJS interop)
+    // This is necessary for production builds with Vite's module wrapping
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const managerModuleAny = managerModule as any;
     if (
       !ServiceManager &&
-      (managerModule as any).__require &&
-      typeof (managerModule as any).__require === 'function'
+      managerModuleAny.__require &&
+      typeof managerModuleAny.__require === 'function'
     ) {
       console.log('[ServiceManagerLoader] Found __require wrapper, calling it');
       try {
-        const unwrapped = (managerModule as any).__require(
+        const unwrapped = managerModuleAny.__require(
           '@jupyterlab/services/lib/manager'
         );
         ServiceManager =
@@ -57,16 +63,18 @@ export async function loadServiceManager() {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serverConnectionModuleAny = serverConnectionModule as any;
     if (
       !ServerConnection &&
-      (serverConnectionModule as any).__require &&
-      typeof (serverConnectionModule as any).__require === 'function'
+      serverConnectionModuleAny.__require &&
+      typeof serverConnectionModuleAny.__require === 'function'
     ) {
       console.log(
         '[ServiceManagerLoader] Found __require wrapper for ServerConnection, calling it'
       );
       try {
-        const unwrapped = (serverConnectionModule as any).__require(
+        const unwrapped = serverConnectionModuleAny.__require(
           '@jupyterlab/services/lib/serverconnection'
         );
         ServerConnection =
@@ -88,7 +96,7 @@ export async function loadServiceManager() {
         '[ServiceManagerLoader] Failed to extract ServiceManager from module:',
         {
           managerModuleKeys: Object.keys(managerModule),
-          managerModuleDefault: (managerModule as any).default,
+          managerModuleDefault: managerModuleAny.default,
         }
       );
       throw new Error(
@@ -100,8 +108,7 @@ export async function loadServiceManager() {
         '[ServiceManagerLoader] Failed to extract ServerConnection from module:',
         {
           serverConnectionModuleKeys: Object.keys(serverConnectionModule),
-          serverConnectionModuleDefault: (serverConnectionModule as any)
-            .default,
+          serverConnectionModuleDefault: serverConnectionModuleAny.default,
         }
       );
       throw new Error(

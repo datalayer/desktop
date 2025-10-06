@@ -21,7 +21,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vite/client", "electron", "node"]
+    "types": ["vite/client", "electron", "node"],
+    // Enforce type safety - no implicit any
+    "noImplicitAny": true,
+    "useUnknownInCatchVariables": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist", "dist-electron"]
