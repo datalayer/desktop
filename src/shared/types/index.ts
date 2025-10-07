@@ -15,3 +15,4 @@ export * from './environments.types';
 export * from './login.types';
 export * from './notebook.types';
 export * from './document.types';
+export * from './runtimes.types';

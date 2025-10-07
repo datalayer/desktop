@@ -39,6 +39,7 @@ import { logger } from './utils/logger';
 const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
+const Runtimes = lazy(() => import('./pages/Runtimes'));
 
 /**
  * Main application component.
@@ -382,6 +383,23 @@ const App: React.FC = () => {
               onDocumentSelect={handleDocumentSelect}
               isAuthenticated={isAuthenticated}
             />
+          </Suspense>
+        </Box>
+
+        {/* Runtimes view */}
+        <Box
+          sx={{
+            display: activeTabId === 'runtimes' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'visible',
+          }}
+        >
+          <Suspense
+            fallback={
+              <LoadingSpinner variant="inline" message="Loading runtimes..." />
+            }
+          >
+            <Runtimes isAuthenticated={isAuthenticated} />
           </Suspense>
         </Box>
 

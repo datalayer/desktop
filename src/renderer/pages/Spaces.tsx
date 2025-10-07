@@ -499,21 +499,20 @@ const Documents: React.FC<DocumentsListProps> = ({
   };
 
   const handleUpdateItem = async (
-    _uid: string,
-    _name: string,
-    _description: string
+    uid: string,
+    name: string,
+    description: string
   ) => {
     if (!spaceId) {
       throw new Error('No space selected');
     }
 
-    // TODO: Implement update methods in DatalayerIPCClient
-    // const itemType = itemToEdit?.type?.toLowerCase();
-    // if (itemType === 'notebook') {
-    //   await window.datalayerClient.updateNotebook(_uid, _name, _description);
-    // } else {
-    //   await window.datalayerClient.updateLexical(_uid, _name, _description);
-    // }
+    const itemType = itemToEdit?.type?.toLowerCase();
+    if (itemType === 'notebook') {
+      await window.datalayerClient.updateNotebook(uid, name, description);
+    } else {
+      await window.datalayerClient.updateLexical(uid, name, description);
+    }
 
     // Refresh the space items to show the updated document
     await fetchDocuments(spaceId);

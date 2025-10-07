@@ -188,6 +188,11 @@ function registerIPCHandlers(): void {
     // Returns void on success, throws on error
   });
 
+  ipcMain.handle('datalayer:terminate-all-runtimes', async () => {
+    const results = await sdkBridge.call('terminate_all_runtimes');
+    return results; // Returns PromiseSettledResult<void>[]
+  });
+
   ipcMain.handle('datalayer:get-runtime', async (_, runtimeId) => {
     const runtime = await sdkBridge.call('get_runtime', runtimeId);
     return runtime; // Returns RuntimeJSON directly, throws on error
@@ -254,11 +259,37 @@ function registerIPCHandlers(): void {
   );
 
   ipcMain.handle(
+    'datalayer:update-notebook',
+    async (_, { uid, name, description }) => {
+      const notebook = await sdkBridge.call(
+        'updateNotebook',
+        uid,
+        name,
+        description
+      );
+      return notebook; // Returns NotebookJSON directly, throws on error
+    }
+  );
+
+  ipcMain.handle(
     'datalayer:create-lexical',
     async (_, { spaceId, name, description }) => {
       const lexical = await sdkBridge.call(
         'createLexical',
         spaceId,
+        name,
+        description
+      );
+      return lexical; // Returns LexicalJSON directly, throws on error
+    }
+  );
+
+  ipcMain.handle(
+    'datalayer:update-lexical',
+    async (_, { uid, name, description }) => {
+      const lexical = await sdkBridge.call(
+        'updateLexical',
+        uid,
         name,
         description
       );

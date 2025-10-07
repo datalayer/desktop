@@ -170,6 +170,9 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   deleteRuntime: (runtimeId: string) =>
     ipcRenderer.invoke('datalayer:delete-runtime', runtimeId),
 
+  terminateAllRuntimes: () =>
+    ipcRenderer.invoke('datalayer:terminate-all-runtimes'),
+
   getRuntime: (runtimeId: string) =>
     ipcRenderer.invoke('datalayer:get-runtime', runtimeId),
 
@@ -184,6 +187,13 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   createNotebook: (spaceId: string, name: string, description?: string) =>
     ipcRenderer.invoke('datalayer:create-notebook', {
       spaceId,
+      name,
+      description,
+    }),
+
+  updateNotebook: (uid: string, name: string, description?: string) =>
+    ipcRenderer.invoke('datalayer:update-notebook', {
+      uid,
       name,
       description,
     }),
@@ -205,6 +215,13 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   createLexical: (spaceId: string, name: string, description: string) =>
     ipcRenderer.invoke('datalayer:create-lexical', {
       spaceId,
+      name,
+      description,
+    }),
+
+  updateLexical: (uid: string, name: string, description?: string) =>
+    ipcRenderer.invoke('datalayer:update-lexical', {
+      uid,
       name,
       description,
     }),
@@ -332,6 +349,7 @@ export interface DatalayerIPCClient {
     minutesLimit: number;
   }) => Promise<RuntimeJSON>;
   deleteRuntime: (podName: string) => Promise<void>;
+  terminateAllRuntimes: () => Promise<PromiseSettledResult<void>[]>;
   getRuntime: (runtimeId: string) => Promise<RuntimeJSON>;
   listRuntimes: () => Promise<RuntimeJSON[]>;
 
@@ -348,6 +366,11 @@ export interface DatalayerIPCClient {
     name: string,
     description?: string
   ) => Promise<NotebookJSON>;
+  updateNotebook: (
+    uid: string,
+    name: string,
+    description?: string
+  ) => Promise<NotebookJSON>;
   deleteSpaceItem: (spaceId: string, itemId: string) => Promise<void>;
   getMySpaces: () => Promise<SpaceJSON[]>;
   getSpaceItems: (
@@ -358,6 +381,11 @@ export interface DatalayerIPCClient {
     spaceId: string,
     name: string,
     description: string
+  ) => Promise<LexicalJSON>;
+  updateLexical: (
+    uid: string,
+    name: string,
+    description?: string
   ) => Promise<LexicalJSON>;
 
   // Collaboration methods

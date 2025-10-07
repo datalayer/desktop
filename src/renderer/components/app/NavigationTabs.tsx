@@ -16,6 +16,7 @@ import {
   BookIcon,
   FileIcon,
   XIcon,
+  CpuIcon,
 } from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
 import { COLORS } from '../../../shared/constants/colors';
@@ -75,6 +76,13 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
         icon={BookIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'spaces'}
         onClick={() => onTabChange('spaces')}
+      />
+
+      <NavigationTab
+        label="Runtimes"
+        icon={CpuIcon as unknown as React.ComponentType<{ size?: number }>}
+        isActive={activeTabId === 'runtimes'}
+        onClick={() => onTabChange('runtimes')}
       />
 
       {/* Dynamic notebook tabs - can be closed */}

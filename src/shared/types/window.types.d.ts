@@ -199,6 +199,7 @@ declare global {
         minutesLimit?: number;
       }) => Promise<import('@datalayer/core/lib/client/models').RuntimeJSON>;
       deleteRuntime: (runtimeId: string) => Promise<void>;
+      terminateAllRuntimes: () => Promise<PromiseSettledResult<void>[]>;
 
       // Spaces
       listSpaces: () => Promise<

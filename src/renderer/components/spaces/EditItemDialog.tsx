@@ -115,28 +115,26 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     >
       <Dialog.Header id="edit-dialog-title">{title}</Dialog.Header>
       <Box p={3}>
-        <FormControl required>
+        <FormControl required disabled={isUpdating}>
           <FormControl.Label>Name</FormControl.Label>
           <TextInput
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter name"
-            disabled={isUpdating}
             autoFocus
             block
           />
         </FormControl>
 
         <Box mt={3}>
-          <FormControl>
+          <FormControl disabled={isUpdating}>
             <FormControl.Label>Description</FormControl.Label>
             <TextInput
               value={description}
               onChange={e => setDescription(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter description (optional)"
-              disabled={isUpdating}
               block
             />
           </FormControl>

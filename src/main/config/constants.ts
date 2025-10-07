@@ -32,5 +32,5 @@ export const ABOUT_DIALOG_CONFIG = {
 export const EXTERNAL_URLS = {
   LEARN_MORE: 'https://datalayer.io',
   DOCUMENTATION: 'https://docs.datalayer.io',
-  GITHUB: 'https://github.com/datalayer/core',
+  GITHUB: 'https://github.com/datalayer/desktop',
 } as const;

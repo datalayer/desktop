@@ -88,10 +88,11 @@ export function logEnvironmentConfig(): void {
  * @returns Environment type
  */
 export const getEnvironmentType = (env: Environment): EnvironmentType => {
+  const nameLower = env.name.toLowerCase();
   const isGPU =
-    env.name === 'ai-env' ||
-    env.name.includes('gpu') ||
-    env.name.includes('ai');
+    nameLower === 'ai-env' ||
+    nameLower.includes('gpu') ||
+    nameLower.includes('ai');
   return isGPU ? 'GPU' : 'CPU';
 };
 
@@ -169,7 +170,10 @@ export const parseEnvironmentDescription = (
  * @returns True if GPU environment
  */
 export const isGPUEnvironment = (envName: string): boolean => {
+  const nameLower = envName.toLowerCase();
   return (
-    envName === 'ai-env' || envName.includes('gpu') || envName.includes('ai')
+    nameLower === 'ai-env' ||
+    nameLower.includes('gpu') ||
+    nameLower.includes('ai')
   );
 };
