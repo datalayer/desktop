@@ -1398,6 +1398,35 @@ npm run build
 - Check terminal output
 - Check `~/Library/Logs/Datalayer Desktop/main.log`
 
+#### Linux: Electron Sandbox Error
+
+**Error**:
+```
+FATAL:setuid_sandbox_host.cc(163)] The SUID sandbox helper binary was found, but is not configured correctly.
+```
+
+**Root Cause**: Electron's sandboxing requires root ownership and setuid permissions on Linux, which is incompatible with development in user directories.
+
+**Solutions** (already implemented):
+1. **Automatic** - The app automatically disables sandbox in development mode on Linux
+2. **Package scripts** - `npm start` and `npm run dev` set `ELECTRON_DISABLE_SANDBOX=1`
+3. **Manual override** - If needed: `export ELECTRON_DISABLE_SANDBOX=1`
+
+**Security Note**: Sandbox is **only disabled in development mode**. Production builds maintain full sandboxing for security.
+
+**Additional Linux Setup** (if you encounter build issues):
+```bash
+# Install build tools (required for native modules like bufferutil)
+sudo apt-get update
+sudo apt-get install build-essential
+
+# If using Python 3.12+, you may need distutils
+sudo apt-get install python3-setuptools
+
+# Or use Python 3.11 for better compatibility
+conda install python=3.11
+```
+
 #### "App doesn't start" in production
 
 **Check**:
@@ -1411,6 +1440,37 @@ npm run build
 ```
 
 ### Authentication Issues
+
+#### Linux: Token Not Persisting Between Restarts
+
+**Symptom**: You have to log in every time you start the app on Ubuntu/Linux.
+
+**Root Cause**: Electron's `safeStorage` requires a system keyring service (`gnome-keyring` or `kwallet`) which may not be installed or running.
+
+**Solution** (already implemented as of January 2025):
+- The app automatically falls back to base64-encoded file storage when system encryption is unavailable
+- Check the logs to confirm: Look for `"Token saved with fallback encoding"`
+
+**Optional: Install system keyring for better security**:
+```bash
+# For GNOME/Ubuntu
+sudo apt-get install gnome-keyring
+# Make sure it's running
+gnome-keyring-daemon --start
+
+# For KDE/Kubuntu
+sudo apt-get install kwalletmanager
+```
+
+**Verify token storage**:
+```bash
+# Token file location (check after logging in)
+ls -la ~/.config/Datalayer\ Desktop/.datalayer-token
+
+# Check logs for storage method used
+cat ~/Library/Logs/Datalayer\ Desktop/main.log | grep "Token saved"
+# Linux: ~/.config/Datalayer Desktop/logs/main.log
+```
 
 #### Can't log in
 
@@ -1431,7 +1491,7 @@ console.log('Logout complete');
 
 **Check**:
 - Auth state change event is fired
-- Token file is deleted: `ls ~/.datalayer-token` (should not exist after logout)
+- Token file is deleted: `ls ~/.config/Datalayer\ Desktop/.datalayer-token` (should not exist after logout)
 
 ### Performance Issues
 
