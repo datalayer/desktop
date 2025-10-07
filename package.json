@@ -11,7 +11,7 @@
     "url": "https://github.com/datalayer/desktop.git"
   },
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "cross-env ELECTRON_DISABLE_SANDBOX=1 electron-vite dev",
     "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
@@ -21,7 +21,7 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
     "check": "npm run format:check && npm run lint && npm run type-check",
     "check:fix": "npm run format && npm run lint:fix && npm run type-check",
-    "start": "rm -rf dist .electron-vite && electron-vite dev",
+    "start": "cross-env ELECTRON_DISABLE_SANDBOX=1 rimraf dist .electron-vite && electron-vite dev",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -110,6 +110,7 @@
     "happy-dom": "^15.11.7",
     "msw": "^2.7.0",
     "patch-package": "^8.0.0",
+    "rimraf": "^6.0.1",
     "typedoc": "^0.28.13",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",

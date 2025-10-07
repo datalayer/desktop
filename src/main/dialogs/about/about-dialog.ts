@@ -59,9 +59,12 @@ export function createAboutDialog(): void {
  * Configures ESC key closing and IPC communication with proper cleanup.
  */
 function setupAboutDialogHandlers(aboutWindow: BrowserWindow): void {
+  // Store webContents reference before it can be destroyed
+  const webContents = aboutWindow.webContents;
+
   // Create named handlers for proper cleanup
   const escapeHandler = (_event: Electron.Event, input: Electron.Input) => {
-    if (input.key === 'Escape') {
+    if (input.key === 'Escape' && !aboutWindow.isDestroyed()) {
       aboutWindow.close();
     }
   };
@@ -73,19 +76,16 @@ function setupAboutDialogHandlers(aboutWindow: BrowserWindow): void {
   };
 
   // Allow closing with ESC key
-  aboutWindow.webContents.on('before-input-event', escapeHandler);
+  webContents.on('before-input-event', escapeHandler);
 
   // Handle close button click from renderer
   ipcMain.on('close-about-window', closeHandler);
 
-  // Clean up all event listeners when window is closed
-  aboutWindow.on('closed', () => {
+  // Clean up all event listeners BEFORE window is destroyed (use 'close' not 'closed')
+  aboutWindow.once('close', () => {
     // Remove the before-input-event listener
-    if (aboutWindow.webContents && !aboutWindow.webContents.isDestroyed()) {
-      aboutWindow.webContents.removeListener(
-        'before-input-event',
-        escapeHandler
-      );
+    if (webContents && !webContents.isDestroyed()) {
+      webContents.removeListener('before-input-event', escapeHandler);
     }
     // Remove the IPC listener
     ipcMain.removeListener('close-about-window', closeHandler);

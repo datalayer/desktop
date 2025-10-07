@@ -11,7 +11,6 @@
 
 import React, { useEffect } from 'react';
 import { Header, Button, Avatar, Box, Text } from '@primer/react';
-import { SignOutIcon } from '@primer/octicons-react';
 import { UserMenuProps } from '../../../shared/types';
 
 /**
@@ -155,21 +154,15 @@ const UserMenu: React.FC<UserMenuProps> = ({
               onClick={handleLogout}
               sx={{
                 width: '100%',
-                display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'flex-start',
-                gap: 2,
                 color: 'danger.fg',
-                px: 3,
-                py: 2,
                 '&:hover': {
                   bg: 'canvas.subtle',
                   color: 'danger.fg',
                 },
               }}
             >
-              <SignOutIcon size={16} />
-              <Text>Sign out</Text>
+              Logout
             </Button>
           </Box>
         </Box>

@@ -20,11 +20,16 @@ function initializeAboutDialog() {
     copyrightYearElement.textContent = currentYear.toString();
   }
 
+  // Hide close button on Windows/Linux (they have titlebar with close button)
+  const closeBtn = document.querySelector('[data-action="close"]');
+  if (closeBtn && window.aboutAPI && window.aboutAPI.platform !== 'darwin') {
+    closeBtn.style.display = 'none';
+  }
+
   // Add event listeners for buttons
   const websiteBtn = document.querySelector('[data-action="website"]');
   const docsBtn = document.querySelector('[data-action="docs"]');
   const githubBtn = document.querySelector('[data-action="github"]');
-  const closeBtn = document.querySelector('[data-action="close"]');
 
   if (websiteBtn) {
     websiteBtn.addEventListener('click', () => {

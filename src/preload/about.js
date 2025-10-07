@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('aboutAPI', {
   getVersion: () => {
     return ipcRenderer.invoke('get-version');
   },
+  // Expose platform information for conditional UI rendering
+  platform: process.platform,
 });
 
 // Populate version information when DOM is ready

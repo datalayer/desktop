@@ -198,6 +198,15 @@ export class RuntimeService extends BaseService implements IRuntimeService {
         state: 'created',
       });
 
+      // Refresh the runtime list to update all pages
+      // Don't await to avoid blocking runtime creation
+      this.refreshAllRuntimes().catch(error => {
+        this.logger.error(
+          'Failed to refresh runtime list after creation',
+          error
+        );
+      });
+
       this.logger.info(`Runtime created for notebook ${notebookId}`, {
         runtimeId: runtime.uid,
       });
@@ -252,6 +261,15 @@ export class RuntimeService extends BaseService implements IRuntimeService {
         notebookId,
         runtime: notebookRuntime.runtime,
         state: 'terminated',
+      });
+
+      // Refresh the runtime list to update all pages
+      // Don't await to avoid blocking termination
+      this.refreshAllRuntimes().catch(error => {
+        this.logger.error(
+          'Failed to refresh runtime list after termination',
+          error
+        );
       });
 
       this.logger.info(`Runtime terminated for notebook ${notebookId}`);
