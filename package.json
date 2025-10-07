@@ -46,7 +46,7 @@
     "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
   "dependencies": {
-    "@datalayer/core": "file:../core",
+    "@datalayer/core": "^0.0.13",
     "@datalayer/jupyter-lexical": "^1.0.6",
     "@datalayer/jupyter-react": "^1.1.7",
     "@datalayer/lexical-loro": "^0.1.0",
