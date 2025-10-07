@@ -37,6 +37,12 @@ export function getMainWindow(): BrowserWindow | null {
  * Sets up window properties, CSP, and event handlers.
  */
 export function createWindow(): void {
+  // Disable sandbox on Linux in development to avoid SUID configuration issues
+  // Production builds still use full sandboxing for security
+  const isLinux = process.platform === 'linux';
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const shouldDisableSandbox = isLinux && isDevelopment;
+
   mainWindow = new BrowserWindow({
     width: WINDOW_CONFIG.WIDTH,
     height: WINDOW_CONFIG.HEIGHT,
@@ -46,6 +52,7 @@ export function createWindow(): void {
       nodeIntegration: false,
       webSecurity: true,
       devTools: shouldEnableDevTools(), // Disable DevTools in pure production
+      sandbox: !shouldDisableSandbox, // Disable sandbox on Linux in dev mode
     },
     icon: join(__dirname, '../../resources/icon.png'),
     titleBarStyle: 'default',

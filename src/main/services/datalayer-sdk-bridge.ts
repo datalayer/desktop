@@ -109,7 +109,8 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Save token securely using Electron's safeStorage.
+   * Save token securely using Electron's safeStorage with fallback.
+   * Falls back to base64 encoding if system encryption is unavailable (common on Linux).
    * @param token - Authentication token to save
    */
   private saveToken(token: string): void {
@@ -117,9 +118,16 @@ export class DatalayerSDKBridge {
       if (safeStorage.isEncryptionAvailable()) {
         const encrypted = safeStorage.encryptString(token);
         writeFileSync(this.tokenPath, encrypted);
-        log.debug('[SDK Bridge] Token saved securely');
+        log.info('[SDK Bridge] Token saved with system encryption');
       } else {
-        log.warn('[SDK Bridge] Encryption not available, token not persisted');
+        // Fallback: Use base64 encoding (better than nothing, especially on Linux)
+        log.warn(
+          '[SDK Bridge] System encryption unavailable (gnome-keyring/kwallet not found), using fallback storage'
+        );
+        const encoded = Buffer.from(token, 'utf-8').toString('base64');
+        // Prefix to distinguish from encrypted tokens
+        writeFileSync(this.tokenPath, `FALLBACK:${encoded}`);
+        log.info('[SDK Bridge] Token saved with fallback encoding');
       }
     } catch (error) {
       log.error('[SDK Bridge] Failed to save token:', error);
@@ -127,16 +135,34 @@ export class DatalayerSDKBridge {
   }
 
   /**
-   * Load stored token from secure storage.
+   * Load stored token from secure storage with fallback support.
+   * Handles both system-encrypted tokens and fallback base64-encoded tokens.
    * @returns Decrypted token or null if not found
    */
   private loadStoredToken(): string | null {
     try {
-      if (existsSync(this.tokenPath) && safeStorage.isEncryptionAvailable()) {
-        const encrypted = readFileSync(this.tokenPath);
-        const decrypted = safeStorage.decryptString(encrypted);
-        log.debug('[SDK Bridge] Token loaded from secure storage');
-        return decrypted;
+      if (existsSync(this.tokenPath)) {
+        const fileContent = readFileSync(this.tokenPath, 'utf-8');
+
+        // Check if this is a fallback-encoded token
+        if (fileContent.startsWith('FALLBACK:')) {
+          const encoded = fileContent.substring(9); // Remove "FALLBACK:" prefix
+          const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
+          log.info('[SDK Bridge] Token loaded from fallback storage');
+          return decoded;
+        }
+
+        // Otherwise, try system encryption
+        if (safeStorage.isEncryptionAvailable()) {
+          const encrypted = readFileSync(this.tokenPath);
+          const decrypted = safeStorage.decryptString(encrypted);
+          log.info('[SDK Bridge] Token loaded from system encryption');
+          return decrypted;
+        }
+
+        log.warn(
+          '[SDK Bridge] Token file exists but encryption is unavailable and no fallback prefix found'
+        );
       }
     } catch (error) {
       log.error('[SDK Bridge] Failed to load stored token:', error);
