@@ -331,7 +331,7 @@ function registerIPCHandlers(): void {
           documentId
         );
         return sessionId;
-      } catch {
+      } catch (error) {
         log.error('Failed to get collaboration session ID:', error);
         // Fallback to document ID
         return documentId;
@@ -598,7 +598,7 @@ async function main(): Promise<void> {
         }
       }, 2000); // Wait 2 seconds for renderer to be fully ready
     }
-  } catch {
+  } catch (error) {
     console.error('Failed to start application:', error);
     process.exit(1);
   }

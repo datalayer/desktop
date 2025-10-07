@@ -406,7 +406,7 @@ const Documents: React.FC<DocumentsListProps> = ({
       URL.revokeObjectURL(url);
 
       // Item downloaded successfully
-    } catch {
+    } catch (error) {
       // Failed to download item
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to download item';
@@ -451,11 +451,11 @@ const Documents: React.FC<DocumentsListProps> = ({
       await fetchDocuments(spaceId);
       handleCancelDelete();
       // Item deleted successfully
-    } catch {
+    } catch (error) {
       // Failed to delete item
       const errorMessage =
-        err instanceof Error
-          ? err.message
+        error instanceof Error
+          ? error.message
           : 'Failed to delete item. Please try again.';
       setError(errorMessage);
     } finally {

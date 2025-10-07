@@ -191,27 +191,42 @@ function createWindowMenu(): Electron.MenuItemConstructorOptions {
  * Create Help menu (common for all platforms).
  */
 function createHelpMenu(): Electron.MenuItemConstructorOptions {
+  const helpSubmenu: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Learn More',
+      click: () => {
+        shell.openExternal(EXTERNAL_URLS.LEARN_MORE);
+      },
+    },
+    {
+      label: 'Documentation',
+      click: () => {
+        shell.openExternal(EXTERNAL_URLS.DOCUMENTATION);
+      },
+    },
+    {
+      label: 'GitHub',
+      click: () => {
+        shell.openExternal(EXTERNAL_URLS.GITHUB);
+      },
+    },
+  ];
+
+  // Add About on Windows/Linux (on macOS it's in the app menu)
+  if (process.platform !== 'darwin') {
+    helpSubmenu.push(
+      { type: 'separator' },
+      {
+        label: 'About ' + app.getName(),
+        click: () => {
+          createAboutDialog();
+        },
+      }
+    );
+  }
+
   return {
     label: 'Help',
-    submenu: [
-      {
-        label: 'Learn More',
-        click: () => {
-          shell.openExternal(EXTERNAL_URLS.LEARN_MORE);
-        },
-      },
-      {
-        label: 'Documentation',
-        click: () => {
-          shell.openExternal(EXTERNAL_URLS.DOCUMENTATION);
-        },
-      },
-      {
-        label: 'GitHub',
-        click: () => {
-          shell.openExternal(EXTERNAL_URLS.GITHUB);
-        },
-      },
-    ],
+    submenu: helpSubmenu,
   };
 }

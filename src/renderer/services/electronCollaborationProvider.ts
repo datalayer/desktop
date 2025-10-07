@@ -221,7 +221,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
       this._provider.on('sync', this._onSync);
       this._provider.on('connection-close', this._onConnectionClose);
-    } catch {
+    } catch (error) {
       console.error('[ElectronCollaboration] Connection error:', error);
       this.setStatus(CollaborationStatus.Error);
       this._errorOccurred.emit(error as Error);
