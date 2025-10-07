@@ -1,0 +1,183 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**'
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
+        uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: sdk/core-updates
+          path: datalayer/core
+
+      - name: Setup build environment
+        uses: ./datalayer/desktop/.github/actions/setup-environment
+        with:
+          skip-debug: "true"
+
+      - name: Run unit tests
+        working-directory: datalayer/desktop
+        run: |
+          echo "Running unit tests..."
+          npm run test:unit
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
+        uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: sdk/core-updates
+          path: datalayer/core
+
+      - name: Setup build environment
+        uses: ./datalayer/desktop/.github/actions/setup-environment
+        with:
+          skip-debug: "true"
+
+      - name: Run integration tests
+        working-directory: datalayer/desktop
+        run: |
+          echo "Running integration tests..."
+          npm run test:integration
+
+  e2e-tests:
+    name: E2E Tests (${{ matrix.os }})
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
+        uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: sdk/core-updates
+          path: datalayer/core
+
+      - name: Setup build environment
+        uses: ./datalayer/desktop/.github/actions/setup-environment
+        with:
+          os: ${{ matrix.os }}
+
+      - name: Install Playwright browsers
+        working-directory: datalayer/desktop
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: datalayer/desktop
+        run: |
+          echo "Running E2E tests..."
+          npm run test:e2e
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            datalayer/desktop/test-results/
+            datalayer/desktop/playwright-report/
+          retention-days: 7
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
+        uses: actions/checkout@v4
+        with:
+          path: datalayer/desktop
+          fetch-depth: 0
+
+      - name: Checkout core repository
+        uses: actions/checkout@v4
+        with:
+          repository: goanpeca/core
+          ref: sdk/core-updates
+          path: datalayer/core
+
+      - name: Setup build environment
+        uses: ./datalayer/desktop/.github/actions/setup-environment
+        with:
+          skip-debug: "true"
+
+      - name: Run tests with coverage
+        working-directory: datalayer/desktop
+        run: |
+          echo "Running tests with coverage..."
+          npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: datalayer/desktop/coverage/
+          retention-days: 30
+
+      - name: Check coverage thresholds
+        working-directory: datalayer/desktop
+        run: |
+          echo "Checking coverage meets thresholds (60% lines, 60% functions, 55% branches)..."
+          # Vitest will fail if thresholds aren't met (configured in vitest.config.ts)

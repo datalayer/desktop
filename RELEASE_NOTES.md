@@ -30,11 +30,12 @@ First official release! 🎉
 - Export capabilities
 
 ### Platform Features
-- Browse and navigate Datalayer spaces
-- Open notebooks and lexical documents from cloud
-- Create and manage cloud runtimes
-- Automatic file synchronization
-- Environment selection (Python, AI/ML)
+- **Spaces Library**: Browse and navigate Datalayer spaces with all your notebooks and documents
+- **Runtimes Manager**: Dedicated UI to monitor, create, and manage cloud computing runtimes
+- **Environment Selection**: Choose from Python, R, Julia, and specialized ML environments
+- **Runtime Dashboard**: View runtime status, resource usage, and active connections
+- Open notebooks and lexical documents directly from cloud storage
+- Automatic file synchronization with Datalayer platform
 
 ## 📥 Installation
 
@@ -87,11 +88,13 @@ sudo rpm -i datalayer-desktop-*.x86_64.rpm
 
 ## 🚀 Getting Started
 
-1. **Launch the app**
-2. **Login with GitHub** - Click "Login to Datalayer"
-3. **Browse your spaces** - View notebooks and documents in the sidebar
-4. **Open a notebook** - Double-click to start editing
-5. **Create a runtime** - Select environment and start coding!
+1. **Launch the app** from your Applications folder or Start menu
+2. **Login with GitHub** - Click "Login to Datalayer" and authenticate
+3. **Select Environment** - Choose your preferred runtime environment (Python, AI/ML, etc.)
+4. **Browse Spaces** - Navigate to the Library tab to view your notebooks and documents
+5. **Open a notebook or document** - Click to start editing
+6. **Manage Runtimes** - Use the Runtimes tab to create, monitor, and terminate cloud computing resources
+7. **Start coding!** - Execute cells with powerful cloud-based kernels
 
 ## 🔄 Auto-Updates
 
@@ -108,7 +111,7 @@ The app includes built-in update checking:
 ## 📚 Documentation
 
 - User Guide: [Coming soon]
-- API Documentation: https://vscode-datalayer.netlify.app
+- API Documentation: https://datalayer-desktop.netlify.app
 - GitHub Repository: https://github.com/datalayer/desktop
 
 ## 🛠️ Troubleshooting

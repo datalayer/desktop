@@ -2,6 +2,7 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 [![Build](https://github.com/datalayer/desktop/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/datalayer/desktop/actions/workflows/build.yml)
+[![Tests](https://github.com/datalayer/desktop/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/datalayer/desktop/actions/workflows/test.yml)
 [![Code Quality](https://github.com/datalayer/desktop/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/datalayer/desktop/actions/workflows/code-quality.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c4c2d128-ca43-4bcd-8f74-e64b00ca59ba/deploy-status)](https://app.netlify.com/sites/datalayer-desktop/deploys)
 [![Documentation](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://datalayer-desktop.netlify.app)
@@ -12,12 +13,18 @@ A powerful desktop application for data science and machine learning, powered by
 
 ## ✨ Features
 
-- 📓 **Jupyter Notebooks** - Full notebook editing with real-time collaboration
+### Core Capabilities
+- 📓 **Jupyter Notebooks** - Full-featured notebook editing with live kernel execution
+- 📝 **Lexical Documents** - Rich text editor with embedded Jupyter cells for narrative documentation
+- 📚 **Spaces Library** - Browse and manage your notebooks and documents across Datalayer spaces
+- ⚙️ **Runtime Management** - Create, monitor, and terminate cloud computing runtimes
+- 🌍 **Environment Selection** - Choose from Python, R, Julia, and specialized ML environments
+
+### Collaboration & Cloud
 - ☁️ **Cloud Computing** - Access powerful cloud runtimes for your computations
-- 🚀 **Multiple Environments** - Choose from Python, R, Julia, and specialized ML environments
-- 🔄 **Real-time Collaboration** - Work together on notebooks in real-time
-- 🔐 **Secure** - Enterprise-grade security with encrypted connections
-- 💾 **Auto-save** - Never lose your work with automatic saving
+- 🔄 **Real-time Collaboration** - Work together on Lexical documents with live editing (beta)
+- 🔐 **Secure** - Enterprise-grade security with encrypted connections and token storage
+- 💾 **Auto-save** - Never lose your work with automatic cloud synchronization
 
 ## 📥 Installation
 
@@ -40,8 +47,11 @@ Download the latest version for your operating system:
 
 1. **Download and Install** the application for your operating system
 2. **Launch** Datalayer Desktop from your Applications folder or Start menu
-3. **Sign In** with your Datalayer account (or create a free account)
-4. **Create or Open** a notebook to start working
+3. **Sign In** with your GitHub account through Datalayer authentication
+4. **Select an Environment** - Choose your preferred runtime environment (Python, AI/ML, etc.)
+5. **Browse Spaces** - Access your notebooks and documents from the library
+6. **Create or Open** a notebook or document to start working
+7. **Create Runtimes** - Spin up cloud computing resources when needed for execution
 
 ## 📚 Documentation
 
@@ -83,14 +93,6 @@ npm run test:ui       # Visual test runner
 - [TESTING.md](TESTING.md) - Testing guide and quick start
 
 **Coverage Goals**: 70%+ overall, 90%+ critical path
-
-### Recent Production Build Fixes (January 2025)
-
-✅ **JupyterLab Services Loading**: Fixed production build module loading by handling Vite's `__require` wrapper
-✅ **Lexical Collaboration**: Fixed WebSocket URL duplication for document collaboration
-✅ **Notebook Execution**: Production builds now properly connect to runtimes and execute cells
-
-See [CLAUDE.md](CLAUDE.md) for detailed technical information about these fixes.
 
 ## 📄 License
 
