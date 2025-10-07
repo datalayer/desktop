@@ -319,6 +319,7 @@ const App: React.FC = () => {
                 activeTabId === `notebook-${notebook.id}` ? 'flex' : 'none',
               flexDirection: 'column',
               minHeight: 0,
+              overflow: 'hidden',
             }}
           >
             <Suspense
@@ -344,6 +345,7 @@ const App: React.FC = () => {
                 activeTabId === `document-${document.id}` ? 'flex' : 'none',
               flexDirection: 'column',
               minHeight: 0,
+              overflow: 'hidden',
             }}
           >
             <Suspense
@@ -363,7 +365,13 @@ const App: React.FC = () => {
         ))}
 
         {/* Library view */}
-        <Box sx={{ display: activeTabId === 'spaces' ? 'block' : 'none' }}>
+        <Box
+          sx={{
+            display: activeTabId === 'spaces' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'visible',
+          }}
+        >
           <Suspense
             fallback={
               <LoadingSpinner variant="inline" message="Loading library..." />
@@ -379,7 +387,11 @@ const App: React.FC = () => {
 
         {/* Environments view */}
         <Box
-          sx={{ display: activeTabId === 'environments' ? 'block' : 'none' }}
+          sx={{
+            display: activeTabId === 'environments' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'visible',
+          }}
         >
           <Environments />
         </Box>
@@ -451,12 +463,8 @@ const App: React.FC = () => {
           <Box
             sx={{
               flex: 1,
-              overflow: activeTabId.startsWith('notebook-') ? 'hidden' : 'auto',
-              p:
-                activeTabId.startsWith('notebook-') ||
-                activeTabId.startsWith('document-')
-                  ? 0
-                  : 3,
+              overflow: 'hidden',
+              p: 0,
               position: 'relative',
               minHeight: 0,
               display: 'flex',

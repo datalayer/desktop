@@ -182,12 +182,12 @@ describe('spaces utilities', () => {
         {
           id: 'doc-1',
           name: 'Document 1',
-          last_update_ts_dt: '2025-01-15',
+          updatedAt: '2025-01-15',
         } as unknown as DocumentItem,
         {
           id: 'doc-2',
           name: 'Document 2',
-          last_update_ts_dt: '2025-01-14',
+          updatedAt: '2025-01-14',
         } as unknown as DocumentItem,
       ];
 
@@ -202,7 +202,7 @@ describe('spaces utilities', () => {
         {
           uid: 'uid-1',
           name: 'Doc',
-          last_update_ts_dt: '2025-01-15',
+          updatedAt: '2025-01-15',
         } as unknown as DocumentItem,
       ];
 
@@ -210,25 +210,12 @@ describe('spaces utilities', () => {
       expect(hash).toContain('uid-1');
     });
 
-    it('should use name_t when name not present', () => {
-      const data = [
-        {
-          id: 'doc-1',
-          name_t: 'Named Doc',
-          last_update_ts_dt: '2025-01-15',
-        } as unknown as DocumentItem,
-      ];
-
-      const hash = createDataHash(data);
-      expect(hash).toContain('Named Doc');
-    });
-
-    it('should use modified_at when last_update_ts_dt not present', () => {
+    it('should include updatedAt timestamp', () => {
       const data = [
         {
           id: 'doc-1',
           name: 'Doc',
-          modified_at: '2025-01-15T10:00:00Z',
+          updatedAt: '2025-01-15T10:00:00Z',
         } as unknown as DocumentItem,
       ];
 
@@ -278,17 +265,17 @@ describe('spaces utilities', () => {
       expect(hash1).not.toBe(hash2);
     });
 
-    it('should handle mixed property formats', () => {
+    it('should handle mixed id/uid formats', () => {
       const data = [
         {
           id: 'doc-1',
           name: 'Doc 1',
-          last_update_ts_dt: '2025-01-15',
+          updatedAt: '2025-01-15',
         } as unknown as DocumentItem,
         {
           uid: 'uid-2',
-          name_t: 'Doc 2',
-          modified_at: '2025-01-14',
+          name: 'Doc 2',
+          updatedAt: '2025-01-14',
         } as unknown as DocumentItem,
       ];
 

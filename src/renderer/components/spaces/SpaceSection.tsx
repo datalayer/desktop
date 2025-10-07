@@ -66,9 +66,6 @@ const SpaceSection: React.FC<SpaceSectionProps> = ({
           justifyContent: 'space-between',
           gap: 2,
           mb: 2,
-          pb: 1,
-          borderBottom: '1px solid',
-          borderColor: 'border.subtle',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

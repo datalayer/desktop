@@ -112,9 +112,16 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
   return (
     <Box
       className="environments-page"
-      sx={{ height: '100%', overflowY: 'scroll' }}
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        p: 3,
+      }}
     >
-      <Box sx={{ mb: 4 }}>
+      {/* Fixed header */}
+      <Box sx={{ flexShrink: 0, mb: 4 }}>
         <Heading as="h2" sx={{ mb: 2 }}>
           Runtime Environments
         </Heading>
@@ -123,25 +130,28 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
         </Text>
       </Box>
 
-      {!userAuthenticated && <AuthWarning />}
+      {/* Scrollable content area */}
+      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', pr: 1 }}>
+        {!userAuthenticated && <AuthWarning />}
 
-      {loading && (
-        <LoadingSpinner message="Loading environments..." variant="inline" />
-      )}
+        {loading && (
+          <LoadingSpinner message="Loading environments..." variant="inline" />
+        )}
 
-      {error && !loading && (
-        <ErrorState error={error} onRetry={fetchEnvironments} />
-      )}
+        {error && !loading && (
+          <ErrorState error={error} onRetry={fetchEnvironments} />
+        )}
 
-      {!loading && environments.length > 0 && (
-        <Box>
-          {environments.map(env => (
-            <Card key={env.uid} environment={{ ...env, name: env.title }} />
-          ))}
-        </Box>
-      )}
+        {!loading && environments.length > 0 && (
+          <Box>
+            {environments.map(env => (
+              <Card key={env.uid} environment={{ ...env, name: env.title }} />
+            ))}
+          </Box>
+        )}
 
-      {!loading && environments.length === 0 && !error && <EmptyState />}
+        {!loading && environments.length === 0 && !error && <EmptyState />}
+      </Box>
     </Box>
   );
 };

@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
-import type { SpaceJSON } from '@datalayer/core/lib/client/models';
+import type { SpaceJSON, LexicalJSON } from '@datalayer/core/lib/client/models';
 import {
   DocumentsListProps,
   SpaceInfo,
@@ -32,6 +32,7 @@ import SpaceSection from '../components/spaces/SpaceSection';
 import DeleteConfirmationDialog from '../components/spaces/DeleteConfirmationDialog';
 import CreateDocumentDialog from '../components/spaces/CreateDocumentDialog';
 import EditItemDialog from '../components/spaces/EditItemDialog';
+import LexicalDocument from '../components/lexical/LexicalDocument';
 
 /**
  * Documents library page component.
@@ -50,6 +51,8 @@ const Documents: React.FC<DocumentsListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
+  const [selectedLexicalDocument, setSelectedLexicalDocument] =
+    useState<LexicalJSON | null>(null);
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [warningMessage, _setWarningMessage] = useState<string | null>(null);
 
@@ -336,6 +339,14 @@ const Documents: React.FC<DocumentsListProps> = ({
   const handleOpenDocument = (document: DocumentItem) => {
     // Opening document
 
+    // Check if this is a Lexical document
+    if (document.type.toLowerCase() === 'lexical') {
+      // Open Lexical document directly in Desktop app
+      setSelectedLexicalDocument(document as LexicalJSON);
+      return;
+    }
+
+    // For other document types, use the callback
     setSelectedNotebook(document.id);
 
     if (onDocumentSelect) {
@@ -510,61 +521,80 @@ const Documents: React.FC<DocumentsListProps> = ({
     setItemToEdit(null);
   };
 
+  // If a Lexical document is selected, show it in full screen
+  if (selectedLexicalDocument) {
+    return (
+      <LexicalDocument
+        document={selectedLexicalDocument}
+        onClose={() => setSelectedLexicalDocument(null)}
+      />
+    );
+  }
+
   return (
     <Box
       sx={{
-        scrollbarGutter: 'stable',
-        overflowY: 'auto',
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        p: 3,
       }}
     >
-      <Header
-        selectedSpace={selectedSpace}
-        userSpaces={userSpaces}
-        loading={loading}
-        isRefreshing={isRefreshing}
-        onSpaceChange={handleSpaceChange}
-        onRefresh={handleManualRefresh}
-      />
+      {/* Fixed header */}
+      <Box sx={{ flexShrink: 0 }}>
+        <Header
+          selectedSpace={selectedSpace}
+          userSpaces={userSpaces}
+          loading={loading}
+          isRefreshing={isRefreshing}
+          onSpaceChange={handleSpaceChange}
+          onRefresh={handleManualRefresh}
+        />
 
-      <ErrorMessage
-        error={error || undefined}
-        warning={warningMessage || undefined}
-      />
+        <ErrorMessage
+          error={error || undefined}
+          warning={warningMessage || undefined}
+        />
+      </Box>
 
-      <SpaceSection
-        title="Notebooks"
-        icon={BookIcon as React.ComponentType<{ size?: number }>}
-        items={groupedDocuments.notebooks}
-        loading={loading}
-        selectedItemId={selectedNotebook}
-        emptyMessage="No notebooks yet"
-        onItemOpen={handleOpenNotebook}
-        onItemEdit={handleEditItem}
-        onItemDownload={handleDownloadItem}
-        onItemDelete={handleDeleteItem}
-        previousItemCount={previousNotebookCount}
-        onCreateNew={handleCreateNotebook}
-        createButtonLabel="New Notebook"
-      />
+      {/* Scrollable content area */}
+      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', pr: 1 }}>
+        <SpaceSection
+          title="Notebooks"
+          icon={BookIcon as React.ComponentType<{ size?: number }>}
+          items={groupedDocuments.notebooks}
+          loading={loading}
+          selectedItemId={selectedNotebook}
+          emptyMessage="No notebooks yet"
+          onItemOpen={handleOpenNotebook}
+          onItemEdit={handleEditItem}
+          onItemDownload={handleDownloadItem}
+          onItemDelete={handleDeleteItem}
+          previousItemCount={previousNotebookCount}
+          onCreateNew={handleCreateNotebook}
+          createButtonLabel="New Notebook"
+        />
 
-      <SpaceSection
-        title="Documents"
-        icon={FileIcon as React.ComponentType<{ size?: number }>}
-        items={groupedDocuments.documents}
-        loading={loading}
-        selectedItemId={selectedNotebook}
-        emptyMessage="No documents yet"
-        onItemOpen={handleOpenDocument}
-        onItemEdit={handleEditItem}
-        onItemDownload={handleDownloadItem}
-        onItemDelete={handleDeleteItem}
-        getItemIcon={getDocumentIcon}
-        previousItemCount={previousDocumentCount}
-        onCreateNew={handleCreateLexical}
-        createButtonLabel="New Lexical Document"
-      />
+        <SpaceSection
+          title="Lexicals"
+          icon={FileIcon as React.ComponentType<{ size?: number }>}
+          items={groupedDocuments.documents}
+          loading={loading}
+          selectedItemId={selectedNotebook}
+          emptyMessage="No lexicals yet"
+          onItemOpen={handleOpenDocument}
+          onItemEdit={handleEditItem}
+          onItemDownload={handleDownloadItem}
+          onItemDelete={handleDeleteItem}
+          getItemIcon={getDocumentIcon}
+          previousItemCount={previousDocumentCount}
+          onCreateNew={handleCreateLexical}
+          createButtonLabel="New Lexical"
+        />
+      </Box>
 
+      {/* Dialogs - outside scrollable area */}
       <DeleteConfirmationDialog
         isOpen={showDeleteDialog}
         item={itemToDelete}

@@ -161,9 +161,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
           </Select.OptGroup>
         )}
 
-        <Select.Option value="__create_new__">
-          🚀 Create New Runtime
-        </Select.Option>
+        <Select.Option value="__create_new__">Create New Runtime</Select.Option>
       </Select>
     </Box>
   );

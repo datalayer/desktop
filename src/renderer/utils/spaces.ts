@@ -44,7 +44,7 @@ export const formatDate = (dateString: string): string => {
 export const getDocumentIcon = (
   document: DocumentItem
 ): React.ComponentType<{ size?: number }> => {
-  if (document.type.toLowerCase() === 'notebook') {
+  if (document.type?.toLowerCase() === 'notebook') {
     return BookIcon as unknown as React.ComponentType<{ size?: number }>;
   }
   return FileIcon as unknown as React.ComponentType<{ size?: number }>;
@@ -58,8 +58,9 @@ export const getDocumentIcon = (
 export const createDataHash = (data: DocumentItem[]): string => {
   return JSON.stringify(
     data.map(item => ({
-      id: item.uid,
+      id: item.uid || item.id,
       name: item.name,
+      modified: (item as { updatedAt?: string }).updatedAt,
     }))
   );
 };
@@ -86,11 +87,11 @@ export const sortByModifiedDate = (
  */
 export const groupDocumentsByType = (documentItems: DocumentItem[]) => {
   const notebooks = documentItems.filter(item => {
-    return item.type.toLowerCase() === 'notebook';
+    return item.type?.toLowerCase() === 'notebook';
   });
 
   const documents = documentItems.filter(item => {
-    return item.type.toLowerCase() !== 'notebook'; // Everything else is a document
+    return item.type?.toLowerCase() !== 'notebook'; // Everything else is a document
   });
 
   return {

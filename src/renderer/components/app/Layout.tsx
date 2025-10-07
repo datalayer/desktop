@@ -24,7 +24,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <BaseStyles>
         <JupyterReactTheme theme={datalayerTheme}>
           <Box
-            sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+            sx={{
+              height: '100vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
           >
             {children}
           </Box>

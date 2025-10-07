@@ -122,6 +122,28 @@ contextBridge.exposeInMainWorld('proxyAPI', {
 });
 
 /**
+ * Loro collaboration API for Lexical document editing.
+ */
+contextBridge.exposeInMainWorld('loroAPI', {
+  connect: (websocketUrl: string, adapterId: string) =>
+    ipcRenderer.invoke('loro:connect', { adapterId, websocketUrl }),
+
+  disconnect: (adapterId: string) =>
+    ipcRenderer.invoke('loro:disconnect', { adapterId }),
+
+  sendMessage: (adapterId: string, data: unknown) =>
+    ipcRenderer.invoke('loro:send-message', { adapterId, data }),
+
+  onAdapterEvent: (callback: (event: unknown) => void) => {
+    ipcRenderer.on('loro:adapter-event', (_, event) => callback(event));
+  },
+
+  removeEventListener: () => {
+    ipcRenderer.removeAllListeners('loro:adapter-event');
+  },
+});
+
+/**
  * Datalayer API for authentication, runtime management, and notebook operations.
  */
 contextBridge.exposeInMainWorld('datalayerClient', {

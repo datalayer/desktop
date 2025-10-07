@@ -14,8 +14,7 @@ import { Header, IconButton, Box } from '@primer/react';
 import {
   DatabaseIcon,
   BookIcon,
-  PencilIcon,
-  FileCodeIcon,
+  FileIcon,
   XIcon,
 } from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
@@ -136,7 +135,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
               },
             }}
           >
-            <FileCodeIcon size={16} />
+            <BookIcon size={16} />
             <span>{notebook.name}</span>
             <IconButton
               icon={XIcon}
@@ -221,7 +220,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
               },
             }}
           >
-            <PencilIcon size={16} />
+            <FileIcon size={16} />
             <span>{document.name}</span>
             <IconButton
               icon={XIcon}

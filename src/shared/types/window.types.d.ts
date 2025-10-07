@@ -88,6 +88,35 @@ declare global {
     };
 
     /**
+     * Loro collaboration API for Lexical document editing.
+     * Provides WebSocket connectivity for real-time CRDT collaboration.
+     */
+    loroAPI: {
+      connect: (
+        websocketUrl: string,
+        adapterId: string
+      ) => Promise<{ success: boolean; status: string }>;
+      disconnect: (adapterId: string) => Promise<{ success: boolean }>;
+      sendMessage: (
+        adapterId: string,
+        data: unknown
+      ) => Promise<{ success: boolean }>;
+      onAdapterEvent: (
+        callback: (event: {
+          type: string;
+          adapterId: string;
+          data?: {
+            status?: string;
+            message?: string;
+            type?: string;
+            bytes?: number[];
+          };
+        }) => void
+      ) => void;
+      removeEventListener: () => void;
+    };
+
+    /**
      * Proxy API for HTTP and WebSocket communication.
      * Provides secure tunneling to Jupyter kernels.
      */
@@ -143,6 +172,13 @@ declare global {
       whoami: () => Promise<
         import('@datalayer/core/lib/client/models').UserJSON
       >;
+      getAuthState: () => Promise<{
+        isAuthenticated: boolean;
+        user: import('@datalayer/core/lib/client/models').UserJSON | null;
+        token: string | null;
+        runUrl: string;
+      }>;
+      getSpacerRunUrl: () => Promise<string>;
 
       // Environments
       listEnvironments: () => Promise<
@@ -168,6 +204,19 @@ declare global {
       listSpaces: () => Promise<
         import('@datalayer/core/lib/client/models').SpaceJSON[]
       >;
+      getMySpaces: () => Promise<
+        import('@datalayer/core/lib/client/models').SpaceJSON[]
+      >;
+      getSpaceItems: (
+        spaceId: string
+      ) => Promise<
+        Array<
+          | import('@datalayer/core/lib/client/models').NotebookJSON
+          | import('@datalayer/core/lib/client/models').LexicalJSON
+        >
+      >;
+      getContent: (itemId: string) => Promise<unknown>;
+      deleteSpaceItem: (spaceId: string, itemId: string) => Promise<void>;
 
       // Notebooks
       listNotebooks: (

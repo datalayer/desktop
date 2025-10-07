@@ -26,6 +26,7 @@ import { Application } from './app/application';
 // Services
 import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
+import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
 
 // Type definitions
 interface VersionInfo {
@@ -447,6 +448,87 @@ function registerIPCHandlers(): void {
 
     return { success: true };
   });
+
+  // Loro collaboration handlers
+  const loroAdapters = new Map<string, LoroWebSocketAdapter>();
+
+  ipcMain.handle(
+    'loro:connect',
+    async (
+      _,
+      {
+        adapterId,
+        websocketUrl,
+        token,
+      }: { adapterId: string; websocketUrl: string; token?: string }
+    ) => {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) {
+        throw new Error('Main window not available');
+      }
+
+      // Check if adapter already exists
+      let adapter = loroAdapters.get(adapterId);
+      if (adapter) {
+        // Adapter already exists, check if connected
+        if (adapter.isConnected()) {
+          return { success: true, status: 'already-connected' };
+        } else {
+          // Dispose old adapter and create new one
+          adapter.dispose();
+        }
+      }
+
+      // Create new adapter with auth token
+      adapter = new LoroWebSocketAdapter(
+        adapterId,
+        websocketUrl,
+        mainWindow,
+        token
+      );
+      loroAdapters.set(adapterId, adapter);
+      adapter.connect();
+
+      log.debug(`[Loro] Created adapter ${adapterId} for ${websocketUrl}`);
+      return { success: true, status: 'connecting' };
+    }
+  );
+
+  ipcMain.handle(
+    'loro:disconnect',
+    async (_, { adapterId }: { adapterId: string }) => {
+      const adapter = loroAdapters.get(adapterId);
+      if (adapter) {
+        adapter.dispose();
+        loroAdapters.delete(adapterId);
+        log.debug(`[Loro] Disposed adapter ${adapterId}`);
+      }
+      return { success: true };
+    }
+  );
+
+  ipcMain.handle(
+    'loro:send-message',
+    async (_, { adapterId, data }: { adapterId: string; data: unknown }) => {
+      const adapter = loroAdapters.get(adapterId);
+      if (!adapter) {
+        throw new Error(`Loro adapter ${adapterId} not found`);
+      }
+
+      adapter.send(data);
+      return { success: true };
+    }
+  );
+
+  // Clean up adapters when window is closed
+  const mainWindow = getMainWindow();
+  if (mainWindow) {
+    mainWindow.on('close', () => {
+      loroAdapters.forEach(adapter => adapter.dispose());
+      loroAdapters.clear();
+      log.debug('[Loro] Cleaned up all adapters on window close');
+    });
+  }
 }
 
 /**

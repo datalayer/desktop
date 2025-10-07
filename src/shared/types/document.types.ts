@@ -16,7 +16,7 @@ import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
 /**
  * Document data structure for Lexical documents.
  */
-export interface DocumentData {
+export interface DocumentData extends Record<string, unknown> {
   id: string;
   name: string;
   path: string;
