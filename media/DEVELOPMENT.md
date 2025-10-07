@@ -68,10 +68,10 @@ npm run format          # Format with Prettier
 npm run type-check      # TypeScript checking
 
 # Building
-npm run build           # Build for production
-npm run dist:mac        # Package for macOS (universal)
-npm run dist:win        # Package for Windows
-npm run dist:linux      # Package for Linux
+npm run build                 # Build for production
+npm run dist:mac-universal    # Package for macOS (universal - Intel & Apple Silicon)
+npm run dist:win              # Package for Windows
+npm run dist:linux            # Package for Linux
 
 # Documentation
 npm run docs            # Generate TypeDoc documentation
@@ -369,9 +369,10 @@ const App: React.FC = () => {
 
 ```typescript
 // Heavy components are lazy loaded for faster startup
-const NotebookEditor = lazy(() => import('./pages/NotebookEditorSimple'));
+const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
+const Runtimes = lazy(() => import('./pages/Runtimes'));
 ```
 
 ### Complete Startup Timeline
@@ -476,9 +477,10 @@ desktop/
 │   │   ├── pages/                # Main views
 │   │   │   ├── Login.tsx         # Login page
 │   │   │   ├── Environments.tsx  # Environment selection
-│   │   │   ├── Spaces.tsx        # Library/spaces
-│   │   │   ├── NotebookEditorSimple.tsx  # Notebook editor
-│   │   │   └── DocumentEditor.tsx        # Document editor
+│   │   │   ├── Runtimes.tsx      # Runtime management dashboard
+│   │   │   ├── Spaces.tsx        # Library/spaces browser
+│   │   │   ├── NotebookEditor.tsx  # Notebook editor
+│   │   │   └── DocumentEditor.tsx  # Lexical document editor
 │   │   ├── services/             # Frontend services
 │   │   │   ├── proxyServiceManager.ts    # Jupyter proxy
 │   │   │   ├── serviceManagerLoader.ts   # Dynamic loader
@@ -634,17 +636,38 @@ const kernel = await serviceManager.kernels.startNew();
 
 #### 3. Document and Notebook Editors
 
-**Notebook Editor** ([`NotebookEditorSimple.tsx`](src/renderer/pages/NotebookEditorSimple.tsx)):
+**Notebook Editor** ([`NotebookEditor.tsx`](src/renderer/pages/NotebookEditor.tsx)):
 - Uses `@datalayer/jupyter-react` for native Jupyter cells
 - Runtime management via `runtimeStore`
 - Kernel selection dialog
 - Save functionality
+- Multi-tab support for multiple open notebooks
 
 **Document Editor** ([`DocumentEditor.tsx`](src/renderer/pages/DocumentEditor.tsx)):
 - Lexical editor for rich text + Jupyter cells
 - Real-time collaboration via Loro CRDT
 - Auto-creates runtimes for documents
 - Runtime readiness polling (waits for Jupyter server to be accessible)
+- Multi-tab support for multiple open documents
+
+**Runtimes Manager** ([`Runtimes.tsx`](src/renderer/pages/Runtimes.tsx)):
+- Dashboard view of all active runtimes
+- Create new runtimes with environment selection
+- Monitor runtime status and resource usage
+- Terminate runtimes with confirmation dialog
+- Real-time status updates
+
+**Spaces Library** ([`Spaces.tsx`](src/renderer/pages/Spaces.tsx)):
+- Browse notebooks and documents across all Datalayer spaces
+- Search and filter items
+- Create new notebooks and documents
+- Download items locally
+- Delete items with confirmation
+
+**Environments Page** ([`Environments.tsx`](src/renderer/pages/Environments.tsx)):
+- Select runtime environment (Python, AI/ML, R, Julia, etc.)
+- View environment details and capabilities
+- Integration with Datalayer platform environments API
 
 ---
 
@@ -925,7 +948,7 @@ npm run build
    - Adds Symbol polyfill for React
 
 ```bash
-npm run dist:mac  # or dist:win, dist:linux
+npm run dist:mac-universal  # or dist:win, dist:linux
 ```
 
 **Steps**:
@@ -1564,6 +1587,128 @@ await terminateRuntime(notebookId);
 - **Discord**: [Join our Discord](https://discord.gg/datalayer)
 - **GitHub Issues**: [Report bugs](https://github.com/datalayer/desktop/issues)
 - **GitHub Discussions**: [Ask questions](https://github.com/datalayer/desktop/discussions)
+
+---
+
+## CI/CD Workflows
+
+The project uses GitHub Actions for continuous integration and deployment. All workflows are located in `.github/workflows/`.
+
+### Available Workflows
+
+#### 1. Tests (`test.yml`)
+
+**Triggers**: Push to main, pull requests, manual dispatch
+
+**Jobs**:
+- **unit-tests**: Runs Vitest unit tests on Ubuntu
+- **integration-tests**: Runs integration tests on Ubuntu
+- **e2e-tests**: Runs Playwright E2E tests on Ubuntu, macOS, and Windows
+- **coverage**: Generates coverage report and checks thresholds
+
+**Commands**:
+```bash
+npm run test:unit        # Unit tests only
+npm run test:integration # Integration tests only
+npm run test:e2e        # E2E tests with Playwright
+npm run test:coverage   # All tests with coverage
+```
+
+**Coverage Thresholds**:
+- Lines: 60%
+- Functions: 60%
+- Branches: 55%
+- Statements: 60%
+
+#### 2. Build (`build.yml`)
+
+**Triggers**: Push to main, pull requests, tags, manual dispatch
+
+**Matrix**: Builds for all platforms and architectures
+- Linux (x64)
+- Windows (x64)
+- macOS Universal (Intel + Apple Silicon)
+- macOS Intel only (x64)
+- macOS Apple Silicon only (arm64)
+
+**Artifacts**: Generated installers (.dmg, .exe, .AppImage, .deb, .rpm)
+
+#### 3. Code Quality (`code-quality.yml`)
+
+**Triggers**: Push to main, pull requests, manual dispatch
+
+**Jobs**:
+- **format-check**: Prettier formatting validation
+- **lint-check**: ESLint with `--max-warnings 0`
+- **type-check**: TypeScript type checking
+
+#### 4. Documentation (`docs.yml`)
+
+**Triggers**: Push to main, pull requests, manual dispatch
+
+**Output**: TypeDoc API documentation deployed to Netlify
+
+#### 5. Release (`release.yml`)
+
+**Triggers**: Push tags matching `v*` pattern
+
+**Process**:
+1. Builds for all platforms
+2. Creates GitHub Release
+3. Uploads installers as release assets
+4. Auto-generates changelog
+
+### Running CI Locally
+
+**Test like CI**:
+```bash
+# Format check
+npm run format:check
+
+# Lint with strict warnings
+npm run lint -- --max-warnings 0
+
+# Type check
+npm run type-check
+
+# Run all tests
+npm run test:ci
+```
+
+**Build like CI**:
+```bash
+# Clean environment
+rm -rf node_modules dist dist-electron
+npm install
+
+# Build
+npm run build
+
+# Package (example for macOS)
+npm run dist:mac-universal
+```
+
+### Workflow Configuration
+
+All workflows use the reusable action `.github/actions/setup-environment` which:
+1. Sets up Node.js 22
+2. Installs desktop dependencies
+3. Clones and builds core SDK from `goanpeca/core` (branch: `sdk/core-updates`)
+4. Configures environment variables
+
+### Debugging Failed Workflows
+
+**Check logs**:
+1. Go to Actions tab on GitHub
+2. Click failed workflow
+3. Expand failing job
+4. Review step logs
+
+**Common failures**:
+- **Lint errors**: Run `npm run lint:fix` locally
+- **Type errors**: Run `npm run type-check` and fix issues
+- **Test failures**: Run `npm test` locally to reproduce
+- **Build failures**: Check `build-logs-*` artifacts for detailed errors
 
 ---
 
