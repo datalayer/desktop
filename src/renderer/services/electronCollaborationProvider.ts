@@ -133,7 +133,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
           } else {
             configToken = undefined;
           }
-        } catch (error) {
+        } catch {
           // Error getting collaboration token
           configToken = undefined;
         }
@@ -221,7 +221,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
 
       this._provider.on('sync', this._onSync);
       this._provider.on('connection-close', this._onConnectionClose);
-    } catch (error) {
+    } catch {
       console.error('[ElectronCollaboration] Connection error:', error);
       this.setStatus(CollaborationStatus.Error);
       this._errorOccurred.emit(error as Error);

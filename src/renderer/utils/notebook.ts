@@ -27,7 +27,7 @@ export const parseNotebookContent = (
   if (typeof responseBody === 'string') {
     try {
       content = JSON.parse(responseBody);
-    } catch (parseError) {
+    } catch {
       throw new Error('Invalid JSON response from server');
     }
   } else if (
@@ -38,7 +38,7 @@ export const parseNotebookContent = (
     try {
       const jsonString = String.fromCharCode(...responseBody);
       content = JSON.parse(jsonString);
-    } catch (parseError) {
+    } catch {
       throw new Error('Failed to parse notebook content from byte array');
     }
   } else {
@@ -188,7 +188,7 @@ export const safelyDisposeServiceManager = (
     ) {
       manager.dispose();
     }
-  } catch (e) {
+  } catch {
     // Error disposing service manager
   }
 };

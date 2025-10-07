@@ -87,7 +87,7 @@ function ensureCLanguageInAllPrismInstances() {
 
   const ensureInterval = setInterval(() => {
     checkCount++;
-    let foundAndFixed = 0;
+    let _foundAndFixed = 0;
 
     // Check all global variables that might be Prism instances
     for (const key in window) {
@@ -103,10 +103,10 @@ function ensureCLanguageInAllPrismInstances() {
           if (!obj.languages.c) {
             // Found Prism instance, adding C language
             obj.languages.c = cLanguageDefinition;
-            foundAndFixed++;
+            _foundAndFixed++;
           }
         }
-      } catch (e) {
+      } catch {
         // Skip if we can't access the property
       }
     }

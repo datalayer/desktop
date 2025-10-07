@@ -244,7 +244,7 @@ export class ProxyWebSocket extends EventTarget {
                 const str = String.fromCharCode(...bufferData.data);
                 JSON.parse(str); // Just validate it's JSON
                 messageData = str; // Send as string instead of binary
-              } catch (jsonError) {
+              } catch {
                 // Not JSON, handle as actual binary data (likely heartbeat)
                 try {
                   // Create ArrayBuffer with proper size and copy data

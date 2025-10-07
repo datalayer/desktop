@@ -128,7 +128,7 @@ function registerIPCHandlers(): void {
   ipcMain.handle('datalayer:logout', async () => {
     try {
       await sdkBridge.call('logout');
-    } catch (error) {
+    } catch {
       // Don't fail logout - silently ignore errors
     }
 
@@ -160,7 +160,7 @@ function registerIPCHandlers(): void {
         token: config.token,
         isAuthenticated: !!config.token,
       };
-    } catch (error) {
+    } catch {
       return { runUrl: '', token: '', isAuthenticated: false };
     }
   });
@@ -203,7 +203,7 @@ function registerIPCHandlers(): void {
       const runtime = await sdkBridge.call('get_runtime', podName);
       // Check if runtime is ready
       return { isActive: !!runtime, runtime };
-    } catch (error) {
+    } catch {
       // If we can't get the runtime, it's not active
       return { isActive: false };
     }
@@ -236,7 +236,7 @@ function registerIPCHandlers(): void {
               allNotebooks.push(...notebooks);
             }
           }
-        } catch (error) {
+        } catch {
           // Continue with other spaces if one fails
         }
       }
@@ -331,7 +331,7 @@ function registerIPCHandlers(): void {
           documentId
         );
         return sessionId;
-      } catch (error) {
+      } catch {
         log.error('Failed to get collaboration session ID:', error);
         // Fallback to document ID
         return documentId;
@@ -473,7 +473,7 @@ function registerIPCHandlers(): void {
     // Close all WebSocket connections for this runtime
     try {
       websocketProxy.closeConnectionsForRuntime(runtimeId);
-    } catch (error) {
+    } catch {
       // Error closing WebSocket connections
     }
 
@@ -598,7 +598,7 @@ async function main(): Promise<void> {
         }
       }, 2000); // Wait 2 seconds for renderer to be fully ready
     }
-  } catch (error) {
+  } catch {
     console.error('Failed to start application:', error);
     process.exit(1);
   }

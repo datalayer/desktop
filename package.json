@@ -15,7 +15,7 @@
     "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --quiet",
+    "lint": "eslint src --max-warnings 0",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",

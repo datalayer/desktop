@@ -18,7 +18,10 @@ import type { AwarenessProvider, UserState } from '@datalayer/lexical-loro';
  * Tracks user presence, cursor positions, and selection states.
  */
 export class AwarenessAdapter implements AwarenessProvider {
-  /** @internal - Stored for potential future use */
+  /**
+   * Loro document reference - stored for potential future use
+   * @private
+   */
   // @ts-ignore - TS6133: unused variable
   private readonly _doc: LoroDoc;
   private readonly ephemeralStore: EphemeralStore;

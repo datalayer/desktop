@@ -177,13 +177,15 @@ const Documents: React.FC<DocumentsListProps> = ({
           }) || spaces[0];
 
         setSelectedSpace(defaultSpace);
-        setSpaceId(defaultSpace.uid!);
+        if (defaultSpace.uid) {
+          setSpaceId(defaultSpace.uid);
+        }
 
         return { defaultSpace };
       }
 
       return null;
-    } catch (error) {
+    } catch {
       setError('Failed to load user spaces');
       return null;
     }
@@ -194,7 +196,7 @@ const Documents: React.FC<DocumentsListProps> = ({
       const items = await window.datalayerClient.getSpaceItems(spaceId);
       // SDK returns NotebookJSON | LexicalJSON[] - use directly as DocumentItem
       return items || [];
-    } catch (error) {
+    } catch {
       setError('Failed to load space items');
       return [];
     }
@@ -234,7 +236,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         setGroupedDocuments({ notebooks: [], documents: [] });
         setLastDataHash('');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load documents. Please try again.');
     } finally {
       setLoading(false);
@@ -244,7 +246,7 @@ const Documents: React.FC<DocumentsListProps> = ({
   const fetchDocuments = async (currentSpaceId: string) => {
     try {
       await processDocuments(currentSpaceId);
-    } catch (err) {
+    } catch {
       setError('Failed to load documents. Please try again.');
     }
   };
@@ -281,7 +283,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         setLastDataHash(newDataHash);
       } else {
       }
-    } catch (error) {}
+    } catch {}
   };
 
   const handleManualRefresh = async () => {
@@ -291,7 +293,7 @@ const Documents: React.FC<DocumentsListProps> = ({
     try {
       // Manual refresh triggered
       await fetchDocuments(selectedSpace.uid);
-    } catch (error) {
+    } catch {
       // Manual refresh failed
       setError('Failed to refresh documents');
     } finally {
@@ -404,7 +406,7 @@ const Documents: React.FC<DocumentsListProps> = ({
       URL.revokeObjectURL(url);
 
       // Item downloaded successfully
-    } catch (error) {
+    } catch {
       // Failed to download item
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to download item';
@@ -449,7 +451,7 @@ const Documents: React.FC<DocumentsListProps> = ({
       await fetchDocuments(spaceId);
       handleCancelDelete();
       // Item deleted successfully
-    } catch (err) {
+    } catch {
       // Failed to delete item
       const errorMessage =
         err instanceof Error

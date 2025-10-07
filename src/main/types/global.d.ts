@@ -11,7 +11,6 @@
  */
 
 declare global {
-  // eslint-disable-next-line no-var
   var __datalayerRuntimeCleanup:
     | Map<string, { terminated: boolean }>
     | undefined;

@@ -182,7 +182,7 @@ class WebSocketProxyService {
               str.substring(0, 100)
             );
             messageData = str; // Send as string
-          } catch (_e) {
+          } catch {
             // Not JSON, treat as binary data
             log.debug(
               `[WebSocket Proxy] Binary message on ${id}, size:`,
@@ -311,8 +311,8 @@ class WebSocketProxyService {
         // Try to stringify, but handle objects that can't be stringified
         try {
           connection.ws.send(JSON.stringify(data));
-        } catch (_e) {
-          log.error(`[WebSocket Proxy] Cannot stringify data on ${id}:`, _e);
+        } catch {
+          log.error(`[WebSocket Proxy] Cannot stringify data on ${id}`);
           // Send as string representation
           connection.ws.send(String(data));
         }

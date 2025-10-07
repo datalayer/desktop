@@ -250,7 +250,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
               if (typeof shutdownFn === 'function') {
                 await (shutdownFn as () => Promise<void>)();
               }
-            } catch (kernelError) {
+            } catch {
               // Kernel may already be shutdown on server - this is expected
             }
           }
@@ -269,7 +269,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
               if (typeof shutdownFn === 'function') {
                 await (shutdownFn as () => Promise<void>)();
               }
-            } catch (sessionError) {
+            } catch {
               // Session shutdown failed
             }
           }

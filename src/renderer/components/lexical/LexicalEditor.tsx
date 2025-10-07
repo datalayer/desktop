@@ -37,6 +37,7 @@ import {
   JupyterInputNode,
   JupyterOutputNode,
 } from '@datalayer/jupyter-lexical';
+import { useJupyter } from '@datalayer/jupyter-react';
 import {
   AutoEmbedPlugin,
   AutoLinkPlugin,
@@ -159,6 +160,15 @@ function LexicalEditorContainer({
     !collaboration?.enabled
   );
 
+  // Get service manager and default kernel from Jupyter context
+  const { serviceManager, defaultKernel } = useJupyter();
+
+  // Log service manager and kernel availability
+  useEffect(() => {
+    console.log('[LexicalEditor] Service Manager:', serviceManager);
+    console.log('[LexicalEditor] Default Kernel:', defaultKernel);
+  }, [serviceManager, defaultKernel]);
+
   // Set collaboration state IMMEDIATELY and SYNCHRONOUSLY before any rendering
   if (collaboration?.enabled) {
     if (collaboration?.token) {
@@ -268,7 +278,7 @@ function LexicalEditorContainer({
           <>
             <ComponentPickerMenuPlugin
               initCode="print('🖥️ Desktop')"
-              kernel={undefined}
+              kernel={defaultKernel}
             />
             <EquationsPlugin />
             <AutoFocusPlugin />
@@ -279,7 +289,7 @@ function LexicalEditorContainer({
             <AutoLinkPlugin />
             <ListMaxIndentLevelPlugin maxDepth={7} />
             <MarkdownPlugin />
-            <JupyterInputOutputPlugin kernel={undefined} />
+            <JupyterInputOutputPlugin kernel={defaultKernel} />
             <ImagesPlugin />
             <HorizontalRulePlugin />
             <YouTubePlugin />

@@ -94,7 +94,7 @@ export class DatalayerSDKBridge {
               handle: this.currentUser.handle,
             }
           );
-        } catch (error) {
+        } catch {
           log.warn('[SDK Bridge] Stored token is invalid, clearing...');
           this.clearStoredToken();
           this.currentUser = null;
@@ -121,7 +121,7 @@ export class DatalayerSDKBridge {
       } else {
         log.warn('[SDK Bridge] Encryption not available, token not persisted');
       }
-    } catch (error) {
+    } catch {
       log.error('[SDK Bridge] Failed to save token:', error);
     }
   }
@@ -138,7 +138,7 @@ export class DatalayerSDKBridge {
         log.debug('[SDK Bridge] Token loaded from secure storage');
         return decrypted;
       }
-    } catch (error) {
+    } catch {
       log.error('[SDK Bridge] Failed to load stored token:', error);
     }
     return null;
@@ -153,7 +153,7 @@ export class DatalayerSDKBridge {
         unlinkSync(this.tokenPath);
         log.debug('[SDK Bridge] Stored token cleared');
       }
-    } catch (error) {
+    } catch {
       log.error('[SDK Bridge] Failed to clear stored token:', error);
     }
   }

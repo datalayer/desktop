@@ -468,7 +468,7 @@ npm version patch  # Updates package.json AND creates tag
 **Solutions**:
 - Review workflow logs
 - Verify `electron-builder` completed
-- Check dist/ folder exists
+- Check dist-electron/ folder exists
 
 ---
 

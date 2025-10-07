@@ -175,7 +175,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
               if (typeof shutdownFn === 'function') {
                 await (shutdownFn as () => Promise<void>)();
               }
-            } catch (kernelError) {
+            } catch {
               // Kernel may already be shutdown on server - this is expected
             }
           }
@@ -194,7 +194,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
               if (typeof shutdownFn === 'function') {
                 await (shutdownFn as () => Promise<void>)();
               }
-            } catch (sessionError) {
+            } catch {
               // Session shutdown failed
             }
           }
@@ -286,6 +286,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
         collaborative={false}
         terminals={false}
         serviceManager={serviceManager}
+        startDefaultKernel={true}
       >
         {/* Lexical Editor with toolbar - completely remounts when key changes */}
         <Box

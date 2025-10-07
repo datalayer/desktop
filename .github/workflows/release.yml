@@ -32,28 +32,32 @@ jobs:
             arch: x64
 
     steps:
-      - name: Checkout code
+      - name: Setup directory structure
+        run: mkdir -p datalayer
+
+      - name: Checkout desktop repository
         uses: actions/checkout@v4
         with:
+          path: datalayer/desktop
           fetch-depth: 0  # Fetch all history for changelog
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout core repository
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
+          repository: goanpeca/core
+          ref: sdk/core-updates
+          path: datalayer/core
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install core dependencies
-        run: |
-          cd ../core
-          npm ci
-          cd ../desktop
+      - name: Setup build environment
+        uses: ./datalayer/desktop/.github/actions/setup-environment
+        with:
+          node-version: '22'
+          os: ${{ matrix.os }}
 
       - name: Extract version from tag
         id: extract_version
         shell: bash
+        working-directory: datalayer/desktop
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -61,6 +65,7 @@ jobs:
 
       - name: Verify package.json version matches tag
         shell: bash
+        working-directory: datalayer/desktop
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           TAG_VERSION="${{ steps.extract_version.outputs.version }}"
@@ -71,42 +76,49 @@ jobs:
           echo "Version verified: $PACKAGE_VERSION"
 
       - name: Run type checking
+        working-directory: datalayer/desktop
         run: npm run type-check
 
       - name: Run linter
+        working-directory: datalayer/desktop
         run: npm run lint
 
       - name: Build application
+        working-directory: datalayer/desktop
         run: npm run build
 
       # Package for each platform (unsigned builds for GitHub Releases only)
       - name: Package application (macOS)
         if: matrix.platform == 'mac'
+        working-directory: datalayer/desktop
         run: npm run dist:mac-universal
 
       - name: Package application (Windows)
         if: matrix.platform == 'win'
+        working-directory: datalayer/desktop
         run: npm run dist:win
 
       - name: Package application (Linux)
         if: matrix.platform == 'linux'
+        working-directory: datalayer/desktop
         run: npm run dist:linux
 
       # Find and list generated artifacts
       - name: List artifacts
         id: artifacts
         shell: bash
+        working-directory: datalayer/desktop
         run: |
           echo "Generated artifacts:"
-          ls -lh dist/
+          ls -lh dist-electron/
 
           # Find artifact files (DMG for macOS, EXE/MSI for Windows, AppImage/deb for Linux)
           if [ "${{ matrix.platform }}" == "mac" ]; then
-            ARTIFACTS=$(find dist -name "*.dmg" -o -name "*.zip")
+            ARTIFACTS=$(find dist-electron -name "*.dmg" -o -name "*.zip")
           elif [ "${{ matrix.platform }}" == "win" ]; then
-            ARTIFACTS=$(find dist -name "*.exe" -o -name "*.msi")
+            ARTIFACTS=$(find dist-electron -name "*.exe" -o -name "*.msi")
           else
-            ARTIFACTS=$(find dist -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm")
+            ARTIFACTS=$(find dist-electron -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm")
           fi
 
           echo "artifacts<<EOF" >> $GITHUB_OUTPUT
@@ -119,13 +131,13 @@ jobs:
         with:
           name: datalayer-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            dist/*.dmg
-            dist/*.zip
-            dist/*.exe
-            dist/*.msi
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
+            datalayer/desktop/dist-electron/*.dmg
+            datalayer/desktop/dist-electron/*.zip
+            datalayer/desktop/dist-electron/*.exe
+            datalayer/desktop/dist-electron/*.msi
+            datalayer/desktop/dist-electron/*.AppImage
+            datalayer/desktop/dist-electron/*.deb
+            datalayer/desktop/dist-electron/*.rpm
           retention-days: 30
 
   create-release:
@@ -236,22 +248,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  notify-success:
-    name: Notify Success
-    runs-on: ubuntu-latest
-    needs: create-release
-    if: success()
-
-    steps:
-      - name: Extract version
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Success notification
-        run: |
-          echo "✅ Datalayer Desktop ${{ steps.version.outputs.version }} released successfully!"
-          echo "- GitHub Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
-          echo "- Downloads available for: macOS, Windows, Linux"
