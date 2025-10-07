@@ -60,7 +60,7 @@ const Form: React.FC<LoginFormProps> = ({
         </legend>
 
         <FormControl sx={{ mb: 2 }} required id="run-url-input">
-          <FormControl.Label>Run URL</FormControl.Label>
+          <FormControl.Label htmlFor="run-url-input">Run URL</FormControl.Label>
           <TextInput
             block
             size="large"
@@ -68,7 +68,6 @@ const Form: React.FC<LoginFormProps> = ({
             onChange={e => onFormDataChange('runUrl', e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="https://prod1.datalayer.run"
-            aria-label="Datalayer instance URL"
             aria-describedby="run-url-help"
             aria-invalid={!formData.runUrl && state.error ? 'true' : 'false'}
             sx={{
@@ -85,7 +84,9 @@ const Form: React.FC<LoginFormProps> = ({
         </FormControl>
 
         <FormControl sx={{ mb: 3 }} required id="api-token-input">
-          <FormControl.Label>API Token</FormControl.Label>
+          <FormControl.Label htmlFor="api-token-input">
+            API Token
+          </FormControl.Label>
           <TextInput
             block
             size="large"
@@ -94,7 +95,6 @@ const Form: React.FC<LoginFormProps> = ({
             onChange={e => onFormDataChange('token', e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="Enter your API token"
-            aria-label="Datalayer API authentication token"
             aria-describedby="api-token-help"
             aria-invalid={!formData.token && state.error ? 'true' : 'false'}
             autoComplete="current-password"

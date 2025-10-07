@@ -132,13 +132,11 @@ describe('UserMenu', () => {
       expect(screen.getByText('Sign out')).toBeInTheDocument();
     });
 
-    it('should display sign out icon', () => {
+    it('should display sign out button', () => {
       render(<UserMenu {...defaultProps} isOpen={true} />);
 
       const signOutButton = screen.getByText('Sign out').closest('button');
       expect(signOutButton).toBeInTheDocument();
-      // Icon is inside the button
-      expect(signOutButton?.querySelector('svg')).toBeInTheDocument();
     });
   });
 

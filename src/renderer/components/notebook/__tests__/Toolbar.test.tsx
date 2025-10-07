@@ -35,24 +35,62 @@ vi.mock('../../stores/runtimeStore', () => ({
   }),
 }));
 
+// Mock ServiceContext
+vi.mock('../../contexts/ServiceContext', () => ({
+  useService: (serviceName: string) => {
+    if (serviceName === 'runtimeService') {
+      return {
+        getRuntimes: vi.fn().mockResolvedValue([]),
+        createRuntime: vi.fn().mockResolvedValue({}),
+        terminateRuntime: vi.fn().mockResolvedValue(undefined),
+        refreshAllRuntimes: vi.fn().mockResolvedValue(undefined),
+      };
+    }
+    return null;
+  },
+}));
+
+// Mock RuntimeProgressBar
+vi.mock('../runtime/RuntimeProgressBar', () => ({
+  RuntimeProgressBar: () => (
+    <div data-testid="runtime-progress-bar">Progress Bar</div>
+  ),
+}));
+
+// Mock RuntimeSelector
+vi.mock('../runtime/RuntimeSelector', () => ({
+  RuntimeSelector: () => (
+    <div data-testid="runtime-selector">Runtime Selector</div>
+  ),
+}));
+
 // Mock window.datalayerClient
 const mockDatalayerClient = {
   listEnvironments: vi.fn().mockResolvedValue(mockEnvironments),
   createRuntime: vi.fn(),
   deleteRuntime: vi.fn(),
+  listRuntimes: vi.fn().mockResolvedValue([]),
+  getRuntime: vi.fn().mockResolvedValue({}),
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
 
-  (global as unknown as Record<string, unknown>).window = {
-    ...((global as unknown as Record<string, unknown>).window || {}),
-    datalayerClient: mockDatalayerClient,
-    datalayerAPI: {
+  // Set up window.datalayerClient mock
+  Object.defineProperty(window, 'datalayerClient', {
+    writable: true,
+    configurable: true,
+    value: mockDatalayerClient,
+  });
+
+  Object.defineProperty(window, 'datalayerAPI', {
+    writable: true,
+    configurable: true,
+    value: {
       createRuntime: vi.fn(),
       deleteRuntime: vi.fn(),
     },
-  };
+  });
 });
 
 describe('Notebook2Toolbar', () => {

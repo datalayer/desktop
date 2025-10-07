@@ -18,7 +18,7 @@ import { NotebookErrorBoundaryProps } from '../../../shared/types';
  */
 class ErrorBoundary extends React.Component<
   NotebookErrorBoundaryProps,
-  { hasError: boolean; errorInfo: string | null }
+  { hasError: boolean; errorInfo: string | null; isWidgetError: boolean }
 > {
   /**
    * @param props - The component props
@@ -28,6 +28,7 @@ class ErrorBoundary extends React.Component<
     this.state = {
       hasError: false,
       errorInfo: null,
+      isWidgetError: false,
     };
   }
 
@@ -37,9 +38,13 @@ class ErrorBoundary extends React.Component<
    * @returns Updated state object
    */
   static getDerivedStateFromError(error: Error) {
+    // Widget detachment errors are caught but don't show error UI
+    const isWidgetError = error.message.includes('Widget is not attached');
+
     return {
-      hasError: true,
-      errorInfo: error.message,
+      hasError: true, // Always catch errors
+      errorInfo: isWidgetError ? null : error.message,
+      isWidgetError,
     };
   }
 
@@ -74,10 +79,17 @@ class ErrorBoundary extends React.Component<
     this.setState({
       hasError: false,
       errorInfo: null,
+      isWidgetError: false,
     });
   };
 
   render() {
+    // Widget errors are caught but we don't show error UI - just render empty div
+    if (this.state.isWidgetError) {
+      return null;
+    }
+
+    // Regular errors show error UI
     if (this.state.hasError) {
       return (
         <Box

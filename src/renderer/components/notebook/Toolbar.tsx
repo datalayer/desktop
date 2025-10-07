@@ -220,6 +220,8 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       <RuntimeProgressBar runtimePodName={runtimePodName} />
 
       <Box
+        role="toolbar"
+        aria-label="Notebook toolbar"
         sx={{
           display: 'flex',
           alignItems: 'center',

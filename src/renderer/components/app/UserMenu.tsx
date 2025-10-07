@@ -162,7 +162,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 },
               }}
             >
-              Logout
+              Sign out
             </Button>
           </Box>
         </Box>

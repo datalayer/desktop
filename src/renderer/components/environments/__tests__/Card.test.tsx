@@ -25,7 +25,7 @@ vi.mock('../Icon', () => ({
   ),
 }));
 
-vi.mock('./TypeLabel', () => ({
+vi.mock('../TypeLabel', () => ({
   default: ({
     environment,
   }: {
@@ -37,7 +37,7 @@ vi.mock('./TypeLabel', () => ({
   ),
 }));
 
-vi.mock('./Description', () => ({
+vi.mock('../Description', () => ({
   default: ({
     environment,
   }: {
@@ -49,7 +49,7 @@ vi.mock('./Description', () => ({
   ),
 }));
 
-vi.mock('./Resources', () => ({
+vi.mock('../Resources', () => ({
   default: ({ resources }: { resources: Partial<Record<string, unknown>> }) => (
     <div data-testid="resources">
       CPU:{' '}
