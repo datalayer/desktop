@@ -12,6 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Select, Spinner } from '@primer/react';
 import type { Runtime } from '../../services/interfaces/IRuntimeService';
+import { useService } from '../../contexts/ServiceContext';
 
 export interface RuntimeSelectorProps {
   /** Currently selected runtime pod name */
@@ -33,8 +34,9 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 }) => {
   const [allRuntimes, setAllRuntimes] = useState<Runtime[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const runtimeService = useService('runtimeService');
 
-  // Fetch runtimes on mount and when selectedRuntimePodName changes
+  // Fetch runtimes on mount
   useEffect(() => {
     const fetchRuntimes = async () => {
       setIsLoading(true);
@@ -47,7 +49,21 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
     };
 
     fetchRuntimes();
-  }, [selectedRuntimePodName]);
+  }, []);
+
+  // Subscribe to runtime list refresh events
+  useEffect(() => {
+    if (!runtimeService) return;
+
+    const unsubscribe = runtimeService.onRuntimeListRefreshed(runtimes => {
+      console.log(
+        '[RuntimeSelector] Runtime list refreshed, updating dropdown'
+      );
+      setAllRuntimes(runtimes);
+    });
+
+    return () => unsubscribe();
+  }, [runtimeService]);
 
   // Calculate remaining time for a runtime
   const getRemainingTime = (runtime: Runtime): string => {
@@ -71,15 +87,11 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   };
 
   // Format display name for runtime
-  const getDisplayName = (
-    runtime: Runtime,
-    includeCheckmark = false
-  ): string => {
+  const getDisplayName = (runtime: Runtime): string => {
     const name = runtime.givenName || runtime.podName;
     const envTitle = runtime.environmentTitle || 'Unknown Env';
     const remaining = getRemainingTime(runtime);
-    const checkmark = includeCheckmark ? '✓ ' : '';
-    return `${checkmark}${name} - ${envTitle} (${remaining})`;
+    return `${name} - ${envTitle} (${remaining})`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -123,10 +135,9 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
           <Select.OptGroup label="Running Runtimes">
             {allRuntimes.map(runtime => {
               const podName = runtime.podName;
-              const isActive = podName === selectedRuntimePodName;
               return (
                 <Select.Option key={podName} value={podName}>
-                  {getDisplayName(runtime, isActive)}
+                  {getDisplayName(runtime)}
                 </Select.Option>
               );
             })}

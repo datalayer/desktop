@@ -56,6 +56,11 @@ export class RuntimeService extends BaseService implements IRuntimeService {
   private globalExpirationTimers = new Map<string, NodeJS.Timeout>();
   private globalExpirationCallbacks = new Set<(podName: string) => void>();
 
+  // Runtime list refresh callbacks
+  private runtimeListRefreshCallbacks = new Set<
+    (runtimes: Runtime[]) => void
+  >();
+
   constructor(
     // @ts-ignore - Reserved for future SDK direct usage
     private readonly sdk: DatalayerClient,
@@ -430,6 +435,9 @@ export class RuntimeService extends BaseService implements IRuntimeService {
       // Update global expiration timers for all runtimes
       this.updateGlobalExpirationTimers(runtimes);
 
+      // Notify all subscribers that the runtime list has been refreshed
+      this.notifyRuntimeListRefreshed(this.allRuntimes);
+
       return this.allRuntimes;
     } catch (error) {
       this.logger.error('Failed to fetch platform runtimes', error as Error);
@@ -492,6 +500,41 @@ export class RuntimeService extends BaseService implements IRuntimeService {
    * Handle global runtime expiration.
    * Notifies all subscribers that a runtime has expired.
    */
+  /**
+   * Manually trigger runtime expiration (e.g., when user terminates a runtime)
+   * This will notify all subscribers that the runtime is no longer available
+   */
+  public notifyRuntimeTerminated(podName: string): void {
+    this.handleGlobalRuntimeExpired(podName);
+  }
+
+  /**
+   * Subscribe to runtime list refresh events.
+   * Called when the list of all runtimes has been updated.
+   */
+  public onRuntimeListRefreshed(
+    callback: (runtimes: Runtime[]) => void
+  ): () => void {
+    this.runtimeListRefreshCallbacks.add(callback);
+    return () => this.runtimeListRefreshCallbacks.delete(callback);
+  }
+
+  /**
+   * Notify all subscribers that the runtime list has been refreshed.
+   */
+  private notifyRuntimeListRefreshed(runtimes: Runtime[]): void {
+    for (const callback of this.runtimeListRefreshCallbacks) {
+      try {
+        callback(runtimes);
+      } catch (error) {
+        this.logger.error(
+          'Error in runtime list refresh callback',
+          error as Error
+        );
+      }
+    }
+  }
+
   private handleGlobalRuntimeExpired(podName: string): void {
     this.logger.warn(`Runtime ${podName} has expired globally`);
 

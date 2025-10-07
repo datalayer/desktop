@@ -10,12 +10,13 @@
  * @module renderer/pages/DocumentEditor
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box } from '@primer/react';
 import { Jupyter } from '@datalayer/jupyter-react';
 import { DocumentViewProps } from '../../shared/types';
 import { useService } from '../contexts/ServiceContext';
 import type { Runtime } from '../services/interfaces/IRuntimeService';
+import type { ServiceManager, Kernel } from '@jupyterlab/services';
 import { LexicalEditor } from '../components/lexical/LexicalEditor';
 import {
   LexicalCollaborationService,
@@ -23,7 +24,6 @@ import {
 } from '../services/lexicalCollaboration';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { createMockServiceManager } from '../services/mockServiceManager';
-import type { ServiceManager } from '@jupyterlab/services';
 
 /**
  * Document editor that creates a fresh service manager when runtime changes.
@@ -68,7 +68,6 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
           console.log(
             '[DocumentEditor] Current runtime expired, switching to mock'
           );
-          setServiceManager(null);
           return null;
         }
         return current;
@@ -98,55 +97,180 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
     setup();
   }, [selectedDocument]);
 
-  // Create service manager when runtime is selected
+  // Create service manager when runtime info changes
   useEffect(() => {
-    if (!runtimeInfo) {
-      setServiceManager(null);
-      return;
-    }
+    let mounted = true;
+    let currentManager: ServiceManager.IManager | null = null;
 
     const createServiceManager = async () => {
-      try {
-        const wsUrl = `${runtimeInfo.ingress}/api/kernels`;
-        const manager = await createProxyServiceManager(
-          wsUrl,
-          runtimeInfo.token
+      // Immediately clear service manager to prevent race conditions
+      setServiceManager(null);
+
+      if (!runtimeInfo) {
+        // No runtime - use mock service manager
+        console.log(
+          '[DocumentEditor] No runtime info, using mock service manager'
         );
-        setServiceManager(manager);
+        const mockManager = createMockServiceManager();
+        currentManager = mockManager;
+        if (mounted) {
+          setServiceManager(mockManager);
+        }
+      } else {
+        // Runtime selected - create real service manager
+        console.log('[DocumentEditor] Creating real service manager with:', {
+          ingress: runtimeInfo.ingress,
+          id: runtimeInfo.id,
+          podName: runtimeInfo.podName,
+        });
+        try {
+          const realManager = await createProxyServiceManager(
+            runtimeInfo.ingress,
+            runtimeInfo.token,
+            runtimeInfo.id
+          );
+          console.log(
+            '[DocumentEditor] Real service manager created successfully'
+          );
+          currentManager = realManager;
+          if (mounted) {
+            setServiceManager(realManager);
+          } else {
+            // Component unmounted, clean up immediately
+            await cleanupServiceManager(realManager);
+          }
+        } catch (error) {
+          console.error(
+            '[DocumentEditor] Failed to create service manager:',
+            error
+          );
+          // Fallback to mock on error
+          if (mounted) {
+            console.log(
+              '[DocumentEditor] Falling back to mock service manager'
+            );
+            const mockManager = createMockServiceManager();
+            currentManager = mockManager;
+            setServiceManager(mockManager);
+          }
+        }
+      }
+    };
+
+    // Comprehensive cleanup function for service manager
+    const cleanupServiceManager = async (manager: ServiceManager.IManager) => {
+      if (!manager) return;
+
+      try {
+        // Step 1: Shutdown all running kernels first
+        if (manager.kernels?.running) {
+          const runningKernels = Array.from(
+            manager.kernels.running()
+          ) as Kernel.IModel[];
+
+          for (const kernel of runningKernels) {
+            try {
+              const shutdownFn = (kernel as unknown as Record<string, unknown>)
+                .shutdown;
+              if (typeof shutdownFn === 'function') {
+                await (shutdownFn as () => Promise<void>)();
+              }
+            } catch (kernelError) {
+              // Kernel may already be shutdown on server - this is expected
+            }
+          }
+        }
+
+        // Step 2: Close all sessions
+        if (manager.sessions?.running) {
+          const runningSessions = Array.from(
+            manager.sessions.running()
+          ) as Kernel.IModel[];
+
+          for (const session of runningSessions) {
+            try {
+              const shutdownFn = (session as unknown as Record<string, unknown>)
+                .shutdown;
+              if (typeof shutdownFn === 'function') {
+                await (shutdownFn as () => Promise<void>)();
+              }
+            } catch (sessionError) {
+              // Session shutdown failed
+            }
+          }
+        }
+
+        // Step 3: Now dispose the service manager itself
+        if (typeof manager.dispose === 'function') {
+          manager.dispose();
+        }
       } catch (error) {
+        // Log but don't throw - cleanup should be best-effort
         console.error(
-          '[DocumentEditor] Failed to create service manager:',
+          '[DocumentEditor] Error during service manager cleanup:',
           error
         );
-        // Fall back to mock service manager
-        const mockManager = createMockServiceManager();
-        setServiceManager(mockManager);
       }
     };
 
     createServiceManager();
 
     return () => {
-      if (serviceManager) {
-        serviceManager.dispose();
+      mounted = false;
+      // Clean up current manager when effect reruns or component unmounts
+      if (currentManager) {
+        // Use async cleanup but don't await (cleanup function can't be async)
+        cleanupServiceManager(currentManager).catch(err => {
+          console.error(
+            '[DocumentEditor] Cleanup error in effect return:',
+            err
+          );
+        });
       }
     };
-  }, [runtimeInfo?.id]);
+  }, [runtimeInfo]);
 
-  // Runtime event handlers
-  const handleRuntimeSelected = (runtime: Runtime | null) => {
+  // Handle runtime selection - set runtime info which will trigger service manager creation
+  const handleRuntimeSelected = useCallback(async (runtime: Runtime | null) => {
     if (!runtime) {
-      console.log('[DocumentEditor] Creating new runtime...');
+      console.log('[DocumentEditor] Clearing runtime');
+      setRuntimeInfo(null);
       return;
     }
-    console.log('[DocumentEditor] Runtime selected:', runtime.podName);
-    setRuntimeInfo({
+
+    console.log('[DocumentEditor] Runtime selected:', runtime);
+    const info = {
       id: runtime.uid,
       podName: runtime.podName,
       ingress: runtime.ingress,
       token: runtime.token,
-    });
-  };
+    };
+    console.log('[DocumentEditor] Setting runtime info:', info);
+    setRuntimeInfo(info);
+  }, []);
+
+  // Generate unique key to force complete remount when runtime changes
+  const editorKey = useMemo(() => {
+    return `lexical-${selectedDocument?.uid || 'new'}-runtime-${runtimeInfo?.podName || 'mock'}`;
+  }, [selectedDocument?.uid, runtimeInfo?.podName]);
+
+  // Show loading state while service manager is being created
+  if (!serviceManager) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          {runtimeInfo ? 'Connecting to runtime...' : 'Initializing editor...'}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -161,9 +285,9 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
       <Jupyter
         collaborative={false}
         terminals={false}
-        serviceManager={serviceManager || undefined}
+        serviceManager={serviceManager}
       >
-        {/* Lexical Editor with integrated runtime selector */}
+        {/* Lexical Editor with toolbar - completely remounts when key changes */}
         <Box
           sx={{
             flex: 1,
@@ -173,9 +297,9 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
           }}
         >
           <LexicalEditor
+            key={editorKey}
             collaboration={collaborationConfig || undefined}
             editable={true}
-            showRuntimeSelector={true}
             runtimePodName={runtimeInfo?.podName}
             onRuntimeSelected={handleRuntimeSelected}
           />

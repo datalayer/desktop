@@ -31,7 +31,8 @@ import { useService } from '../contexts/ServiceContext';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { createMockServiceManager } from '../services/mockServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
-import { Notebook2Toolbar } from '../components/notebook/Toolbar';
+import { RuntimeToolbar } from '../components/runtime/RuntimeToolbar';
+import { NotebookControls } from '../components/notebook/NotebookControls';
 
 interface NotebookEditorProps {
   notebookId: string;
@@ -171,6 +172,11 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       // This ensures Notebook2 unmounts before we create a new manager
       setServiceManager(null);
       setServiceManagerReady(false);
+
+      // Wait a tick to allow React to finish unmounting the previous widget
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      if (!mounted) return;
 
       if (!runtimeInfo) {
         // No runtime - use mock service manager
@@ -386,10 +392,15 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         }}
       >
         <Box sx={{ flexShrink: 0 }}>
-          <Notebook2Toolbar
-            notebookId={notebookId}
+          <RuntimeToolbar
             runtimePodName={runtimeInfo?.podName}
             onRuntimeSelected={handleRuntimeSelected}
+            leftContent={
+              <NotebookControls
+                notebookId={notebookId}
+                runtimePodName={runtimeInfo?.podName}
+              />
+            }
           />
         </Box>
         <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -415,10 +426,15 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     >
       {/* Toolbar */}
       <Box sx={{ flexShrink: 0 }}>
-        <Notebook2Toolbar
-          notebookId={notebookId}
+        <RuntimeToolbar
           runtimePodName={runtimeInfo?.podName}
           onRuntimeSelected={handleRuntimeSelected}
+          leftContent={
+            <NotebookControls
+              notebookId={notebookId}
+              runtimePodName={runtimeInfo?.podName}
+            />
+          }
         />
       </Box>
 

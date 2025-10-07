@@ -54,6 +54,13 @@
   margin: 0;
 }
 
+/* Override toolbar padding from jupyter-lexical */
+.lexical-editor-container .toolbar {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
 /* Editor shell from jupyter-lexical - override max-width and centering */
 .editor-shell {
   display: flex;
@@ -73,6 +80,8 @@
   width: 100%;
   background-color: transparent;
   resize: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Inner editor container */
