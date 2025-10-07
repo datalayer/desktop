@@ -52,16 +52,8 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
   // Calculate remaining time for a runtime
   const getRemainingTime = (runtime: Runtime): string => {
     try {
-      const parseTimestamp = (value: string | number) => {
-        if (typeof value === 'string' && !value.includes('-')) {
-          return new Date(parseFloat(value) * 1000);
-        }
-        return new Date(value);
-      };
-
-      const expiresAt = parseTimestamp(
-        (runtime.expired_at || runtime.expiredAt || '') as string | number
-      ).getTime();
+      // RuntimeJSON.expiredAt is already an ISO string
+      const expiresAt = new Date(runtime.expiredAt).getTime();
       const now = Date.now();
       const remainingMs = Math.max(0, expiresAt - now);
       const remainingMinutes = Math.floor(remainingMs / 60000);
@@ -83,13 +75,8 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
     runtime: Runtime,
     includeCheckmark = false
   ): string => {
-    const name =
-      runtime.given_name ||
-      runtime.givenName ||
-      runtime.pod_name ||
-      runtime.podName;
-    const envTitle =
-      runtime.environment_title || runtime.environmentTitle || 'Unknown Env';
+    const name = runtime.givenName || runtime.podName;
+    const envTitle = runtime.environmentTitle || 'Unknown Env';
     const remaining = getRemainingTime(runtime);
     const checkmark = includeCheckmark ? '✓ ' : '';
     return `${checkmark}${name} - ${envTitle} (${remaining})`;
@@ -101,9 +88,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
     if (value === '__create_new__') {
       onRuntimeSelected(null);
     } else {
-      const selectedRuntime = allRuntimes.find(
-        r => (r.pod_name || r.podName) === value
-      );
+      const selectedRuntime = allRuntimes.find(r => r.podName === value);
       if (selectedRuntime) {
         onRuntimeSelected(selectedRuntime);
       }
@@ -112,20 +97,6 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 
   // Get current value for select - always use placeholder if no runtime selected
   const currentValue = selectedRuntimePodName || '__placeholder__';
-
-  // Get display text for the current selection
-  const getCurrentDisplayText = () => {
-    if (!selectedRuntimePodName) {
-      return 'Runtimes';
-    }
-    const currentRuntime = allRuntimes.find(
-      r => (r.pod_name || r.podName) === selectedRuntimePodName
-    );
-    if (currentRuntime) {
-      return getDisplayName(currentRuntime);
-    }
-    return selectedRuntimePodName;
-  };
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 280 }}>
@@ -141,16 +112,17 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
           fontSize: '14px',
         }}
       >
-        <Select.Option value="__placeholder__" disabled>
-          {getCurrentDisplayText()}
-        </Select.Option>
+        {/* Only show placeholder when no runtime is selected */}
+        {!selectedRuntimePodName && (
+          <Select.Option value="__placeholder__" disabled>
+            Runtimes
+          </Select.Option>
+        )}
 
         {allRuntimes.length > 0 && (
           <Select.OptGroup label="Running Runtimes">
             {allRuntimes.map(runtime => {
-              const podName = (runtime.pod_name ||
-                runtime.podName ||
-                '') as string;
+              const podName = runtime.podName;
               const isActive = podName === selectedRuntimePodName;
               return (
                 <Select.Option key={podName} value={podName}>

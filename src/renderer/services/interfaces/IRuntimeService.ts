@@ -4,27 +4,14 @@
  */
 
 import { ServiceManager } from '@jupyterlab/services';
+import { RuntimeJSON } from '@datalayer/core/lib/client/models';
 import { ILifecycle } from './ILifecycle';
 
 /**
  * Runtime information from Datalayer API.
+ * Using RuntimeJSON from core library for consistent camelCase properties.
  */
-export interface Runtime {
-  uid: string;
-  given_name?: string;
-  pod_name: string;
-  ingress?: string;
-  token?: string;
-  environment_name?: string;
-  environment_title?: string;
-  type?: string;
-  burning_rate?: number;
-  reservation_id?: string;
-  started_at?: string;
-  expired_at?: string;
-  status?: string;
-  [key: string]: unknown;
-}
+export type Runtime = RuntimeJSON;
 
 /**
  * Runtime creation options.
@@ -99,4 +86,12 @@ export interface IRuntimeService extends ILifecycle {
    * Forces a fresh fetch even if cached.
    */
   refreshAllRuntimes(): Promise<Runtime[]>;
+
+  /**
+   * Subscribe to global runtime expiration events.
+   * Called when ANY runtime on the platform expires.
+   * @param callback - Function to call with the expired runtime's podName
+   * @returns Unsubscribe function
+   */
+  onRuntimeExpired(callback: (podName: string) => void): () => void;
 }

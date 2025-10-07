@@ -19,7 +19,7 @@ import React, {
 } from 'react';
 import { Box } from '@primer/react';
 import type { ServiceManager, Kernel } from '@jupyterlab/services';
-import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
+import type { Runtime } from '../services/interfaces/IRuntimeService';
 import {
   Notebook2,
   notebookStore2,
@@ -56,7 +56,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   } | null>(null);
   const [serviceManager, setServiceManager] =
     useState<ServiceManager.IManager | null>(null);
-  const [allRuntimes, _setAllRuntimes] = useState<RuntimeJSON[]>([]);
+  const [serviceManagerReady, setServiceManagerReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize RuntimeService
@@ -72,47 +72,47 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     initService();
   }, [runtimeService]);
 
-  // Watch for runtime expiration - clear runtime selection if current runtime disappears
+  // Listen for global runtime expiration events
   useEffect(() => {
-    if (runtimeInfo) {
-      const currentRuntimeExists = allRuntimes.some(
-        r => r.podName === runtimeInfo.podName
-      );
+    if (!runtimeService) return;
 
-      if (!currentRuntimeExists) {
-        setRuntimeInfo(null);
-      }
-    }
-  }, [allRuntimes, runtimeInfo]);
+    const unsubscribe = runtimeService.onRuntimeExpired(expiredPodName => {
+      console.log('[NotebookEditor] Runtime expired globally:', expiredPodName);
 
-  // Handle runtime creation - set runtime info which will trigger service manager creation
-  const handleRuntimeCreated = useCallback(
-    async (runtime: {
-      id: string;
-      podName: string;
-      ingress: string;
-      token: string;
-    }) => {
-      setRuntimeInfo(runtime);
-    },
-    []
-  );
+      // Check current runtime using setRuntimeInfo callback to avoid dependency
+      setRuntimeInfo(current => {
+        if (current?.podName === expiredPodName) {
+          console.log(
+            '[NotebookEditor] Current runtime expired, switching to mock'
+          );
+          return null;
+        }
+        return current;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [runtimeService]); // Only depend on runtimeService, not runtimeInfo
 
   // Handle runtime selection - set runtime info which will trigger service manager creation
-  const handleRuntimeSelected = useCallback(
-    async (runtime: {
-      id: string;
-      podName: string;
-      ingress: string;
-      token: string;
-    }) => {
-      setRuntimeInfo(runtime);
-    },
-    []
-  );
+  const handleRuntimeSelected = useCallback(async (runtime: Runtime | null) => {
+    if (!runtime) {
+      console.log('[NotebookEditor] Creating new runtime...');
+      setRuntimeInfo(null);
+      return;
+    }
 
-  const handleRuntimeTerminated = useCallback(() => {
-    setRuntimeInfo(null);
+    console.log('[NotebookEditor] Runtime selected:', runtime);
+    const info = {
+      id: runtime.uid,
+      podName: runtime.podName,
+      ingress: runtime.ingress,
+      token: runtime.token,
+    };
+    console.log('[NotebookEditor] Setting runtime info:', info);
+    setRuntimeInfo(info);
   }, []);
 
   // Get authentication token from main process
@@ -170,39 +170,57 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       // Immediately clear service manager to prevent race conditions
       // This ensures Notebook2 unmounts before we create a new manager
       setServiceManager(null);
+      setServiceManagerReady(false);
 
       if (!runtimeInfo) {
         // No runtime - use mock service manager
+        console.log(
+          '[NotebookEditor] No runtime info, using mock service manager'
+        );
         const mockManager = createMockServiceManager();
         currentManager = mockManager;
         if (mounted) {
           setServiceManager(mockManager);
+          setServiceManagerReady(false); // Don't start kernel with mock
         }
       } else {
         // Runtime selected - create real service manager
+        console.log('[NotebookEditor] Creating real service manager with:', {
+          ingress: runtimeInfo.ingress,
+          id: runtimeInfo.id,
+          podName: runtimeInfo.podName,
+        });
         try {
           const realManager = await createProxyServiceManager(
             runtimeInfo.ingress,
             runtimeInfo.token,
             runtimeInfo.id
           );
+          console.log(
+            '[NotebookEditor] Real service manager created successfully'
+          );
           currentManager = realManager;
           if (mounted) {
             setServiceManager(realManager);
+            setServiceManagerReady(true); // Now we can start kernel
           } else {
             // Component unmounted, clean up immediately
             await cleanupServiceManager(realManager);
           }
         } catch (error) {
           console.error(
-            '[NotebookEditorSimple] Failed to create service manager:',
+            '[NotebookEditor] Failed to create service manager:',
             error
           );
           // Fallback to mock on error
           if (mounted) {
+            console.log(
+              '[NotebookEditor] Falling back to mock service manager'
+            );
             const mockManager = createMockServiceManager();
             currentManager = mockManager;
             setServiceManager(mockManager);
+            setServiceManagerReady(false);
           }
         }
       }
@@ -371,9 +389,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           <Notebook2Toolbar
             notebookId={notebookId}
             runtimePodName={runtimeInfo?.podName}
-            onRuntimeCreated={handleRuntimeCreated}
             onRuntimeSelected={handleRuntimeSelected}
-            onRuntimeTerminated={handleRuntimeTerminated}
           />
         </Box>
         <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -402,9 +418,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         <Notebook2Toolbar
           notebookId={notebookId}
           runtimePodName={runtimeInfo?.podName}
-          onRuntimeCreated={handleRuntimeCreated}
           onRuntimeSelected={handleRuntimeSelected}
-          onRuntimeTerminated={handleRuntimeTerminated}
         />
       </Box>
 
@@ -428,7 +442,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           collaborationProvider={collaborationProvider as unknown as never}
           readonly={false}
           cellSidebarMargin={120}
-          startDefaultKernel={!!runtimeInfo}
+          startDefaultKernel={serviceManagerReady}
           extensions={[
             new CellSidebarExtension({ factory: CellSidebarButton }),
           ]}

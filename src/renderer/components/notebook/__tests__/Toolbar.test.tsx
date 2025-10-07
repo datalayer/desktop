@@ -96,17 +96,6 @@ describe('Notebook2Toolbar', () => {
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
   });
 
-  it('should call onRuntimeCreated when provided', async () => {
-    const onRuntimeCreated = vi.fn();
-
-    render(
-      <Notebook2Toolbar {...defaultProps} onRuntimeCreated={onRuntimeCreated} />
-    );
-
-    // onRuntimeCreated would be called by child components (RuntimeSelector)
-    expect(screen.getByRole('toolbar')).toBeInTheDocument();
-  });
-
   it('should call onRuntimeSelected when provided', () => {
     const onRuntimeSelected = vi.fn();
 
@@ -114,19 +103,6 @@ describe('Notebook2Toolbar', () => {
       <Notebook2Toolbar
         {...defaultProps}
         onRuntimeSelected={onRuntimeSelected}
-      />
-    );
-
-    expect(screen.getByRole('toolbar')).toBeInTheDocument();
-  });
-
-  it('should call onRuntimeTerminated when provided', () => {
-    const onRuntimeTerminated = vi.fn();
-
-    render(
-      <Notebook2Toolbar
-        {...defaultProps}
-        onRuntimeTerminated={onRuntimeTerminated}
       />
     );
 
@@ -176,9 +152,7 @@ describe('Notebook2Toolbar - Integration', () => {
 
   it('should handle runtime lifecycle callbacks', () => {
     const callbacks = {
-      onRuntimeCreated: vi.fn(),
       onRuntimeSelected: vi.fn(),
-      onRuntimeTerminated: vi.fn(),
     };
 
     render(<Notebook2Toolbar {...defaultProps} {...callbacks} />);

@@ -38,28 +38,14 @@ export interface INotebook2ToolbarProps {
   notebookId?: string;
   runtimePodName?: string;
   showNotebookControls?: boolean;
-  onRuntimeCreated?: (runtime: {
-    id: string;
-    podName: string;
-    ingress: string;
-    token: string;
-  }) => void;
-  onRuntimeSelected?: (runtime: {
-    id: string;
-    podName: string;
-    ingress: string;
-    token: string;
-  }) => void;
-  onRuntimeTerminated?: () => void;
+  onRuntimeSelected?: (runtime: Runtime | null) => void;
 }
 
 export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   notebookId,
   runtimePodName,
   showNotebookControls = true,
-  onRuntimeCreated,
   onRuntimeSelected,
-  onRuntimeTerminated,
 }) => {
   const runtimeService = useService('runtimeService');
   const [cellType, setCellType] = useState('code');
@@ -139,17 +125,11 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       // User chose "Create New" - show dialog
       setShowRuntimeDialog(true);
     } else {
-      // User selected existing runtime - connect to it
+      // User selected existing runtime - pass it directly to parent
       setIsConnecting(true);
       try {
         if (onRuntimeSelected) {
-          // runtime is already a plain JSON object from the bridge (RuntimeJSON)
-          await onRuntimeSelected({
-            id: runtime.uid as string,
-            podName: runtime.podName as string,
-            ingress: runtime.ingress as string,
-            token: runtime.token as string,
-          });
+          await onRuntimeSelected(runtime);
         }
       } catch (error) {
         console.error('Failed to connect to runtime:', error);
@@ -179,14 +159,9 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       }
 
       // Now notify parent component to automatically select the runtime
-      if (onRuntimeCreated && runtime) {
-        // runtime is already a plain JSON object from the bridge (RuntimeJSON)
-        onRuntimeCreated({
-          id: runtime.uid,
-          podName: runtime.podName,
-          ingress: runtime.ingress,
-          token: runtime.token,
-        });
+      if (onRuntimeSelected && runtime) {
+        // Pass the runtime object to the selector
+        onRuntimeSelected(runtime as unknown as Runtime);
       }
 
       // Close dialog
@@ -226,8 +201,8 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
         await runtimeService.refreshAllRuntimes();
       }
 
-      if (onRuntimeTerminated) {
-        onRuntimeTerminated();
+      if (onRuntimeSelected) {
+        onRuntimeSelected(null);
       }
 
       setShowTerminateDialog(false);

@@ -12,7 +12,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Box } from '@primer/react';
-import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
 import { Jupyter } from '@datalayer/jupyter-react';
 import { DocumentViewProps } from '../../shared/types';
 import { useService } from '../contexts/ServiceContext';
@@ -32,7 +31,6 @@ import type { ServiceManager } from '@jupyterlab/services';
  */
 const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   const runtimeService = useService('runtimeService');
-  const [allRuntimes, setAllRuntimes] = useState<RuntimeJSON[]>([]);
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
     podName: string;
@@ -44,7 +42,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   const [collaborationConfig, setCollaborationConfig] =
     useState<LexicalCollaborationConfig | null>(null);
 
-  // Initialize runtime service and fetch runtimes
+  // Initialize runtime service
   useEffect(() => {
     const init = async () => {
       if (!runtimeService) return;
@@ -52,28 +50,35 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
       if (runtimeService.state === 'uninitialized') {
         await runtimeService.initialize();
       }
-
-      const runtimes = await runtimeService.refreshAllRuntimes();
-      setAllRuntimes(runtimes as unknown as RuntimeJSON[]);
     };
 
     init();
   }, [runtimeService]);
 
-  // Watch for runtime expiration
+  // Listen for global runtime expiration events
   useEffect(() => {
-    if (runtimeInfo) {
-      const currentRuntimeExists = allRuntimes.some(
-        r => r.podName === runtimeInfo.podName
-      );
+    if (!runtimeService) return;
 
-      if (!currentRuntimeExists) {
-        console.log('[DocumentEditor] Runtime expired, clearing selection');
-        setRuntimeInfo(null);
-        setServiceManager(null);
-      }
-    }
-  }, [allRuntimes, runtimeInfo]);
+    const unsubscribe = runtimeService.onRuntimeExpired(expiredPodName => {
+      console.log('[DocumentEditor] Runtime expired globally:', expiredPodName);
+
+      // Check current runtime using setState callback to avoid dependency
+      setRuntimeInfo(current => {
+        if (current?.podName === expiredPodName) {
+          console.log(
+            '[DocumentEditor] Current runtime expired, switching to mock'
+          );
+          setServiceManager(null);
+          return null;
+        }
+        return current;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [runtimeService]); // Only depend on runtimeService, not runtimeInfo
 
   // Setup collaboration
   useEffect(() => {
@@ -134,15 +139,12 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
       console.log('[DocumentEditor] Creating new runtime...');
       return;
     }
-    console.log(
-      '[DocumentEditor] Runtime selected:',
-      runtime.pod_name || runtime.podName
-    );
+    console.log('[DocumentEditor] Runtime selected:', runtime.podName);
     setRuntimeInfo({
-      id: (runtime.id || runtime.uid) as string,
-      podName: (runtime.pod_name || runtime.podName) as string,
-      ingress: (runtime.ingress || runtime.ingressUrl) as string,
-      token: (runtime.token || runtime.authToken) as string,
+      id: runtime.uid,
+      podName: runtime.podName,
+      ingress: runtime.ingress,
+      token: runtime.token,
     });
   };
 

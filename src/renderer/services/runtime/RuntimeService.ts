@@ -11,7 +11,7 @@
  */
 
 import { ServiceManager } from '@jupyterlab/services';
-import { DatalayerClient, RuntimeJSON } from '@datalayer/core/lib/client';
+import { DatalayerClient } from '@datalayer/core/lib/client';
 import { BaseService } from '../core/BaseService';
 import { ILogger } from '../interfaces/ILogger';
 import {
@@ -51,6 +51,10 @@ export class RuntimeService extends BaseService implements IRuntimeService {
   private allRuntimes: Runtime[] = [];
   private lastRuntimesFetch: number | null = null;
   private readonly RUNTIME_CACHE_TTL = 30000; // 30 seconds
+
+  // Global runtime expiration monitoring
+  private globalExpirationTimers = new Map<string, NodeJS.Timeout>();
+  private globalExpirationCallbacks = new Set<(podName: string) => void>();
 
   constructor(
     // @ts-ignore - Reserved for future SDK direct usage
@@ -158,14 +162,16 @@ export class RuntimeService extends BaseService implements IRuntimeService {
 
       const runtime: Runtime = {
         uid: result.uid,
-        given_name: runtimeName,
-        pod_name: result.podName,
+        givenName: runtimeName,
+        podName: result.podName,
         ingress: result.ingress,
         token: result.token,
-        environment_name: options?.environmentId,
-        status: 'running',
-        started_at: result.startedAt,
-        expired_at: result.expiredAt,
+        environmentName: options?.environmentId || '',
+        environmentTitle: result.environmentTitle || '',
+        type: result.type || '',
+        burningRate: result.burningRate || 0,
+        startedAt: result.startedAt,
+        expiredAt: result.expiredAt,
       };
 
       // Store runtime
@@ -176,7 +182,7 @@ export class RuntimeService extends BaseService implements IRuntimeService {
       });
 
       // Start expiration timer if needed
-      if (runtime.expired_at) {
+      if (runtime.expiredAt) {
         this.startExpirationTimer(runtime);
       }
 
@@ -298,9 +304,9 @@ export class RuntimeService extends BaseService implements IRuntimeService {
    * Start expiration timer for runtime.
    */
   private startExpirationTimer(runtime: Runtime): void {
-    if (!runtime.expired_at) return;
+    if (!runtime.expiredAt) return;
 
-    const expirationTime = parseInt(runtime.expired_at, 10) * 1000;
+    const expirationTime = new Date(runtime.expiredAt).getTime();
     const now = Date.now();
     const timeUntilExpiration = expirationTime - now;
 
@@ -414,30 +420,97 @@ export class RuntimeService extends BaseService implements IRuntimeService {
         throw new Error('Invalid runtimes response');
       }
 
-      // Map to Runtime interface
-      this.allRuntimes = runtimes.map((r: RuntimeJSON) => ({
-        uid: r.uid,
-        given_name: r.givenName,
-        pod_name: r.podName,
-        ingress: r.ingress,
-        token: r.token,
-        environment_name: r.environmentName,
-        environment_title: r.environmentTitle,
-        type: r.type,
-        burning_rate: r.burningRate,
-        reservation_id: '', // Not in RuntimeJSON, use empty string
-        started_at: r.startedAt,
-        expired_at: r.expiredAt,
-        status: 'running', // Not in RuntimeJSON, assume running
-      }));
+      // RuntimeJSON is already in the correct format, just assign it
+      this.allRuntimes = runtimes;
 
       this.lastRuntimesFetch = Date.now();
 
       this.logger.info(`Fetched ${this.allRuntimes.length} platform runtimes`);
+
+      // Update global expiration timers for all runtimes
+      this.updateGlobalExpirationTimers(runtimes);
+
       return this.allRuntimes;
     } catch (error) {
       this.logger.error('Failed to fetch platform runtimes', error as Error);
       throw error;
+    }
+  }
+
+  /**
+   * Subscribe to global runtime expiration events.
+   * Called when ANY runtime on the platform expires.
+   * @param callback - Function to call with the expired runtime's podName
+   * @returns Unsubscribe function
+   */
+  onRuntimeExpired(callback: (podName: string) => void): () => void {
+    this.globalExpirationCallbacks.add(callback);
+    return () => {
+      this.globalExpirationCallbacks.delete(callback);
+    };
+  }
+
+  /**
+   * Update global expiration timers for all platform runtimes.
+   * This monitors ALL runtimes and notifies when they expire.
+   */
+  private updateGlobalExpirationTimers(runtimes: Runtime[]): void {
+    // Clear existing timers
+    for (const timer of this.globalExpirationTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.globalExpirationTimers.clear();
+
+    // Set up new timers for each runtime
+    for (const runtime of runtimes) {
+      if (!runtime.expiredAt) continue;
+
+      const expirationTime = new Date(runtime.expiredAt).getTime();
+      const now = Date.now();
+      const timeUntilExpiration = expirationTime - now;
+
+      if (timeUntilExpiration <= 0) {
+        // Already expired
+        this.handleGlobalRuntimeExpired(runtime.podName);
+        continue;
+      }
+
+      // Set timer for future expiration
+      const timer = setTimeout(() => {
+        this.handleGlobalRuntimeExpired(runtime.podName);
+      }, timeUntilExpiration);
+
+      this.globalExpirationTimers.set(runtime.podName, timer);
+
+      this.logger.debug(`Set expiration timer for runtime ${runtime.podName}`, {
+        expiresIn: Math.round(timeUntilExpiration / 1000),
+      });
+    }
+  }
+
+  /**
+   * Handle global runtime expiration.
+   * Notifies all subscribers that a runtime has expired.
+   */
+  private handleGlobalRuntimeExpired(podName: string): void {
+    this.logger.warn(`Runtime ${podName} has expired globally`);
+
+    // Remove from global timers
+    this.globalExpirationTimers.delete(podName);
+
+    // Remove from allRuntimes cache
+    this.allRuntimes = this.allRuntimes.filter(r => r.podName !== podName);
+
+    // Notify all subscribers
+    for (const callback of this.globalExpirationCallbacks) {
+      try {
+        callback(podName);
+      } catch (error) {
+        this.logger.error(
+          'Error in runtime expiration callback',
+          error as Error
+        );
+      }
     }
   }
 }
