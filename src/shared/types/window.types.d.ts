@@ -79,7 +79,7 @@ declare global {
       onAuthStateChanged: (
         callback: (authState: {
           isAuthenticated: boolean;
-          user: import('@datalayer/core/lib/client/models').UserJSON | null;
+          user: import('@datalayer/core/lib/models').UserJSON | null;
           token: string | null;
           runUrl: string;
         }) => void
@@ -164,17 +164,17 @@ declare global {
       // Authentication
       login: (token: string) => Promise<{
         isAuthenticated: boolean;
-        user: import('@datalayer/core/lib/client/models').UserJSON;
+        user: import('@datalayer/core/lib/models').UserJSON;
         token: string;
         runUrl: string;
       }>;
       logout: () => Promise<void>;
       whoami: () => Promise<
-        import('@datalayer/core/lib/client/models').UserJSON
+        import('@datalayer/core/lib/models').UserJSON
       >;
       getAuthState: () => Promise<{
         isAuthenticated: boolean;
-        user: import('@datalayer/core/lib/client/models').UserJSON | null;
+        user: import('@datalayer/core/lib/models').UserJSON | null;
         token: string | null;
         runUrl: string;
       }>;
@@ -182,38 +182,38 @@ declare global {
 
       // Environments
       listEnvironments: () => Promise<
-        import('@datalayer/core/lib/client/models').EnvironmentJSON[]
+        import('@datalayer/core/lib/models').EnvironmentJSON[]
       >;
 
       // Runtimes
       listRuntimes: () => Promise<
-        import('@datalayer/core/lib/client/models').RuntimeJSON[]
+        import('@datalayer/core/lib/models').RuntimeJSON[]
       >;
       getRuntime: (
         runtimeId: string
-      ) => Promise<import('@datalayer/core/lib/client/models').RuntimeJSON>;
+      ) => Promise<import('@datalayer/core/lib/models').RuntimeJSON>;
       createRuntime: (options: {
         environmentName: string;
         type?: string;
         givenName?: string;
         minutesLimit?: number;
-      }) => Promise<import('@datalayer/core/lib/client/models').RuntimeJSON>;
+      }) => Promise<import('@datalayer/core/lib/models').RuntimeJSON>;
       deleteRuntime: (runtimeId: string) => Promise<void>;
       terminateAllRuntimes: () => Promise<PromiseSettledResult<void>[]>;
 
       // Spaces
       listSpaces: () => Promise<
-        import('@datalayer/core/lib/client/models').SpaceJSON[]
+        import('@datalayer/core/lib/models').SpaceJSON[]
       >;
       getMySpaces: () => Promise<
-        import('@datalayer/core/lib/client/models').SpaceJSON[]
+        import('@datalayer/core/lib/models').SpaceJSON[]
       >;
       getSpaceItems: (
         spaceId: string
       ) => Promise<
         Array<
-          | import('@datalayer/core/lib/client/models').NotebookJSON
-          | import('@datalayer/core/lib/client/models').LexicalJSON
+          | import('@datalayer/core/lib/models').NotebookJSON
+          | import('@datalayer/core/lib/models').LexicalJSON
         >
       >;
       getContent: (itemId: string) => Promise<unknown>;
@@ -222,19 +222,19 @@ declare global {
       // Notebooks
       listNotebooks: (
         spaceId: string
-      ) => Promise<import('@datalayer/core/lib/client/models').NotebookJSON[]>;
+      ) => Promise<import('@datalayer/core/lib/models').NotebookJSON[]>;
       getNotebook: (
         notebookId: string
-      ) => Promise<import('@datalayer/core/lib/client/models').NotebookJSON>;
+      ) => Promise<import('@datalayer/core/lib/models').NotebookJSON>;
       createNotebook: (
         spaceId: string,
         name: string,
         description?: string
-      ) => Promise<import('@datalayer/core/lib/client/models').NotebookJSON>;
+      ) => Promise<import('@datalayer/core/lib/models').NotebookJSON>;
       updateNotebook: (
         notebookId: string,
         data: { name?: string; description?: string }
-      ) => Promise<import('@datalayer/core/lib/client/models').NotebookJSON>;
+      ) => Promise<import('@datalayer/core/lib/models').NotebookJSON>;
       deleteNotebook: (notebookId: string) => Promise<void>;
 
       // Lexical documents
@@ -242,7 +242,7 @@ declare global {
         spaceId: string,
         name: string,
         description?: string
-      ) => Promise<import('@datalayer/core/lib/client/models').LexicalJSON>;
+      ) => Promise<import('@datalayer/core/lib/models').LexicalJSON>;
       deleteLexical: (lexicalId: string) => Promise<void>;
     };
   }

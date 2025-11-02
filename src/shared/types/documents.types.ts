@@ -9,10 +9,7 @@
  * @module shared/types/documents
  */
 
-import type {
-  NotebookJSON,
-  LexicalJSON,
-} from '@datalayer/core/lib/client/models';
+import type { NotebookJSON, LexicalJSON } from '@datalayer/core/lib/models';
 
 /**
  * Represents any document item (notebook or lexical) from the API.

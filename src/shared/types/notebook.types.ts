@@ -11,7 +11,7 @@
 
 import type { ServiceManager } from '@jupyterlab/services';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
+import type { RuntimeJSON } from '@datalayer/core/lib/models';
 import type { ElectronCollaborationProvider } from '../../renderer/services/electronCollaborationProvider';
 
 /**

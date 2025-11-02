@@ -15,6 +15,7 @@
     "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --project tsconfig.lib.json --watch --preserveWatchOutput",
     "lint": "eslint src --max-warnings 0",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
@@ -46,10 +47,10 @@
     "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
   "dependencies": {
-    "@datalayer/core": "^0.0.13",
-    "@datalayer/jupyter-lexical": "^1.0.6",
-    "@datalayer/jupyter-react": "^1.1.7",
-    "@datalayer/lexical-loro": "^0.1.0",
+    "@datalayer/core": "file:../core",
+    "@datalayer/jupyter-lexical": "file:../../jupyter/ui/packages/lexical",
+    "@datalayer/jupyter-react": "file:../../jupyter/ui/packages/react",
+    "@datalayer/lexical-loro": "file:../../lexical/loro",
     "@jupyterlab/services": "^7.0.0",
     "@lexical/code": "^0.35.0",
     "@lexical/link": "^0.35.0",

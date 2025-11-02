@@ -10,7 +10,7 @@
  * @module renderer/services/lexicalCollaboration
  */
 
-import type { LexicalJSON } from '@datalayer/core/lib/client/models';
+import type { LexicalJSON } from '@datalayer/core/lib/models';
 
 /**
  * Configuration for lexical document collaboration.

@@ -28,7 +28,7 @@ import {
   PaperAirplaneIcon,
 } from '@primer/octicons-react';
 import { notebookStore2 } from '@datalayer/jupyter-react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/client/models';
+import type { EnvironmentJSON } from '@datalayer/core/lib/models';
 import { RuntimeProgressBar } from '../runtime/RuntimeProgressBar';
 import { RuntimeSelector } from '../runtime/RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';

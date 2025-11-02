@@ -17,10 +17,10 @@ export type {
   NotebookJSON,
   LexicalJSON,
   SpaceJSON,
-} from '@datalayer/core/lib/client/models';
-export type { UserJSON } from '@datalayer/core/lib/client/models/User';
+} from '@datalayer/core/lib/models';
+export type { UserJSON } from '@datalayer/core/lib/models/User3';
 
-import type { UserJSON } from '@datalayer/core/lib/client/models/User';
+import type { UserJSON } from '@datalayer/core/lib/models/User3';
 
 /**
  * Authentication state shared between main and renderer processes.
