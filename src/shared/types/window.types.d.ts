@@ -169,9 +169,7 @@ declare global {
         runUrl: string;
       }>;
       logout: () => Promise<void>;
-      whoami: () => Promise<
-        import('@datalayer/core/lib/models').UserJSON
-      >;
+      whoami: () => Promise<import('@datalayer/core/lib/models').UserJSON>;
       getAuthState: () => Promise<{
         isAuthenticated: boolean;
         user: import('@datalayer/core/lib/models').UserJSON | null;

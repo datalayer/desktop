@@ -18,9 +18,9 @@ export type {
   LexicalJSON,
   SpaceJSON,
 } from '@datalayer/core/lib/models';
-export type { UserJSON } from '@datalayer/core/lib/models/User3';
+export type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
 
-import type { UserJSON } from '@datalayer/core/lib/models/User3';
+import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
 
 /**
  * Authentication state shared between main and renderer processes.

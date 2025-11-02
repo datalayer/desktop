@@ -11,7 +11,7 @@
  */
 
 import { DatalayerClient } from '@datalayer/core/lib/client/index';
-import type { UserJSON } from '@datalayer/core/lib/models/User3';
+import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
 import { safeStorage } from 'electron';
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';

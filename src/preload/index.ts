@@ -21,7 +21,7 @@ import type {
   SpaceJSON,
   LexicalJSON,
 } from '@datalayer/core/lib/models';
-import type { UserJSON } from '@datalayer/core/lib/models/User3';
+import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
 
 /**
  * Electron API for system information and menu actions.
