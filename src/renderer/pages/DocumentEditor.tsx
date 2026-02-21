@@ -295,6 +295,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
           editable={true}
           runtimePodName={runtimeInfo?.podName}
           onRuntimeSelected={handleRuntimeSelected}
+          serviceManager={serviceManager}
         />
       </Box>
     </Box>
