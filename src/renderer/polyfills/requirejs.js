@@ -51,7 +51,13 @@ const pathModule = {
     return idx <= 0 ? '' : base.slice(idx);
   },
   resolve: function (...paths) {
-    return '/' + paths.filter(p => p).join('/').replace(/\/+/g, '/');
+    return (
+      '/' +
+      paths
+        .filter(p => p)
+        .join('/')
+        .replace(/\/+/g, '/')
+    );
   },
   relative: function (from, to) {
     return to || '';

@@ -104,6 +104,12 @@ module.exports = [
       '*.config.ts',
       'scripts/**',
       'src/**/*.js', // Polyfill files - legacy JS, not TS
+      'src/**/__tests__/**', // Test files excluded from tsconfig.json
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'src/**/*.spec.ts',
+      'src/**/*.spec.tsx',
+      'tests/**',
     ],
   },
 ];
