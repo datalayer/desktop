@@ -279,6 +279,55 @@ export function esbuildCjsToEsm(options = {}) {
 
       if (!code) return null;
 
+      // Detect __require("sibling-package") calls for other pre-bundled packages.
+      // esbuild with format:'esm' generates __require() for externalized CJS deps
+      // instead of ESM imports. In the browser, require() doesn't exist, so we
+      // inject ESM imports and rewrite __require to a lookup function.
+      const siblingRequires = [];
+      const requireCallRe = /__require\("([^"]+)"\)/g;
+      let reqMatch;
+      while ((reqMatch = requireCallRe.exec(code)) !== null) {
+        const dep = reqMatch[1];
+        // Only handle deps that we also pre-bundle (sibling CJS packages)
+        if (bundleCache.has(dep) && !siblingRequires.includes(dep)) {
+          siblingRequires.push(dep);
+        }
+      }
+
+      let processedCode = code;
+
+      // If this bundle has __require() calls to sibling packages, inject a shim
+      if (siblingRequires.length > 0) {
+        // Generate ESM imports for each sibling (Rollup will resolve these
+        // to our virtual modules via resolveId)
+        const imports = siblingRequires
+          .map((dep, i) => `import __sibling_${i}__ from "${dep}";`)
+          .join('\n');
+
+        // Build a require shim that maps package names to the imported modules
+        const mapping = siblingRequires
+          .map((dep, i) => `  "${dep}": __sibling_${i}__`)
+          .join(',\n');
+
+        const requireShim = `
+${imports}
+var __sibling_map__ = {
+${mapping}
+};
+`;
+        // Replace esbuild's __require definition with our shim version
+        // esbuild generates: var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : ...
+        const esbuildRequireDef = /var __require = \/\* @__PURE__ \*\/ \(\(x\) =>[\s\S]*?\)\(function\(x\) \{[\s\S]*?\}\);/;
+        if (esbuildRequireDef.test(processedCode)) {
+          processedCode = processedCode.replace(esbuildRequireDef,
+            `${requireShim}\nvar __require = function(x) { if (__sibling_map__[x]) return __sibling_map__[x]; throw Error('Dynamic require of "' + x + '" is not supported'); };`
+          );
+        } else {
+          // Fallback: prepend imports and add a global __require if not already defined
+          processedCode = `${requireShim}\nif (typeof __require === 'undefined') { var __require = function(x) { if (__sibling_map__[x]) return __sibling_map__[x]; throw Error('Dynamic require of "' + x + '" is not supported'); }; }\n${processedCode}`;
+        }
+      }
+
       // Get auto-detected exports (or fallback to manual list)
       const pkg = packages.find(p => p.name === pkgName);
       const autoExports = detectedExports.get(pkgName) || [];
@@ -294,13 +343,12 @@ export function esbuildCjsToEsm(options = {}) {
         // Pattern 2: export { some_var as default };
         const exportBracketRe = /export\s*\{\s*([\w$]+)\s+as\s+default\s*\};?\s*$/;
 
-        const match = code.match(exportDefaultRe) || code.match(exportBracketRe);
+        const match = processedCode.match(exportDefaultRe) || processedCode.match(exportBracketRe);
 
         if (match) {
           const defaultExpr = match[1];
-          const before = code.slice(0, match.index);
+          const before = processedCode.slice(0, match.index);
           // Use unique alias names to avoid colliding with internal declarations
-          // (e.g., json5 already declares `var parse = ...` internally)
           const namedExports = allExports
             .map(name => `const __cjs_export_${name}__ = __cjs_default__["${name}"];`)
             .join('\n');
@@ -318,7 +366,7 @@ export { ${reExports} };
         }
       }
 
-      return { code, map: null };
+      return { code: processedCode, map: null };
     },
   };
 }

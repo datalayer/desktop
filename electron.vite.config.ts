@@ -117,8 +117,6 @@ export default defineConfig({
           'next/link',
           '@react-navigation/native',
           '@react-navigation/stack',
-          '@jupyterlite/pyodide-kernel',
-          '@jupyterlite/kernel',
           'prettier/parser-postcss',
           'prettier/parser-html',
           'prettier/parser-babel',
@@ -126,7 +124,6 @@ export default defineConfig({
           'prettier/parser-markdown',
           'prettier/parser-typescript',
           'prettier/standalone',
-          '@primer/react-brand/lib/css/main.css',
           /\.whl$/,
         ],
         plugins: [
@@ -156,6 +153,10 @@ export default defineConfig({
         name: 'fix-sanitize-html-postcss',
         enforce: 'pre',
         resolveId(id: string) {
+          // Intercept @primer/react-brand CSS — not available in Electron
+          if (id === '@primer/react-brand/lib/css/main.css' || id.includes('@primer/react-brand/lib/css/')) {
+            return { id: '\0virtual:primer-brand-css-stub', external: false };
+          }
           // Intercept postcss and source-map-js to prevent externalization
           if (id === 'postcss' || id.startsWith('postcss/')) {
             return { id: '\0virtual:postcss-stub', external: false };
@@ -185,6 +186,9 @@ export default defineConfig({
           return null;
         },
         load(id: string) {
+          if (id === '\0virtual:primer-brand-css-stub') {
+            return 'export default "";';
+          }
           if (id === '\0virtual:postcss-stub') {
             // Provide a minimal postcss stub for sanitize-html
             return `
@@ -881,11 +885,6 @@ export default defineConfig({
         { find: '~react-toastify', replacement: 'react-toastify' },
         // Alias underscore to lodash
         { find: 'underscore', replacement: 'lodash' },
-        // Force @jupyterlite to use our root @jupyterlab/services
-        { find: '@jupyterlite/server/node_modules/@jupyterlab/services', replacement: resolve(
-          __dirname,
-          'node_modules/@jupyterlab/services'
-        ) },
       ],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
@@ -951,8 +950,6 @@ export default defineConfig({
         'typestyle',
         'jsonpointer',
         '@react-navigation/native',
-        '@jupyterlite/pyodide-kernel',
-        '@jupyterlab/apputils-extension',
         // Exclude Node.js built-ins from optimization
         'path',
         'fs',
