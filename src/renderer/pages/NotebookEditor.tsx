@@ -21,8 +21,8 @@ import { Box } from '@primer/react';
 import type { ServiceManager, Kernel } from '@jupyterlab/services';
 import type { Runtime } from '../services/interfaces/IRuntimeService';
 import {
-  Notebook2,
-  notebookStore2,
+  Notebook,
+  notebookStore,
   CellSidebarExtension,
   CellSidebarButton,
 } from '@datalayer/jupyter-react';
@@ -169,7 +169,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
 
     const createServiceManager = async () => {
       // Immediately clear service manager to prevent race conditions
-      // This ensures Notebook2 unmounts before we create a new manager
+      // This ensures Notebook unmounts before we create a new manager
       setServiceManager(null);
       setServiceManagerReady(false);
 
@@ -327,7 +327,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
             (notebookBox as HTMLElement).style.maxHeight = `${newHeight}px`;
           }
 
-          const notebook = notebookStore2.getState().notebooks.get(notebookId);
+          const notebook = notebookStore.getState().notebooks.get(notebookId);
           if (notebook?.adapter?.panel) {
             notebook.adapter.panel.update();
           }
@@ -449,7 +449,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
           minHeight: 0,
         }}
       >
-        <Notebook2
+        <Notebook
           key={notebookKey}
           id={notebookId}
           height="100%"

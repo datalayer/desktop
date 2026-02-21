@@ -4,7 +4,7 @@
  */
 
 /**
- * Toolbar for Notebook2 component using notebookStore2.
+ * Toolbar for Notebook component using notebookStore.
  *
  * @module Notebook2Toolbar
  */
@@ -27,7 +27,7 @@ import {
   TrashIcon,
   PaperAirplaneIcon,
 } from '@primer/octicons-react';
-import { notebookStore2 } from '@datalayer/jupyter-react';
+import { notebookStore, type NotebookState } from '@datalayer/jupyter-react';
 import type { EnvironmentJSON } from '@datalayer/core/lib/models';
 import { RuntimeProgressBar } from '../runtime/RuntimeProgressBar';
 import { RuntimeSelector } from '../runtime/RuntimeSelector';
@@ -64,7 +64,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   useEffect(() => {
     if (!notebookId) return;
 
-    const unsubscribe = notebookStore2.subscribe(state => {
+    const unsubscribe = notebookStore.subscribe((state: NotebookState) => {
       const notebook = state.notebooks.get(notebookId);
       if (!notebook?.adapter) {
         setIsCellRunning(false);
@@ -102,22 +102,22 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
 
   const handleRun = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().run(notebookId);
+    if (notebookId) notebookStore.getState().run(notebookId);
   };
 
   const handleRunAll = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().runAll(notebookId);
+    if (notebookId) notebookStore.getState().runAll(notebookId);
   };
 
   const handleInterrupt = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().interrupt(notebookId);
+    if (notebookId) notebookStore.getState().interrupt(notebookId);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().delete(notebookId);
+    if (notebookId) notebookStore.getState().delete(notebookId);
   };
 
   const handleRuntimeSelectorChange = async (runtime: Runtime | null) => {
