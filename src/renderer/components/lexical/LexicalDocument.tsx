@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, Spinner } from '@primer/react';
-import type { LexicalJSON } from '@datalayer/core/lib/client/models';
+import type { LexicalJSON } from '@datalayer/core/lib/models';
 import {
   LexicalCollaborationService,
   type LexicalCollaborationConfig,

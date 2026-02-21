@@ -11,7 +11,7 @@
 
 import type { LexicalEditor } from 'lexical';
 import type { ServiceManager } from '@jupyterlab/services';
-import type { RuntimeJSON } from '@datalayer/core/lib/client/models';
+import type { RuntimeJSON } from '@datalayer/core/lib/models';
 
 /**
  * Document data structure for Lexical documents.

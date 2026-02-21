@@ -72,8 +72,8 @@ jobs:
       - name: Checkout core repository
         uses: actions/checkout@v4
         with:
-          repository: goanpeca/core
-          ref: sdk/core-updates
+          repository: datalayer/core
+          ref: refact/models
           path: datalayer/core
 
       - name: Setup build environment

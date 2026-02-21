@@ -20,8 +20,8 @@ import type {
   NotebookJSON,
   SpaceJSON,
   LexicalJSON,
-} from '@datalayer/core/lib/client/models';
-import type { UserJSON } from '@datalayer/core/lib/client/models/User';
+} from '@datalayer/core/lib/models';
+import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
 
 /**
  * Electron API for system information and menu actions.

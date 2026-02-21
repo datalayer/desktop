@@ -67,7 +67,6 @@ import { LexicalToolbar } from './LexicalToolbar';
 import { RuntimeToolbar } from '../runtime/RuntimeToolbar';
 import { ThemeProvider, BaseStyles } from '@primer/react';
 import '@datalayer/jupyter-lexical/style/lexical/Editor.css';
-import '@datalayer/jupyter-lexical/style/lexical/ToolbarPlugin.css';
 import '@datalayer/jupyter-lexical/style/lexical/Theme.css';
 import './LexicalEditor.css';
 

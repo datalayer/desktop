@@ -15,7 +15,7 @@ import {
   TrashIcon,
   PaperAirplaneIcon,
 } from '@primer/octicons-react';
-import { notebookStore2 } from '@datalayer/jupyter-react';
+import { notebookStore, type NotebookState } from '@datalayer/jupyter-react';
 
 export interface NotebookControlsProps {
   notebookId?: string;
@@ -33,7 +33,7 @@ export const NotebookControls: React.FC<NotebookControlsProps> = ({
   useEffect(() => {
     if (!notebookId) return;
 
-    const unsubscribe = notebookStore2.subscribe(state => {
+    const unsubscribe = notebookStore.subscribe((state: NotebookState) => {
       const notebook = state.notebooks.get(notebookId);
       if (!notebook?.adapter) {
         setIsCellRunning(false);
@@ -52,22 +52,22 @@ export const NotebookControls: React.FC<NotebookControlsProps> = ({
 
   const handleRun = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().run(notebookId);
+    if (notebookId) notebookStore.getState().run(notebookId);
   };
 
   const handleRunAll = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().runAll(notebookId);
+    if (notebookId) notebookStore.getState().runAll(notebookId);
   };
 
   const handleInterrupt = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().interrupt(notebookId);
+    if (notebookId) notebookStore.getState().interrupt(notebookId);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (notebookId) notebookStore2.getState().delete(notebookId);
+    if (notebookId) notebookStore.getState().delete(notebookId);
   };
 
   return (

@@ -19,7 +19,7 @@ import {
   Button,
   Text,
 } from '@primer/react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/client/models';
+import type { EnvironmentJSON } from '@datalayer/core/lib/models';
 
 export interface CreateRuntimeDialogProps {
   isOpen: boolean;

@@ -12,7 +12,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box } from '@primer/react';
-import { Jupyter } from '@datalayer/jupyter-react';
 import { DocumentViewProps } from '../../shared/types';
 import { useService } from '../contexts/ServiceContext';
 import type { Runtime } from '../services/interfaces/IRuntimeService';
@@ -281,31 +280,23 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
         overflow: 'hidden',
       }}
     >
-      {/* Jupyter context wrapper */}
-      <Jupyter
-        collaborative={false}
-        terminals={false}
-        serviceManager={serviceManager}
-        startDefaultKernel={true}
+      {/* Lexical Editor with toolbar - completely remounts when key changes */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
       >
-        {/* Lexical Editor with toolbar - completely remounts when key changes */}
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
-          <LexicalEditor
-            key={editorKey}
-            collaboration={collaborationConfig || undefined}
-            editable={true}
-            runtimePodName={runtimeInfo?.podName}
-            onRuntimeSelected={handleRuntimeSelected}
-          />
-        </Box>
-      </Jupyter>
+        <LexicalEditor
+          key={editorKey}
+          collaboration={collaborationConfig || undefined}
+          editable={true}
+          runtimePodName={runtimeInfo?.podName}
+          onRuntimeSelected={handleRuntimeSelected}
+        />
+      </Box>
     </Box>
   );
 };

@@ -21,7 +21,7 @@ import {
   IconButton,
 } from '@primer/react';
 import { TrashIcon } from '@primer/octicons-react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/client/models';
+import type { EnvironmentJSON } from '@datalayer/core/lib/models';
 import { RuntimeProgressBar } from './RuntimeProgressBar';
 import { RuntimeSelector } from './RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';

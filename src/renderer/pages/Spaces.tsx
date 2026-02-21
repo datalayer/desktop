@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
-import type { SpaceJSON, LexicalJSON } from '@datalayer/core/lib/client/models';
+import type { SpaceJSON, LexicalJSON } from '@datalayer/core/lib/models';
 import {
   DocumentsListProps,
   SpaceInfo,

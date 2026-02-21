@@ -21,7 +21,7 @@ import Footer from '../components/auth/Footer';
 import Version from '../components/auth/Version';
 import { LoginFormData, LoginState } from '../../shared/types';
 import { validateLoginForm, formatLoginError } from '../utils/login';
-// UserJSON type not exported, using Record from '@datalayer/core/lib/client/models';
+// UserJSON type not exported, using Record from '@datalayer/core/lib/models';
 
 interface LoginProps {
   onUserDataFetched?: (userData: Record<string, unknown>) => void;

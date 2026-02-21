@@ -4,7 +4,7 @@
  */
 
 import { ServiceManager } from '@jupyterlab/services';
-import { RuntimeJSON } from '@datalayer/core/lib/client/models';
+import { RuntimeJSON } from '@datalayer/core/lib/models';
 import { ILifecycle } from './ILifecycle';
 
 /**
