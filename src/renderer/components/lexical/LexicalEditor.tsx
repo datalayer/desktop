@@ -341,6 +341,7 @@ export function LexicalEditor({
                   <LexicalEditorContainer
                     collaboration={collaboration}
                     onContentChange={onContentChange}
+                    serviceManager={serviceManager}
                   />
                 </div>
               </ToolbarContext>
