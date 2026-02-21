@@ -868,11 +868,27 @@ export default defineConfig({
           if (id.includes('service-worker') && id.includes('?text')) {
             return 'export default "";';
           }
+          // Replace require('../package.json').version with a safe stub
+          // (e.g. @jupyter-widgets/controls uses this pattern)
+          if (code.includes("require('../package.json')") || code.includes('require("../package.json")')) {
+            return code
+              .replace(/require\(['"]\.\.\/package\.json['"]\)\.version/g, '"1.0.0"')
+              .replace(/require\(['"]\.\.\/package\.json['"]\)/g, '({ version: "1.0.0" })');
+          }
         },
         resolveId(source: string) {
+          // Resolve require('../package.json') to a stub (jupyter-widgets uses this for version)
+          if (source.endsWith('package.json') && source.includes('..')) {
+            return { id: '\0virtual:package-json-stub', external: false };
+          }
           // Handle service-worker?text imports
           if (source.includes('service-worker?text')) {
             return { id: source, external: false };
+          }
+        },
+        load(id: string) {
+          if (id === '\0virtual:package-json-stub') {
+            return 'export default { version: "1" }; export const version = "1";';
           }
         },
       },
