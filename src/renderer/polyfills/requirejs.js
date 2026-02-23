@@ -21,6 +21,84 @@
 // Store loaded modules
 const moduleRegistry = new Map();
 
+// Register a path polyfill for CJS code that uses require("path").
+// The Vite virtual module handles ESM imports, but CJS modules bundled with
+// __commonJS wrappers call __require$1("path") which resolves to window.require,
+// i.e. the requirejs shim below. Without this registration, the CJS call returns
+// undefined and @jupyterlab/coreutils crashes on path_1.posix.join().
+const pathModule = {
+  join: function (...parts) {
+    if (!parts || parts.length === 0) return '.';
+    return parts
+      .filter(p => p != null && p !== '')
+      .join('/')
+      .replace(/\/+/g, '/');
+  },
+  dirname: function (p) {
+    if (!p) return '.';
+    const idx = p.lastIndexOf('/');
+    return idx <= 0 ? (p[0] === '/' ? '/' : '.') : p.slice(0, idx);
+  },
+  basename: function (p, ext) {
+    if (!p) return '';
+    const base = p.split('/').pop() || '';
+    return ext && base.endsWith(ext) ? base.slice(0, -ext.length) : base;
+  },
+  extname: function (p) {
+    if (!p) return '';
+    const base = p.split('/').pop() || '';
+    const idx = base.lastIndexOf('.');
+    return idx <= 0 ? '' : base.slice(idx);
+  },
+  resolve: function (...paths) {
+    return (
+      '/' +
+      paths
+        .filter(p => p)
+        .join('/')
+        .replace(/\/+/g, '/')
+    );
+  },
+  relative: function (from, to) {
+    return to || '';
+  },
+  normalize: function (path) {
+    if (!path || path === '') return '.';
+    const isAbsolute = path[0] === '/';
+    const parts = path.split('/').filter(p => p && p !== '.');
+    const result = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] === '..') {
+        if (result.length > 0 && result[result.length - 1] !== '..') {
+          result.pop();
+        } else if (!isAbsolute) {
+          result.push('..');
+        }
+      } else {
+        result.push(parts[i]);
+      }
+    }
+    let normalized = result.join('/');
+    if (isAbsolute) normalized = '/' + normalized;
+    else if (normalized === '') normalized = '.';
+    return normalized;
+  },
+  sep: '/',
+  delimiter: ':',
+  parse: function (p) {
+    return {
+      root: '',
+      dir: this.dirname(p),
+      base: this.basename(p),
+      ext: this.extname(p),
+      name: this.basename(p, this.extname(p)),
+    };
+  },
+  posix: null,
+};
+pathModule.posix = pathModule;
+moduleRegistry.set('path', pathModule);
+
 // Define a minimal RequireJS-compatible loader
 window.requirejs = function (deps, callback) {
   if (typeof deps === 'string') {

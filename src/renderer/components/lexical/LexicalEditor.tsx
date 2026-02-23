@@ -57,7 +57,7 @@ import {
   YouTubePlugin,
 } from '@datalayer/jupyter-lexical';
 import { LoroCollaborationPlugin } from '@datalayer/lexical-loro';
-import { ToolbarContext } from '@datalayer/jupyter-lexical';
+import { ToolbarContext, CommentsProvider } from '@datalayer/jupyter-lexical';
 import {
   createDesktopLoroProvider,
   setCollaborationToken,
@@ -108,6 +108,7 @@ export interface LexicalEditorProps {
   collaboration?: CollaborationConfig;
   runtimePodName?: string;
   onRuntimeSelected?: (runtime: Runtime | null) => void;
+  serviceManager?: import('@jupyterlab/services').ServiceManager.IManager;
 }
 
 /**
@@ -149,9 +150,11 @@ const initialConfig = {
 function LexicalEditorContainer({
   collaboration,
   onContentChange,
+  serviceManager: propsServiceManager,
 }: {
   collaboration?: CollaborationConfig;
   onContentChange?: (content: string) => void;
+  serviceManager?: import('@jupyterlab/services').ServiceManager.IManager;
 }) {
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
@@ -160,7 +163,10 @@ function LexicalEditorContainer({
   );
 
   // Get service manager and default kernel from Jupyter context
-  const { serviceManager, defaultKernel } = useJupyter();
+  const { serviceManager, defaultKernel } = useJupyter({
+    serviceManager: propsServiceManager,
+    startDefaultKernel: !!propsServiceManager,
+  });
 
   // Log service manager and kernel availability
   useEffect(() => {
@@ -317,25 +323,29 @@ export function LexicalEditor({
   onContentChange,
   runtimePodName,
   onRuntimeSelected,
+  serviceManager,
 }: LexicalEditorProps) {
   return (
     <ThemeProvider>
       <BaseStyles>
         <div className={`lexical-editor-container ${className}`}>
           <LexicalComposer initialConfig={initialConfig}>
-            <ToolbarContext>
-              <div className="editor-shell">
-                <RuntimeToolbar
-                  runtimePodName={runtimePodName}
-                  onRuntimeSelected={onRuntimeSelected}
-                  leftContent={<LexicalToolbar />}
-                />
-                <LexicalEditorContainer
-                  collaboration={collaboration}
-                  onContentChange={onContentChange}
-                />
-              </div>
-            </ToolbarContext>
+            <CommentsProvider>
+              <ToolbarContext>
+                <div className="editor-shell">
+                  <RuntimeToolbar
+                    runtimePodName={runtimePodName}
+                    onRuntimeSelected={onRuntimeSelected}
+                    leftContent={<LexicalToolbar />}
+                  />
+                  <LexicalEditorContainer
+                    collaboration={collaboration}
+                    onContentChange={onContentChange}
+                    serviceManager={serviceManager}
+                  />
+                </div>
+              </ToolbarContext>
+            </CommentsProvider>
           </LexicalComposer>
         </div>
       </BaseStyles>
