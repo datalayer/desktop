@@ -109,7 +109,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
 
   return (
     <Dialog
-      isOpen={isOpen}
+      open={isOpen}
       onDismiss={handleCancel}
       aria-labelledby="edit-dialog-title"
     >

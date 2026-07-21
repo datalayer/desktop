@@ -50,7 +50,7 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
 }) => {
   return (
     <Dialog
-      isOpen={isOpen}
+      open={isOpen}
       onDismiss={() => !isTerminating && onCancel()}
       aria-labelledby="terminate-dialog-title"
     >

@@ -19,7 +19,7 @@ import {
   Button,
   Text,
 } from '@primer/react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/models';
+import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
 
 export interface CreateRuntimeDialogProps {
   isOpen: boolean;
@@ -125,7 +125,7 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
 
   return (
     <Dialog
-      isOpen={isOpen}
+      open={isOpen}
       onDismiss={handleClose}
       aria-labelledby="create-runtime-dialog-title"
     >

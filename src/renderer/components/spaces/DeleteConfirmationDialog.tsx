@@ -43,7 +43,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
 
   return (
     <Dialog
-      isOpen={isOpen}
+      open={isOpen}
       onDismiss={() => {
         if (!isDeleting) {
           onCancel();

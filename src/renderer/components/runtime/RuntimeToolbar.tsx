@@ -21,7 +21,7 @@ import {
   IconButton,
 } from '@primer/react';
 import { TrashIcon } from '@primer/octicons-react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/models';
+import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
 import { RuntimeProgressBar } from './RuntimeProgressBar';
 import { RuntimeSelector } from './RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';
@@ -290,7 +290,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
         <Dialog
-          isOpen={showRuntimeDialog}
+          open={showRuntimeDialog}
           onDismiss={() => setShowRuntimeDialog(false)}
           aria-labelledby="runtime-dialog-title"
         >
@@ -396,7 +396,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       {/* Terminate Runtime Dialog */}
       {showTerminateDialog && (
         <Dialog
-          isOpen={showTerminateDialog}
+          open={showTerminateDialog}
           onDismiss={() => !terminating && setShowTerminateDialog(false)}
           aria-labelledby="terminate-dialog-title"
         >

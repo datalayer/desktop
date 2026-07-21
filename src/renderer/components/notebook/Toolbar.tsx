@@ -28,7 +28,7 @@ import {
   PaperAirplaneIcon,
 } from '@primer/octicons-react';
 import { notebookStore, type NotebookState } from '@datalayer/jupyter-react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/models';
+import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
 import { RuntimeProgressBar } from '../runtime/RuntimeProgressBar';
 import { RuntimeSelector } from '../runtime/RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';
@@ -325,7 +325,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
         <Dialog
-          isOpen={showRuntimeDialog}
+          open={showRuntimeDialog}
           onDismiss={() => setShowRuntimeDialog(false)}
           aria-labelledby="runtime-dialog-title"
         >
@@ -431,7 +431,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       {/* Terminate Runtime Dialog */}
       {showTerminateDialog && (
         <Dialog
-          isOpen={showTerminateDialog}
+          open={showTerminateDialog}
           onDismiss={() => !terminating && setShowTerminateDialog(false)}
           aria-labelledby="terminate-dialog-title"
         >
