@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: goanpeca/core
-          ref: sdk/core-updates
+          ref: main
           path: datalayer/core
 
       - name: Setup build environment
