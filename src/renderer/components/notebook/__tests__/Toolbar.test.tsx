@@ -15,8 +15,18 @@ import { render, screen } from '@testing-library/react';
 import { Notebook2Toolbar } from '../Toolbar';
 import { mockEnvironments } from '../../../../../tests/fixtures/index';
 
-// Mock the notebookStore2
+// Mock notebook stores used by toolbar implementations.
 vi.mock('@datalayer/jupyter-react', () => ({
+  notebookStore: {
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({
+      notebooks: new Map(),
+      run: vi.fn(),
+      runAll: vi.fn(),
+      interrupt: vi.fn(),
+      delete: vi.fn(),
+    })),
+  },
   notebookStore2: {
     subscribe: vi.fn(() => vi.fn()),
     getState: vi.fn(() => ({
