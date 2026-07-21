@@ -116,7 +116,7 @@ function registerIPCHandlers(): void {
       isAuthenticated: true,
       user: user,
       token: config.token || null,
-      runUrl: config.iamRunUrl || '',
+      runUrl: config.iamUrl || '',
     };
 
     broadcastAuthState(authState);
@@ -156,7 +156,7 @@ function registerIPCHandlers(): void {
     try {
       const config = sdkBridge.getConfig();
       return {
-        runUrl: config.iamRunUrl,
+        runUrl: config.iamUrl,
         token: config.token,
         isAuthenticated: !!config.token,
       };
@@ -358,7 +358,7 @@ function registerIPCHandlers(): void {
   // Configuration handlers
   ipcMain.handle('datalayer:get-spacer-run-url', async () => {
     const config = sdkBridge.getConfig();
-    return config.spacerRunUrl;
+    return config.spacerUrl;
   });
 
   // GitHub user handler removed - use whoami instead

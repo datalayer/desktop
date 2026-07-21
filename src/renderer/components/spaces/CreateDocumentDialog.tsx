@@ -101,8 +101,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
 
   return (
     <Dialog
-      open={isOpen}
-      onDismiss={handleCancel}
+      onClose={handleCancel}
       aria-labelledby="create-dialog-title"
     >
       <Dialog.Header id="create-dialog-title">{title}</Dialog.Header>

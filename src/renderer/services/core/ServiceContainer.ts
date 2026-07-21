@@ -10,7 +10,7 @@
  * Manages all services with proper initialization order and lifecycle.
  */
 
-import { DatalayerClient } from '@datalayer/core/lib/client';
+import type { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
 import { ILifecycle, ServiceState } from '../interfaces/ILifecycle';
 import { ILogger, ILoggerManager } from '../interfaces/ILogger';
 import { IAuthService } from '../interfaces/IAuthService';

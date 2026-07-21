@@ -24,10 +24,13 @@ const TerminateAllDialog: React.FC<TerminateAllDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog
-      open={isOpen}
-      onDismiss={onCancel}
+      onClose={onCancel}
       aria-labelledby="terminate-all-dialog-title"
       sx={{ maxWidth: '500px' }}
     >

@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box } from '@primer/react';
-import type { RuntimeJSON } from '@datalayer/core/lib/client';
+import type { RuntimeJSON } from '@datalayer/agent-runtimes/lib/models';
 
 export interface RuntimeProgressBarProps {
   /** Runtime pod name - used to fetch runtime details */

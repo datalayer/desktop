@@ -10,7 +10,8 @@
  * Manages computing environments with caching and state management.
  */
 
-import { DatalayerClient, EnvironmentJSON } from '@datalayer/core/lib/client';
+import type { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
+import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
 import { BaseService } from '../core/BaseService';
 import { ILogger } from '../interfaces/ILogger';
 import {

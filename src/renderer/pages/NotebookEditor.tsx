@@ -126,7 +126,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
             setAuthToken(authState.token);
             setConfiguration({
               token: authState.token,
-              runUrl: authState.runUrl || configuration.runUrl,
+              iamUrl: authState.runUrl || configuration.iamUrl,
             });
           }
         }
@@ -143,12 +143,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
 
   // Initialize collaboration provider
   useEffect(() => {
-    if (!configuration?.runUrl || !authToken) {
+    if (!configuration?.iamUrl || !authToken) {
       return;
     }
 
     const provider = new ElectronCollaborationProvider({
-      runUrl: configuration.runUrl,
+      runUrl: configuration.iamUrl,
       token: authToken,
       runtimeId: undefined,
     });
@@ -160,7 +160,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         provider.dispose();
       }
     };
-  }, [configuration?.runUrl, authToken]);
+  }, [configuration?.iamUrl, authToken]);
 
   // Create service manager when runtime info changes
   useEffect(() => {

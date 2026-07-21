@@ -325,8 +325,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
         <Dialog
-          open={showRuntimeDialog}
-          onDismiss={() => setShowRuntimeDialog(false)}
+          onClose={() => setShowRuntimeDialog(false)}
           aria-labelledby="runtime-dialog-title"
         >
           <Dialog.Header id="runtime-dialog-title">
@@ -431,8 +430,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       {/* Terminate Runtime Dialog */}
       {showTerminateDialog && (
         <Dialog
-          open={showTerminateDialog}
-          onDismiss={() => !terminating && setShowTerminateDialog(false)}
+          onClose={() => !terminating && setShowTerminateDialog(false)}
           aria-labelledby="terminate-dialog-title"
         >
           <Dialog.Header id="terminate-dialog-title">

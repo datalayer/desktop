@@ -10,7 +10,7 @@
  * Manages user authentication and session state without global state.
  */
 
-import { DatalayerClient } from '@datalayer/core/lib/client';
+import type { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
 import { BaseService } from '../core/BaseService';
 import { ILogger } from '../interfaces/ILogger';
 import {

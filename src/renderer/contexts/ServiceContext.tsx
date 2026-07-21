@@ -11,6 +11,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
 import {
   IServiceContainer,
   ServiceContainer,
@@ -49,7 +50,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
     const initializeServices = async (): Promise<void> => {
       // Wait for window.datalayerClient to be available (set by main process SDK bridge)
       if (
-        !(window.datalayerClient as unknown as import('@datalayer/core/lib/client').DatalayerClient)
+        !(window.datalayerClient as unknown as DatalayerClient)
       ) {
         console.warn('ServiceProvider: SDK not available yet, waiting...');
         // Retry in a moment
@@ -60,7 +61,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       try {
         // Create and initialize service container
         const serviceContainer = new ServiceContainer(
-          window.datalayerClient as unknown as import('@datalayer/core/lib/client').DatalayerClient
+          window.datalayerClient as unknown as DatalayerClient
         );
         await serviceContainer.initialize();
 
