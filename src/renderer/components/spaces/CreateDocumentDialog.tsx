@@ -100,10 +100,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
     type === 'notebook' ? 'Create New Notebook' : 'Create New Document';
 
   return (
-    <Dialog
-      onClose={handleCancel}
-      aria-labelledby="create-dialog-title"
-    >
+    <Dialog onClose={handleCancel} aria-labelledby="create-dialog-title">
       <Dialog.Header id="create-dialog-title">{title}</Dialog.Header>
       <Box p={3}>
         <FormControl required>

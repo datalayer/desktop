@@ -49,9 +49,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   useEffect(() => {
     const initializeServices = async (): Promise<void> => {
       // Wait for window.datalayerClient to be available (set by main process SDK bridge)
-      if (
-        !(window.datalayerClient as unknown as DatalayerClient)
-      ) {
+      if (!(window.datalayerClient as unknown as DatalayerClient)) {
         console.warn('ServiceProvider: SDK not available yet, waiting...');
         // Retry in a moment
         setTimeout(initializeServices, 100);

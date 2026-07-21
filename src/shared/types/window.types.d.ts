@@ -169,7 +169,9 @@ declare global {
         runUrl: string;
       }>;
       logout: () => Promise<void>;
-      whoami: () => Promise<import('@datalayer/agent-runtimes/lib/models').UserJSON>;
+      whoami: () => Promise<
+        import('@datalayer/agent-runtimes/lib/models').UserJSON
+      >;
       getAuthState: () => Promise<{
         isAuthenticated: boolean;
         user: import('@datalayer/agent-runtimes/lib/models').UserJSON | null;
@@ -220,7 +222,9 @@ declare global {
       // Notebooks
       listNotebooks: (
         spaceId: string
-      ) => Promise<import('@datalayer/agent-runtimes/lib/models').NotebookJSON[]>;
+      ) => Promise<
+        import('@datalayer/agent-runtimes/lib/models').NotebookJSON[]
+      >;
       getNotebook: (
         notebookId: string
       ) => Promise<import('@datalayer/agent-runtimes/lib/models').NotebookJSON>;

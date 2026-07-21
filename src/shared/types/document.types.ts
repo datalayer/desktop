@@ -32,10 +32,7 @@ export interface DocumentViewProps {
 
 // Collaboration status type
 export type CollaborationStatus =
-  | 'disconnected'
-  | 'connecting'
-  | 'connected'
-  | 'error';
+  'disconnected' | 'connecting' | 'connected' | 'error';
 
 // Custom Lexical Editor props
 export interface CustomLexicalEditorProps {

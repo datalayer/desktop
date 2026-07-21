@@ -45,15 +45,12 @@ export async function loadServiceManager() {
     const managerWrapper = managerModule as ViteModuleWrapper;
     let ServiceManager =
       (managerWrapper.ServiceManager as
-        | typeof import('@jupyterlab/services').ServiceManager
-        | undefined) ||
+        typeof import('@jupyterlab/services').ServiceManager | undefined) ||
       ((managerWrapper.default as ViteModuleWrapper['default'])
         ?.ServiceManager as
-        | typeof import('@jupyterlab/services').ServiceManager
-        | undefined) ||
+        typeof import('@jupyterlab/services').ServiceManager | undefined) ||
       (managerWrapper.default as
-        | typeof import('@jupyterlab/services').ServiceManager
-        | undefined);
+        typeof import('@jupyterlab/services').ServiceManager | undefined);
 
     const serverConnectionWrapper = serverConnectionModule as ViteModuleWrapper;
     let ServerConnection =

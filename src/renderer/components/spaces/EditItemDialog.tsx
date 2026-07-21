@@ -108,10 +108,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
   if (!item) return null;
 
   return (
-    <Dialog
-      onClose={handleCancel}
-      aria-labelledby="edit-dialog-title"
-    >
+    <Dialog onClose={handleCancel} aria-labelledby="edit-dialog-title">
       <Dialog.Header id="edit-dialog-title">{title}</Dialog.Header>
       <Box p={3}>
         <FormControl required disabled={isUpdating}>
