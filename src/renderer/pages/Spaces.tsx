@@ -581,12 +581,12 @@ const Documents: React.FC<DocumentsListProps> = ({
         />
 
         <SpaceSection
-          title="Lexicals"
+          title="Documents"
           icon={FileIcon as React.ComponentType<{ size?: number }>}
           items={groupedDocuments.documents}
           loading={loading}
           selectedItemId={selectedNotebook}
-          emptyMessage="No lexicals yet"
+          emptyMessage="No documents yet"
           onItemOpen={handleOpenDocument}
           onItemEdit={handleEditItem}
           onItemDownload={handleDownloadItem}

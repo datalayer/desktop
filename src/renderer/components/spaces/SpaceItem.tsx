@@ -43,6 +43,7 @@ const SpaceItem: React.FC<SpaceItemProps> = ({
 }) => {
   return (
     <ActionList.Item
+      as="div"
       key={item.id}
       sx={{
         cursor: 'default',
@@ -85,87 +86,85 @@ const SpaceItem: React.FC<SpaceItemProps> = ({
           </Text>
         )}
       </Box>
-      <ActionList.TrailingVisual>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Button
-            size="small"
-            variant="invisible"
-            onClick={e => {
-              e.stopPropagation();
-              onOpen();
-            }}
-            sx={{
-              color: COLORS.brand.primary + ' !important',
-              fontWeight: 'semibold',
-              '&:hover': {
-                color: COLORS.brand.primaryHover + ' !important',
-                backgroundColor: `${COLORS.brand.primary}15`,
-              },
-            }}
-          >
-            Open
-          </Button>
-          <IconButton
-            aria-label="Edit"
-            icon={PencilIcon}
-            size="large"
-            variant="invisible"
-            sx={{
-              '& svg': {
-                width: '20px',
-                height: '20px',
-              },
-            }}
-            onClick={e => {
-              e.stopPropagation();
-              onEdit();
-            }}
-          />
-          <IconButton
-            aria-label="Download"
-            icon={DownloadIcon}
-            size="large"
-            variant="invisible"
-            sx={{
-              '& svg': {
-                width: '20px',
-                height: '20px',
-              },
-            }}
-            onClick={e => {
-              e.stopPropagation();
-              onDownload();
-            }}
-          />
-          <IconButton
-            aria-label="Delete"
-            icon={TrashIcon}
-            size="large"
-            variant="invisible"
-            sx={{
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Button
+          size="small"
+          variant="invisible"
+          onClick={e => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          sx={{
+            color: COLORS.brand.primary + ' !important',
+            fontWeight: 'semibold',
+            '&:hover': {
+              color: COLORS.brand.primaryHover + ' !important',
+              backgroundColor: `${COLORS.brand.primary}15`,
+            },
+          }}
+        >
+          Open
+        </Button>
+        <IconButton
+          aria-label="Edit"
+          icon={PencilIcon}
+          size="large"
+          variant="invisible"
+          sx={{
+            '& svg': {
+              width: '20px',
+              height: '20px',
+            },
+          }}
+          onClick={e => {
+            e.stopPropagation();
+            onEdit();
+          }}
+        />
+        <IconButton
+          aria-label="Download"
+          icon={DownloadIcon}
+          size="large"
+          variant="invisible"
+          sx={{
+            '& svg': {
+              width: '20px',
+              height: '20px',
+            },
+          }}
+          onClick={e => {
+            e.stopPropagation();
+            onDownload();
+          }}
+        />
+        <IconButton
+          aria-label="Delete"
+          icon={TrashIcon}
+          size="large"
+          variant="invisible"
+          sx={{
+            color: COLORS.palette.redPrimary + ' !important',
+            '& svg': {
               color: COLORS.palette.redPrimary + ' !important',
+              fill: COLORS.palette.redPrimary + ' !important',
+              width: '20px',
+              height: '20px',
+            },
+            '&:hover': {
+              color: COLORS.palette.redHover + ' !important',
+              backgroundColor: `${COLORS.palette.redPrimary}10`,
               '& svg': {
-                color: COLORS.palette.redPrimary + ' !important',
-                fill: COLORS.palette.redPrimary + ' !important',
-                width: '20px',
-                height: '20px',
-              },
-              '&:hover': {
                 color: COLORS.palette.redHover + ' !important',
-                backgroundColor: `${COLORS.palette.redPrimary}10`,
-                '& svg': {
-                  color: COLORS.palette.redHover + ' !important',
-                  fill: COLORS.palette.redHover + ' !important',
-                },
+                fill: COLORS.palette.redHover + ' !important',
               },
-            }}
-            onClick={e => {
-              e.stopPropagation();
-              onDelete();
-            }}
-          />
-        </Box>
-      </ActionList.TrailingVisual>
+            },
+          }}
+          onClick={e => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        />
+      </Box>
     </ActionList.Item>
   );
 };
