@@ -7,13 +7,14 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c4c2d128-ca43-4bcd-8f74-e64b00ca59ba/deploy-status)](https://app.netlify.com/sites/datalayer-desktop/deploys)
 [![Documentation](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://datalayer-desktop.netlify.app)
 
-# 🖥️ Datalayer Desktop
+# ☰ 🖥️ Datalayer Desktop
 
 A powerful desktop application for data science and machine learning, powered by Jupyter notebooks and cloud computing.
 
 ## ✨ Features
 
 ### Core Capabilities
+
 - 📓 **Jupyter Notebooks** - Full-featured notebook editing with live kernel execution
 - 📝 **Lexical Documents** - Rich text editor with embedded Jupyter cells for narrative documentation
 - 📚 **Spaces Library** - Browse and manage your notebooks and documents across Datalayer spaces
@@ -21,6 +22,7 @@ A powerful desktop application for data science and machine learning, powered by
 - 🌍 **Environment Selection** - Choose from Python, R, Julia, and specialized ML environments
 
 ### Collaboration & Cloud
+
 - ☁️ **Cloud Computing** - Access powerful cloud runtimes for your computations
 - 🔄 **Real-time Collaboration** - Work together on Lexical documents with live editing (beta)
 - 🔐 **Secure** - Enterprise-grade security with encrypted connections and token storage

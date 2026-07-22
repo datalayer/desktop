@@ -16,7 +16,11 @@ export default defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin({
-        exclude: ['@datalayer/core'],
+        // Bundle these instead of externalizing so Rollup can resolve their
+        // internal ESM directory imports (e.g. '@datalayer/core/lib/client').
+        // Native Node ESM (Electron main) rejects directory imports with
+        // ERR_UNSUPPORTED_DIR_IMPORT, so leaving them external breaks at load.
+        exclude: ['@datalayer/core', '@datalayer/agent-runtimes'],
       }),
       {
         name: 'copy-static-files',

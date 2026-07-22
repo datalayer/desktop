@@ -123,6 +123,10 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
     }
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog onClose={handleClose} aria-labelledby="create-runtime-dialog-title">
       <Dialog.Header id="create-runtime-dialog-title">

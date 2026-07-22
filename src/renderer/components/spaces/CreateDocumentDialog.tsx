@@ -99,6 +99,10 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
   const title =
     type === 'notebook' ? 'Create New Notebook' : 'Create New Document';
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog onClose={handleCancel} aria-labelledby="create-dialog-title">
       <Dialog.Header id="create-dialog-title">{title}</Dialog.Header>

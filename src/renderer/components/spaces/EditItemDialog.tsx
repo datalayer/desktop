@@ -105,7 +105,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
 
   const title = item?.type === 'notebook' ? 'Edit Notebook' : 'Edit Document';
 
-  if (!item) return null;
+  if (!isOpen || !item) return null;
 
   return (
     <Dialog onClose={handleCancel} aria-labelledby="edit-dialog-title">
