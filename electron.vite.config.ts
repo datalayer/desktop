@@ -12,9 +12,28 @@ import importAsString from 'vite-plugin-string';
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
 
+const hasCoreModelImportWithoutExtension = (id: string): boolean => {
+  const normalizedId = id.replace(/\\/g, '/');
+  const isCoreModelImport =
+    normalizedId.startsWith('@datalayer/core/lib/models/') ||
+    normalizedId.includes('/datalayer/core/lib/models/');
+  const hasKnownExtension = /\.(mjs|js|ts|tsx|jsx|json)$/.test(normalizedId);
+  return isCoreModelImport && !hasKnownExtension;
+};
+
 export default defineConfig({
   main: {
     plugins: [
+      {
+        name: 'fix-core-model-extension-main',
+        enforce: 'pre',
+        resolveId(id: string) {
+          if (hasCoreModelImportWithoutExtension(id)) {
+            return { id: `${id}.js`, external: false };
+          }
+          return null;
+        },
+      },
       externalizeDepsPlugin({
         // Bundle these instead of externalizing so Rollup can resolve their
         // internal ESM directory imports (e.g. '@datalayer/core/lib/client').
@@ -75,6 +94,16 @@ export default defineConfig({
   },
   preload: {
     plugins: [
+      {
+        name: 'fix-core-model-extension-preload',
+        enforce: 'pre',
+        resolveId(id: string) {
+          if (hasCoreModelImportWithoutExtension(id)) {
+            return { id: `${id}.js`, external: false };
+          }
+          return null;
+        },
+      },
       externalizeDepsPlugin({
         exclude: ['@datalayer/core'],
       }),
@@ -160,11 +189,7 @@ export default defineConfig({
           // Some generated ESM from @datalayer packages imports core models
           // without a file extension (e.g. @datalayer/core/lib/models/HealthCheck).
           // Vite SSR/Rollup may fail load-fallback in CI unless we normalize to .js.
-          if (
-            id.startsWith('@datalayer/core/lib/models/') &&
-            !id.endsWith('.js') &&
-            !id.endsWith('.mjs')
-          ) {
+          if (hasCoreModelImportWithoutExtension(id)) {
             return { id: `${id}.js`, external: false };
           }
           // Intercept @primer/react-brand CSS — not available in Electron

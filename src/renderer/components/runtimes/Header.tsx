@@ -106,7 +106,7 @@ const Header: React.FC<RuntimesHeaderProps> = ({
           <Button
             leadingVisual={TrashIcon}
             variant="danger"
-            size="medium"
+            size="small"
             onClick={onTerminateAll}
             disabled={disabled || runtimeCount === 0}
             sx={{
@@ -131,28 +131,14 @@ const Header: React.FC<RuntimesHeaderProps> = ({
             Terminate All Agents
           </Button>
 
-          {/* Create Runtime button - never disabled */}
+          {/* New Agent button - never disabled */}
           <Button
             leadingVisual={PlusIcon}
             variant="primary"
-            size="medium"
+            size="small"
             onClick={onCreateRuntime}
-            sx={{
-              backgroundColor: COLORS.brand.primary + ' !important',
-              color: 'white !important',
-              border: '1px solid',
-              borderColor: COLORS.brand.primary,
-              '& svg': {
-                color: 'white !important',
-                fill: 'white !important',
-              },
-              '&:hover:not([disabled])': {
-                backgroundColor: COLORS.brand.primaryHover + ' !important',
-                borderColor: COLORS.brand.primaryHover,
-              },
-            }}
           >
-            Create Agent
+            New Agent
           </Button>
 
           {/* Refresh button - only disabled while refreshing */}
