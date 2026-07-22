@@ -116,14 +116,31 @@ export const formatResources = (
   if (!resources) return [];
 
   const formatted = [];
-  if (resources.cpu) {
-    formatted.push(`${resources.cpu} CPU cores`);
+  const asDefaultValue = (value: unknown): unknown => {
+    if (value && typeof value === 'object' && 'default' in value) {
+      return (value as { default?: unknown }).default;
+    }
+    return value;
+  };
+
+  const cpu = asDefaultValue(resources.cpu);
+  const memory = asDefaultValue(resources.memory);
+  const gpu = asDefaultValue(resources.gpu);
+  const nvidiaGpu = asDefaultValue(resources['nvidia.com/gpu']);
+
+  if (cpu !== undefined && cpu !== null && cpu !== '') {
+    formatted.push(`${cpu} CPU`);
   }
-  if (resources.memory) {
-    formatted.push(`${resources.memory} RAM`);
+  if (memory !== undefined && memory !== null && memory !== '') {
+    formatted.push(`${memory} RAM`);
   }
-  if (resources.gpu && resources.gpu !== '0') {
-    formatted.push(`${resources.gpu} GPU`);
+  const gpuValue =
+    gpu !== undefined && gpu !== null && gpu !== '' ? gpu : nvidiaGpu;
+  if (gpuValue !== undefined && gpuValue !== null && gpuValue !== '') {
+    const asString = String(gpuValue);
+    if (asString !== '0') {
+      formatted.push(`${asString} GPU`);
+    }
   }
   return formatted;
 };

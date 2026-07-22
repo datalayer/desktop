@@ -103,6 +103,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 
   // Get current value for select - always use placeholder if no runtime selected
   const currentValue = selectedRuntimePodName || '__placeholder__';
+  const hasAvailableAgents = allRuntimes.length > 0;
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 280 }}>
@@ -110,7 +111,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
       <Select
         value={currentValue}
         onChange={handleChange}
-        disabled={disabled || isLoading}
+        disabled={disabled || isLoading || !hasAvailableAgents}
         size="small"
         sx={{
           flex: 1,
@@ -121,7 +122,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
         {/* Only show placeholder when no runtime is selected */}
         {!selectedRuntimePodName && (
           <Select.Option value="__placeholder__" disabled>
-            Agents
+            {hasAvailableAgents ? 'Select an agent' : 'No agents available'}
           </Select.Option>
         )}
 

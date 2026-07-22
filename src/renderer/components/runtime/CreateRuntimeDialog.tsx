@@ -20,6 +20,7 @@ import {
   Text,
 } from '@primer/react';
 import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
+import { createRandomTimestampName } from '@datalayer/core/lib/utils/Name';
 
 export interface CreateRuntimeDialogProps {
   isOpen: boolean;
@@ -37,7 +38,9 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
 }) => {
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState('');
+  const [runtimeName, setRuntimeName] = useState(() =>
+    createRandomTimestampName()
+  );
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
 
@@ -62,11 +65,18 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
 
   const handleClose = () => {
     if (!creating) {
-      setRuntimeName('');
+      setRuntimeName(createRandomTimestampName());
       setMinutes(10);
       onClose();
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setRuntimeName(createRandomTimestampName());
+      setMinutes(10);
+    }
+  }, [isOpen]);
 
   // Handle Escape key globally when dialog is open
   useEffect(() => {

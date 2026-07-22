@@ -22,6 +22,7 @@ import {
 } from '@primer/react';
 import { TrashIcon } from '@primer/octicons-react';
 import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
+import { createRandomTimestampName } from '@datalayer/core/lib/utils/Name';
 import { RuntimeProgressBar } from './RuntimeProgressBar';
 import { RuntimeSelector } from './RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';
@@ -46,12 +47,26 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState('');
+  const [runtimeName, setRuntimeName] = useState(() =>
+    createRandomTimestampName()
+  );
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [terminating, setTerminating] = useState(false);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+
+  const handleOpenRuntimeDialog = () => {
+    setRuntimeName(createRandomTimestampName());
+    setMinutes(10);
+    setShowRuntimeDialog(true);
+  };
+
+  const handleCloseRuntimeDialog = () => {
+    setShowRuntimeDialog(false);
+    setRuntimeName(createRandomTimestampName());
+    setMinutes(10);
+  };
 
   // Subscribe to runtime expiration events
   useEffect(() => {
@@ -99,9 +114,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !creating) {
         event.preventDefault();
-        setShowRuntimeDialog(false);
-        setRuntimeName('');
-        setMinutes(10);
+        handleCloseRuntimeDialog();
       }
     };
 
@@ -166,9 +179,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       }
 
       // Close dialog
-      setShowRuntimeDialog(false);
-      setRuntimeName('');
-      setMinutes(10);
+      handleCloseRuntimeDialog();
     } catch (error) {
       console.error('Failed to create runtime:', error);
       alert('Failed to create runtime: ' + (error as Error).message);
@@ -181,9 +192,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   const handleRuntimeKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       event.preventDefault();
-      setShowRuntimeDialog(false);
-      setRuntimeName('');
-      setMinutes(10);
+      handleCloseRuntimeDialog();
     } else if (
       event.key === 'Enter' &&
       !creating &&
@@ -272,7 +281,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
             onRuntimeSelected={handleRuntimeSelectorChange}
             disabled={isConnecting || creating}
           />
-          <Button size="small" onClick={() => setShowRuntimeDialog(true)}>
+          <Button size="small" onClick={handleOpenRuntimeDialog}>
             New Agent
           </Button>
           {runtimePodName && (
@@ -289,7 +298,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
 
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
-        <Dialog onClose={() => setShowRuntimeDialog(false)} title="New Agent">
+        <Dialog onClose={handleCloseRuntimeDialog} title="New Agent">
           <Box sx={{ p: 3 }}>
             <FormControl required>
               <FormControl.Label>Agent Name</FormControl.Label>
@@ -367,10 +376,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
                 mt: 3,
               }}
             >
-              <Button
-                onClick={() => setShowRuntimeDialog(false)}
-                disabled={creating}
-              >
+              <Button onClick={handleCloseRuntimeDialog} disabled={creating}>
                 Cancel
               </Button>
               <Button

@@ -29,6 +29,7 @@ import {
 } from '@primer/octicons-react';
 import { notebookStore, type NotebookState } from '@datalayer/jupyter-react';
 import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
+import { createRandomTimestampName } from '@datalayer/core/lib/utils/Name';
 import { RuntimeProgressBar } from '../runtime/RuntimeProgressBar';
 import { RuntimeSelector } from '../runtime/RuntimeSelector';
 import { useService } from '../../contexts/ServiceContext';
@@ -52,13 +53,27 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState('');
+  const [runtimeName, setRuntimeName] = useState(() =>
+    createRandomTimestampName()
+  );
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [terminating, setTerminating] = useState(false);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isCellRunning, setIsCellRunning] = useState(false);
+
+  const handleOpenRuntimeDialog = () => {
+    setRuntimeName(createRandomTimestampName());
+    setMinutes(10);
+    setShowRuntimeDialog(true);
+  };
+
+  const handleCloseRuntimeDialog = () => {
+    setShowRuntimeDialog(false);
+    setRuntimeName(createRandomTimestampName());
+    setMinutes(10);
+  };
 
   // Monitor kernel execution state
   useEffect(() => {
@@ -162,9 +177,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       }
 
       // Close dialog
-      setShowRuntimeDialog(false);
-      setRuntimeName('');
-      setMinutes(10);
+      handleCloseRuntimeDialog();
     } catch (error) {
       console.error('Failed to create runtime:', error);
       alert('Failed to create runtime: ' + (error as Error).message);
@@ -306,7 +319,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
             onRuntimeSelected={handleRuntimeSelectorChange}
             disabled={isConnecting || creating}
           />
-          <Button size="small" onClick={() => setShowRuntimeDialog(true)}>
+          <Button size="small" onClick={handleOpenRuntimeDialog}>
             New Agent
           </Button>
           {runtimePodName && (
@@ -324,7 +337,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
 
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
-        <Dialog onClose={() => setShowRuntimeDialog(false)} title="New Agent">
+        <Dialog onClose={handleCloseRuntimeDialog} title="New Agent">
           <Box sx={{ p: 3 }}>
             <FormControl required>
               <FormControl.Label>Agent Name</FormControl.Label>
@@ -402,10 +415,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
                 mt: 3,
               }}
             >
-              <Button
-                onClick={() => setShowRuntimeDialog(false)}
-                disabled={creating}
-              >
+              <Button onClick={handleCloseRuntimeDialog} disabled={creating}>
                 Cancel
               </Button>
               <Button

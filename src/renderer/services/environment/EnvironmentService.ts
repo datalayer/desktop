@@ -107,15 +107,22 @@ export class EnvironmentService
       }
 
       // Map to our Environment interface
-      this.environments = rawEnvironments.map((env: EnvironmentJSON) => ({
-        uid: env.name, // Use name as uid
-        title: env.title,
-        description: env.description,
-        rich_description: env.richDescription,
-        burning_rate: env.burningRate,
-        name: env.name,
-        is_default: false, // Not in EnvironmentJSON, set default
-      }));
+      this.environments = rawEnvironments.map((env: EnvironmentJSON) => {
+        const envRecord = env as unknown as Record<string, unknown>;
+        return {
+          uid: env.name, // Use name as uid
+          title: env.title,
+          description: env.richDescription || env.description,
+          rich_description: env.richDescription,
+          icon: envRecord.icon as string | undefined,
+          image: envRecord.image as string | undefined,
+          resources: envRecord.resources as Record<string, unknown> | undefined,
+          burning_rate: env.burningRate,
+          burningRate: env.burningRate,
+          name: env.name,
+          is_default: false, // Not in EnvironmentJSON, set default
+        };
+      });
 
       this.lastFetchTime = Date.now();
 

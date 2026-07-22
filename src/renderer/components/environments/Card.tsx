@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Heading, Label, Text } from '@primer/react';
 import { EnvironmentCardProps } from '../../../shared/types';
 import Icon from './Icon';
 import TypeLabel from './TypeLabel';
@@ -26,6 +26,7 @@ const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
   const shouldHideTypeLabel =
     normalizedDisplayName === 'ai agents environment gpu' ||
     normalizedDisplayName === 'ai agents environment';
+  const burningRate = environment.burningRate ?? environment.burning_rate;
 
   return (
     <Box
@@ -65,6 +66,19 @@ const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
             </Box>
 
             <Description environment={environment} />
+
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+              {environment.name && (
+                <Label size="small" variant="accent">
+                  Profile: {environment.name}
+                </Label>
+              )}
+              {burningRate !== undefined && burningRate !== null && (
+                <Label size="small" variant="success">
+                  Burning rate: {burningRate} credits/s
+                </Label>
+              )}
+            </Box>
 
             {environment.image && (
               <Text

@@ -113,18 +113,30 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         if (cancelled || runtimeInfo) return;
 
         const now = Date.now();
-        const availableRuntime = runtimes.find(runtime => {
-          if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
-            return false;
-          }
-          if (runtime.expiredAt) {
-            const expiresAt = new Date(runtime.expiredAt).getTime();
-            if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+        const availableRuntimes = runtimes
+          .filter(runtime => {
+            if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
               return false;
             }
-          }
-          return true;
-        });
+            if (runtime.expiredAt) {
+              const expiresAt = new Date(runtime.expiredAt).getTime();
+              if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .sort((a, b) => {
+            const aStarted = a.startedAt
+              ? new Date(a.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            const bStarted = b.startedAt
+              ? new Date(b.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            return bStarted - aStarted;
+          });
+
+        const availableRuntime = availableRuntimes[0];
 
         if (availableRuntime) {
           console.log(

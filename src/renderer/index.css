@@ -322,4 +322,3 @@ ul > li:focus-within,
   border: 0 !important;
   box-shadow: inset 0 0 0 2px var(--datalayer-green-accessible-dark) !important;
 }
-
