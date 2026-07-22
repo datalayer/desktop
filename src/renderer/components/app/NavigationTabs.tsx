@@ -32,7 +32,7 @@ export interface NavigationTabsProps {
 
 /**
  * Container component for navigation tabs with horizontal scrolling.
- * Shows Spaces, Agents, Environments, and all open notebooks/documents.
+ * Shows Spaces, Agents, Runtime Profiles, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
@@ -79,7 +79,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
       />
 
       <NavigationTab
-        label="Environments"
+        label="Runtime Profiles"
         icon={ServerIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'environments'}
         onClick={() => onTabChange('environments')}

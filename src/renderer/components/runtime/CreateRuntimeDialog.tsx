@@ -153,7 +153,7 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
         </FormControl>
 
         <FormControl sx={{ mt: 3 }}>
-          <FormControl.Label>Environment</FormControl.Label>
+          <FormControl.Label>Runtime Profile</FormControl.Label>
           <Select
             value={selectedEnvironment}
             onChange={e => setSelectedEnvironment(e.target.value)}
