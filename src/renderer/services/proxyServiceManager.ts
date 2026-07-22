@@ -457,9 +457,11 @@ export async function createProxyServiceManager(
     appendToken: true,
   });
 
-  return new (ServiceManager as unknown as new (
-    ...args: unknown[]
-  ) => Record<string, unknown>)({
+  return new (
+    ServiceManager as unknown as new (
+      ...args: unknown[]
+    ) => Record<string, unknown>
+  )({
     serverSettings: settings,
   }) as unknown as import('@jupyterlab/services').ServiceManager.IManager;
 }

@@ -48,18 +48,18 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog
-      isOpen={isOpen}
-      onDismiss={() => !isTerminating && onCancel()}
-      aria-labelledby="terminate-dialog-title"
+      onClose={() => !isTerminating && onCancel()}
+      title="Terminate Agent"
     >
-      <Dialog.Header id="terminate-dialog-title">
-        Terminate Runtime
-      </Dialog.Header>
       <Box sx={{ p: 3 }}>
         <Box sx={{ mb: 3 }}>
-          Are you sure you want to terminate this runtime? This action cannot be
+          Are you sure you want to terminate this agent? This action cannot be
           undone.
         </Box>
 

@@ -27,7 +27,7 @@ const EmptyState: React.FC = () => {
       }}
     >
       <Text sx={{ color: 'fg.muted' }}>
-        No environments available. Please check your connection.
+        No runtime profiles available. Please check your connection.
       </Text>
     </Box>
   );

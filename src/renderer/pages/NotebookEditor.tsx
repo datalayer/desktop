@@ -97,6 +97,74 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     };
   }, [runtimeService]); // Only depend on runtimeService, not runtimeInfo
 
+  // Auto-assign an existing agent when opening the editor.
+  useEffect(() => {
+    let cancelled = false;
+
+    const autoAssignRuntime = async () => {
+      if (!runtimeService || runtimeInfo) return;
+
+      try {
+        if (runtimeService.state === 'uninitialized') {
+          await runtimeService.initialize();
+        }
+
+        const runtimes = await runtimeService.listAllRuntimes();
+        if (cancelled || runtimeInfo) return;
+
+        const now = Date.now();
+        const availableRuntimes = runtimes
+          .filter(runtime => {
+            if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
+              return false;
+            }
+            if (runtime.expiredAt) {
+              const expiresAt = new Date(runtime.expiredAt).getTime();
+              if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .sort((a, b) => {
+            const aStarted = a.startedAt
+              ? new Date(a.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            const bStarted = b.startedAt
+              ? new Date(b.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            return bStarted - aStarted;
+          });
+
+        const availableRuntime = availableRuntimes[0];
+
+        if (availableRuntime) {
+          console.log(
+            '[NotebookEditor] Auto-assigning available agent:',
+            availableRuntime.podName
+          );
+          setRuntimeInfo({
+            id: availableRuntime.uid,
+            podName: availableRuntime.podName,
+            ingress: availableRuntime.ingress,
+            token: availableRuntime.token,
+          });
+        }
+      } catch (error) {
+        console.error(
+          '[NotebookEditor] Failed to auto-assign available agent:',
+          error
+        );
+      }
+    };
+
+    autoAssignRuntime();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeService, runtimeInfo, notebookId]);
+
   // Handle runtime selection - set runtime info which will trigger service manager creation
   const handleRuntimeSelected = useCallback(async (runtime: Runtime | null) => {
     if (!runtime) {
@@ -126,7 +194,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
             setAuthToken(authState.token);
             setConfiguration({
               token: authState.token,
-              runUrl: authState.runUrl || configuration.runUrl,
+              iamUrl: authState.runUrl || configuration.iamUrl,
             });
           }
         }
@@ -143,12 +211,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
 
   // Initialize collaboration provider
   useEffect(() => {
-    if (!configuration?.runUrl || !authToken) {
+    if (!configuration?.iamUrl || !authToken) {
       return;
     }
 
     const provider = new ElectronCollaborationProvider({
-      runUrl: configuration.runUrl,
+      runUrl: configuration.iamUrl,
       token: authToken,
       runtimeId: undefined,
     });
@@ -160,7 +228,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         provider.dispose();
       }
     };
-  }, [configuration?.runUrl, authToken]);
+  }, [configuration?.iamUrl, authToken]);
 
   // Create service manager when runtime info changes
   useEffect(() => {

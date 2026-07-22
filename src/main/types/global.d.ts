@@ -12,8 +12,7 @@
 
 declare global {
   var __datalayerRuntimeCleanup:
-    | Map<string, { terminated: boolean }>
-    | undefined;
+    Map<string, { terminated: boolean }> | undefined;
 }
 
 export {};

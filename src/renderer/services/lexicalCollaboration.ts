@@ -10,7 +10,7 @@
  * @module renderer/services/lexicalCollaboration
  */
 
-import type { LexicalJSON } from '@datalayer/core/lib/models';
+import type { LexicalJSON } from '@datalayer/agent-runtimes/lib/models';
 
 /**
  * Configuration for lexical document collaboration.
@@ -50,8 +50,7 @@ export class LexicalCollaborationService {
    */
   async setupCollaboration(
     document:
-      | LexicalJSON
-      | ({ id: string; uid?: string } & Record<string, unknown>)
+      LexicalJSON | ({ id: string; uid?: string } & Record<string, unknown>)
   ): Promise<LexicalCollaborationConfig | undefined> {
     // Support both DocumentData (with id) and LexicalJSON (with uid)
     const documentId =

@@ -19,7 +19,7 @@ import { AlertIcon } from '@primer/octicons-react';
 const AuthWarning: React.FC = () => {
   return (
     <Flash variant="warning" sx={{ mb: 3 }}>
-      <AlertIcon /> Please login to view and select runtime environments
+      <AlertIcon /> Please login to view and select runtime profiles
     </Flash>
   );
 };

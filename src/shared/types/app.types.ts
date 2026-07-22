@@ -11,7 +11,7 @@
 
 export type ViewType = 'notebooks' | 'notebook' | 'document' | 'environments';
 
-import type { UserJSON } from '@datalayer/core/lib/client';
+import type { UserJSON } from '@datalayer/agent-runtimes/lib/models';
 export type User = UserJSON;
 
 export interface LoadingScreenProps {

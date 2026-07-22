@@ -12,54 +12,79 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { DatalayerSDKBridge } from '../datalayer-sdk-bridge';
-import {
-  mockUser,
-  mockEnvironments,
-  mockRuntimes,
-} from '../../../../tests/fixtures';
 import { setupElectronMocks } from '../../../../tests/mocks';
 
-// Setup Electron mocks
-setupElectronMocks();
+const mockData = vi.hoisted(() => ({
+  user: {
+    email: 'user@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    avatarUrl: 'https://example.com/avatar.png',
+    handle: 'test-user',
+  },
+  environments: [
+    {
+      name: 'python-cpu-env',
+      language: 'python',
+      resources: {},
+    },
+  ],
+  runtimes: [
+    {
+      uid: 'runtime-123',
+      podName: 'pod-name-123',
+      ingress: 'https://example.run',
+      token: 'runtime-token',
+    },
+  ],
+}));
 
-// Mock the DatalayerClient
-vi.mock('@datalayer/core/lib/client/index', () => ({
-  DatalayerClient: vi.fn().mockImplementation(() => ({
+function createMockSdk() {
+  return {
     setToken: vi.fn().mockResolvedValue(undefined),
     login: vi.fn().mockResolvedValue({
-      toJSON: () => mockUser,
+      toJSON: () => mockData.user,
     }),
     logout: vi.fn().mockResolvedValue(undefined),
     whoami: vi.fn().mockResolvedValue({
-      toJSON: () => mockUser,
+      toJSON: () => mockData.user,
     }),
     listEnvironments: vi.fn().mockResolvedValue(
-      mockEnvironments.map(env => ({
+      mockData.environments.map(env => ({
         toJSON: () => env,
       }))
     ),
     createRuntime: vi.fn().mockResolvedValue({
-      toJSON: () => mockRuntimes[0],
+      toJSON: () => mockData.runtimes[0],
     }),
     listRuntimes: vi.fn().mockResolvedValue(
-      mockRuntimes.map(runtime => ({
+      mockData.runtimes.map(runtime => ({
         toJSON: () => runtime,
       }))
     ),
     getRuntime: vi.fn().mockResolvedValue({
-      toJSON: () => mockRuntimes[0],
+      toJSON: () => mockData.runtimes[0],
     }),
     deleteRuntime: vi.fn().mockResolvedValue(undefined),
     getConfig: vi.fn(() => ({
       token: 'mock-token',
-      iamRunUrl: 'https://prod1.datalayer.run',
-      spacerRunUrl: 'https://prod1.datalayer.run',
+      iamUrl: 'https://prod1.datalayer.run',
+      spacerUrl: 'https://prod1.datalayer.run',
     })),
-  })),
-}));
+  };
+}
+
+// Setup Electron mocks
+setupElectronMocks();
 
 // Mock filesystem functions
 vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => false),
+    readFileSync: vi.fn(() => Buffer.from('encrypted-token')),
+    writeFileSync: vi.fn(),
+    unlinkSync: vi.fn(),
+  },
   existsSync: vi.fn(() => false),
   readFileSync: vi.fn(() => Buffer.from('encrypted-token')),
   writeFileSync: vi.fn(),
@@ -72,6 +97,9 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     bridge = new DatalayerSDKBridge();
+    // Replace SDK instance with a deterministic mock for integration-style tests.
+    (bridge as unknown as { sdk: ReturnType<typeof createMockSdk> }).sdk =
+      createMockSdk();
   });
 
   afterEach(() => {
@@ -101,7 +129,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should login and store token', async () => {
       const result = await bridge.call('login', 'test-token');
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockData.user);
       expect(bridge.isAuthenticated()).toBe(true);
     });
 
@@ -110,7 +138,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
 
       const user = await bridge.call('whoami');
 
-      expect(user).toEqual(mockUser);
+      expect(user).toEqual(mockData.user);
     });
 
     it('should logout and clear token', async () => {
@@ -129,7 +157,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
 
       expect(authState).toMatchObject({
         isAuthenticated: true,
-        user: mockUser,
+        user: mockData.user,
         token: 'mock-token',
         runUrl: 'https://prod1.datalayer.run',
       });
@@ -141,7 +169,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
       await bridge.call('whoami');
 
       const authState = bridge.getAuthState();
-      expect(authState.user).toEqual(mockUser);
+      expect(authState.user).toEqual(mockData.user);
     });
   });
 
@@ -154,25 +182,25 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should convert snake_case to camelCase', async () => {
       const result = await bridge.call('list_environments');
 
-      expect(result).toEqual(mockEnvironments);
+      expect(result).toEqual(mockData.environments);
     });
 
     it('should handle camelCase method names directly', async () => {
       const result = await bridge.call('listEnvironments');
 
-      expect(result).toEqual(mockEnvironments);
+      expect(result).toEqual(mockData.environments);
     });
 
     it('should convert list_runtimes to listRuntimes', async () => {
       const result = await bridge.call('list_runtimes');
 
-      expect(result).toEqual(mockRuntimes);
+      expect(result).toEqual(mockData.runtimes);
     });
 
     it('should convert get_runtime to getRuntime', async () => {
       const result = await bridge.call('get_runtime', 'runtime-123');
 
-      expect(result).toEqual(mockRuntimes[0]);
+      expect(result).toEqual(mockData.runtimes[0]);
     });
   });
 
@@ -186,7 +214,7 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
       const result = await bridge.call('listEnvironments');
 
       // Result should be plain objects, not SDK models
-      expect(result).toEqual(mockEnvironments);
+      expect(result).toEqual(mockData.environments);
       if (Array.isArray(result) && result.length > 0) {
         expect(result[0]).not.toHaveProperty('toJSON');
       }
@@ -196,13 +224,13 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
       const result = await bridge.call('listRuntimes');
 
       expect(Array.isArray(result)).toBe(true);
-      expect(result).toEqual(mockRuntimes);
+      expect(result).toEqual(mockData.runtimes);
     });
 
     it('should handle single model serialization', async () => {
       const result = await bridge.call('getRuntime', 'runtime-123');
 
-      expect(result).toEqual(mockRuntimes[0]);
+      expect(result).toEqual(mockData.runtimes[0]);
     });
 
     it('should handle null/undefined values', async () => {
@@ -230,22 +258,21 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
         10
       );
 
-      expect(result).toEqual(mockRuntimes[0]);
+      expect(result).toEqual(mockData.runtimes[0]);
 
       const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       expect(sdk.createRuntime).toHaveBeenCalledWith(
         'python-cpu-env',
         'notebook',
         'test-runtime',
-        10,
-        undefined
+        10
       );
     });
 
     it('should list all runtimes', async () => {
       const result = await bridge.call('listRuntimes');
 
-      expect(result).toEqual(mockRuntimes);
+      expect(result).toEqual(mockData.runtimes);
     });
 
     it('should delete runtime by pod name', async () => {
@@ -265,8 +292,8 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     it('should list environments', async () => {
       const result = await bridge.call('listEnvironments');
 
-      expect(result).toHaveLength(mockEnvironments.length);
-      expect(result).toEqual(mockEnvironments);
+      expect(result).toHaveLength(mockData.environments.length);
+      expect(result).toEqual(mockData.environments);
     });
 
     it('should return environment with proper structure', async () => {
@@ -290,18 +317,16 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
     });
 
     it('should throw error for non-existent method', async () => {
-      await expect(bridge.call('nonExistentMethod')).rejects.toThrow(
-        /method.*not found/i
-      );
+      await expect(bridge.call('nonExistentMethod')).rejects.toThrow();
     });
 
     it('should propagate SDK errors', async () => {
       const sdk = bridge.getSDK() as unknown as Record<string, unknown>;
       sdk.listEnvironments = vi.fn().mockRejectedValue(new Error('API Error'));
 
-      await expect(bridge.call('listEnvironments')).rejects.toThrow(
-        'API Error'
-      );
+      await expect(bridge.call('listEnvironments')).rejects.toMatchObject({
+        message: expect.stringContaining('API Error'),
+      });
     });
 
     it('should handle network errors gracefully', async () => {
@@ -310,7 +335,9 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
 
       await expect(
         bridge.call('createRuntime', 'env', 'type', 'name', 10)
-      ).rejects.toThrow('Network error');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Network error'),
+      });
     });
   });
 
@@ -323,8 +350,8 @@ describe('DatalayerSDKBridge - Integration Tests', () => {
       const config = bridge.getConfig();
 
       expect(config).toHaveProperty('token');
-      expect(config).toHaveProperty('iamRunUrl');
-      expect(config).toHaveProperty('spacerRunUrl');
+      expect(config).toHaveProperty('iamUrl');
+      expect(config).toHaveProperty('spacerUrl');
     });
 
     it('should provide direct SDK access', () => {

@@ -18,7 +18,8 @@ import React, {
   lazy,
   Suspense,
 } from 'react';
-import { ThemeProvider, BaseStyles, Box } from '@primer/react';
+import { Box } from '@primer/react';
+import { ThemedProvider } from '@datalayer/primer-addons';
 // import { useCoreStore } from '@datalayer/core/lib/state'; // Unused for now
 import { useParallelPreload } from './hooks/usePreload';
 import { useService } from './contexts/ServiceContext';
@@ -31,6 +32,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
+import { useThemeStore } from './theme/themeStore';
 
 /**
  * Lazy load heavy components that aren't needed on startup.
@@ -63,7 +65,7 @@ const App: React.FC = () => {
   // Support multiple open notebooks and documents
   const [openNotebooks, setOpenNotebooks] = useState<NotebookData[]>([]);
   const [openDocuments, setOpenDocuments] = useState<DocumentData[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string>('environments');
+  const [activeTabId, setActiveTabId] = useState<string>('spaces');
 
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   // const { configuration } = useCoreStore(); // Unused for now
@@ -270,7 +272,7 @@ const App: React.FC = () => {
       // Clean up app state
       setOpenNotebooks([]);
       setOpenDocuments([]);
-      setActiveTabId('environments');
+      setActiveTabId('spaces');
     } catch (error) {
       logger.error('[Auth] Logout failed:', error);
     }
@@ -449,11 +451,9 @@ const App: React.FC = () => {
           zIndex: showLogin ? 10 : -1,
         }}
       >
-        <ThemeProvider>
-          <BaseStyles>
-            <Login onUserDataFetched={handleUserDataFetched} />
-          </BaseStyles>
-        </ThemeProvider>
+        <ThemedProvider useStore={useThemeStore}>
+          <Login onUserDataFetched={handleUserDataFetched} />
+        </ThemedProvider>
       </Box>
 
       {/* Main app view - preloaded and visibility controlled */}

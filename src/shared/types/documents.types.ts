@@ -9,7 +9,10 @@
  * @module shared/types/documents
  */
 
-import type { NotebookJSON, LexicalJSON } from '@datalayer/core/lib/models';
+import type {
+  NotebookJSON,
+  LexicalJSON,
+} from '@datalayer/agent-runtimes/lib/models';
 
 /**
  * Represents any document item (notebook or lexical) from the API.
@@ -22,6 +25,7 @@ export interface SpaceInfo {
   uid?: string;
   name: string;
   handle?: string;
+  variant?: string;
 }
 
 export interface GroupedDocuments {

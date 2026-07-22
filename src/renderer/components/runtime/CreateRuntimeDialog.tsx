@@ -19,7 +19,8 @@ import {
   Button,
   Text,
 } from '@primer/react';
-import type { EnvironmentJSON } from '@datalayer/core/lib/models';
+import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
+import { createRandomTimestampName } from '@datalayer/core/lib/utils/Name';
 
 export interface CreateRuntimeDialogProps {
   isOpen: boolean;
@@ -37,7 +38,9 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
 }) => {
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState('');
+  const [runtimeName, setRuntimeName] = useState(() =>
+    createRandomTimestampName()
+  );
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
 
@@ -62,11 +65,18 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
 
   const handleClose = () => {
     if (!creating) {
-      setRuntimeName('');
+      setRuntimeName(createRandomTimestampName());
       setMinutes(10);
       onClose();
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setRuntimeName(createRandomTimestampName());
+      setMinutes(10);
+    }
+  }, [isOpen]);
 
   // Handle Escape key globally when dialog is open
   useEffect(() => {
@@ -123,15 +133,12 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
     }
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <Dialog
-      isOpen={isOpen}
-      onDismiss={handleClose}
-      aria-labelledby="create-runtime-dialog-title"
-    >
-      <Dialog.Header id="create-runtime-dialog-title">
-        Create Runtime
-      </Dialog.Header>
+    <Dialog onClose={handleClose} title="Create Runtime">
       <Box sx={{ p: 3 }}>
         <FormControl required>
           <FormControl.Label>Runtime Name</FormControl.Label>
@@ -146,7 +153,7 @@ export const CreateRuntimeDialog: React.FC<CreateRuntimeDialogProps> = ({
         </FormControl>
 
         <FormControl sx={{ mt: 3 }}>
-          <FormControl.Label>Environment</FormControl.Label>
+          <FormControl.Label>Runtime Profile</FormControl.Label>
           <Select
             value={selectedEnvironment}
             onChange={e => setSelectedEnvironment(e.target.value)}

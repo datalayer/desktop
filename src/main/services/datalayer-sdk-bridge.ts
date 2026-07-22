@@ -10,8 +10,8 @@
  * @module main/services/datalayer-sdk-bridge
  */
 
-import { DatalayerClient } from '@datalayer/core/lib/client/index';
-import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
+import { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
+import type { UserJSON } from '@datalayer/agent-runtimes/lib/models';
 import { safeStorage } from 'electron';
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
@@ -46,13 +46,13 @@ export class DatalayerSDKBridge {
 
     this.sdk = new DatalayerClient({
       handlers: {
-        beforeCall: (method, args) => {
+        beforeCall: (method: string, args: unknown[]) => {
           log.debug(`[SDK] → ${method}`, { argsCount: args.length });
         },
-        afterCall: method => {
+        afterCall: (method: string) => {
           log.debug(`[SDK] ${method} completed`);
         },
-        onError: (method, error) => {
+        onError: (method: string, error: unknown) => {
           log.error(
             `[SDK] ${method} failed:`,
             error instanceof Error ? error.message : String(error)
@@ -83,15 +83,16 @@ export class DatalayerSDKBridge {
           // Verify the token is still valid
           const user = await this.sdk.whoami();
           // Use the User model's toJSON method to get all properties
-          this.currentUser = user.toJSON();
+          const userJson = user.toJSON();
+          this.currentUser = userJson;
           log.info(
             '[SDK Bridge] Successfully restored authentication for user:',
             {
-              email: this.currentUser.email,
-              firstName: this.currentUser.firstName,
-              lastName: this.currentUser.lastName,
-              avatarUrl: this.currentUser.avatarUrl,
-              handle: this.currentUser.handle,
+              email: userJson.email,
+              firstName: userJson.firstName,
+              lastName: userJson.lastName,
+              avatarUrl: userJson.avatarUrl,
+              handle: userJson.handle,
             }
           );
         } catch {
@@ -336,7 +337,7 @@ export class DatalayerSDKBridge {
       isAuthenticated: !!config.token && !!this.currentUser,
       user: this.currentUser,
       token: config.token || null,
-      runUrl: config.iamRunUrl || 'https://prod1.datalayer.run',
+      runUrl: config.iamUrl || 'https://prod1.datalayer.run',
     };
   }
 

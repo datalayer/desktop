@@ -19,6 +19,7 @@ import {
   Text,
 } from '@primer/react';
 import { COLORS } from '../../../shared/constants/colors';
+import { createRandomTimestampName } from '@datalayer/core/lib/utils/Name';
 
 export interface CreateDocumentDialogProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
   onClose,
   onCreate,
 }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => createRandomTimestampName());
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,14 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
     };
   }, [isOpen, isCreating]);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(createRandomTimestampName());
+      setDescription('');
+      setError(null);
+    }
+  }, [isOpen]);
+
   const handleCreate = async () => {
     if (!name.trim()) {
       setError('Name is required');
@@ -69,7 +78,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
     try {
       await onCreate(name, description);
       // Reset form
-      setName('');
+      setName(createRandomTimestampName());
       setDescription('');
       onClose();
     } catch (err) {
@@ -90,7 +99,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
   };
 
   const handleCancel = () => {
-    setName('');
+    setName(createRandomTimestampName());
     setDescription('');
     setError(null);
     onClose();
@@ -99,13 +108,12 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
   const title =
     type === 'notebook' ? 'Create New Notebook' : 'Create New Document';
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <Dialog
-      isOpen={isOpen}
-      onDismiss={handleCancel}
-      aria-labelledby="create-dialog-title"
-    >
-      <Dialog.Header id="create-dialog-title">{title}</Dialog.Header>
+    <Dialog onClose={handleCancel} title={title}>
       <Box p={3}>
         <FormControl required>
           <FormControl.Label>Name</FormControl.Label>

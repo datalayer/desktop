@@ -78,6 +78,74 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
     };
   }, [runtimeService]); // Only depend on runtimeService, not runtimeInfo
 
+  // Auto-assign an existing agent when opening the editor.
+  useEffect(() => {
+    let cancelled = false;
+
+    const autoAssignRuntime = async () => {
+      if (!runtimeService || runtimeInfo) return;
+
+      try {
+        if (runtimeService.state === 'uninitialized') {
+          await runtimeService.initialize();
+        }
+
+        const runtimes = await runtimeService.listAllRuntimes();
+        if (cancelled || runtimeInfo) return;
+
+        const now = Date.now();
+        const availableRuntimes = runtimes
+          .filter(runtime => {
+            if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
+              return false;
+            }
+            if (runtime.expiredAt) {
+              const expiresAt = new Date(runtime.expiredAt).getTime();
+              if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .sort((a, b) => {
+            const aStarted = a.startedAt
+              ? new Date(a.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            const bStarted = b.startedAt
+              ? new Date(b.startedAt).getTime()
+              : Number.NEGATIVE_INFINITY;
+            return bStarted - aStarted;
+          });
+
+        const availableRuntime = availableRuntimes[0];
+
+        if (availableRuntime) {
+          console.log(
+            '[DocumentEditor] Auto-assigning available agent:',
+            availableRuntime.podName
+          );
+          setRuntimeInfo({
+            id: availableRuntime.uid,
+            podName: availableRuntime.podName,
+            ingress: availableRuntime.ingress,
+            token: availableRuntime.token,
+          });
+        }
+      } catch (error) {
+        console.error(
+          '[DocumentEditor] Failed to auto-assign available agent:',
+          error
+        );
+      }
+    };
+
+    autoAssignRuntime();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeService, runtimeInfo, selectedDocument?.uid]);
+
   // Setup collaboration
   useEffect(() => {
     const setup = async () => {

@@ -105,7 +105,7 @@ const RuntimeItem: React.FC<RuntimeItemProps> = ({ runtime, onTerminate }) => {
                 mb: 1,
               }}
             >
-              Environment: {runtime.environmentTitle}
+              Runtime Profile: {runtime.environmentTitle}
             </Text>
           )}
 

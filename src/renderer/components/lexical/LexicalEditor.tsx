@@ -21,7 +21,6 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { HashtagNode } from '@lexical/hashtag';
@@ -31,7 +30,12 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import type { Runtime } from '../../services/interfaces/IRuntimeService';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { commentTheme } from '@datalayer/jupyter-lexical';
+import {
+  commentTheme,
+  LexicalConfigProvider,
+  LexicalProvider,
+  ThemeContext,
+} from '@datalayer/jupyter-lexical';
 import {
   JupyterInputHighlightNode,
   JupyterInputNode,
@@ -41,18 +45,29 @@ import { useJupyter } from '@datalayer/jupyter-react';
 import {
   AutoEmbedPlugin,
   AutoLinkPlugin,
+  CollapsibleContainerNode,
+  CollapsibleContentNode,
+  CollapsiblePlugin,
+  CollapsibleTitleNode,
   CodeActionMenuPlugin,
   CommentPlugin,
   ComponentPickerMenuPlugin,
   DraggableBlockPlugin,
   EquationNode,
   EquationsPlugin,
+  ExcalidrawNode,
+  ExcalidrawPlugin,
+  FloatingTextFormatToolbarPlugin,
   HorizontalRulePlugin,
   ImageNode,
   ImagesPlugin,
   JupyterInputOutputPlugin,
   ListMaxIndentLevelPlugin,
   MarkdownPlugin,
+  TableActionMenuPlugin,
+  TableCellResizerPlugin,
+  TableHoverActionsV2Plugin,
+  TablePlugin,
   YouTubeNode,
   YouTubePlugin,
 } from '@datalayer/jupyter-lexical';
@@ -65,7 +80,12 @@ import {
 } from '../../services/loro/providerFactory';
 import { LexicalToolbar } from './LexicalToolbar';
 import { RuntimeToolbar } from '../runtime/RuntimeToolbar';
-import { ThemeProvider, BaseStyles } from '@primer/react';
+import {
+  DatalayerThemeProvider,
+  getThemeConfig,
+  useSystemColorMode,
+} from '@datalayer/primer-addons';
+import { useThemeStore } from '../../theme/themeStore';
 import '@datalayer/jupyter-lexical/style/lexical/Editor.css';
 import '@datalayer/jupyter-lexical/style/lexical/Theme.css';
 import './LexicalEditor.css';
@@ -124,7 +144,11 @@ const initialConfig = {
   nodes: [
     AutoLinkNode,
     CodeNode,
+    CollapsibleContainerNode,
+    CollapsibleContentNode,
+    CollapsibleTitleNode,
     EquationNode,
+    ExcalidrawNode,
     HashtagNode,
     HeadingNode,
     HorizontalRuleNode,
@@ -158,6 +182,7 @@ function LexicalEditorContainer({
 }) {
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
+  const [_isLinkEditMode, setIsLinkEditMode] = useState(false);
   const [isCollabInitialized, setIsCollabInitialized] = useState(
     !collaboration?.enabled
   );
@@ -286,8 +311,12 @@ function LexicalEditorContainer({
               kernel={defaultKernel}
             />
             <EquationsPlugin />
+            <CollapsiblePlugin />
             <AutoFocusPlugin />
             <TablePlugin />
+            <TableCellResizerPlugin />
+            <TableActionMenuPlugin />
+            <TableHoverActionsV2Plugin />
             <ListPlugin />
             <CheckListPlugin />
             <LinkPlugin />
@@ -296,6 +325,7 @@ function LexicalEditorContainer({
             <MarkdownPlugin />
             <JupyterInputOutputPlugin kernel={defaultKernel} />
             <ImagesPlugin />
+            <ExcalidrawPlugin />
             <HorizontalRulePlugin />
             <YouTubePlugin />
             <AutoEmbedPlugin />
@@ -304,6 +334,10 @@ function LexicalEditorContainer({
               <>
                 <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
                 <CodeActionMenuPlugin anchorElem={floatingAnchorElem} />
+                <FloatingTextFormatToolbarPlugin
+                  anchorElem={floatingAnchorElem}
+                  setIsLinkEditMode={setIsLinkEditMode}
+                />
               </>
             )}
           </>
@@ -325,31 +359,58 @@ export function LexicalEditor({
   onRuntimeSelected,
   serviceManager,
 }: LexicalEditorProps) {
+  const colorMode = useThemeStore(state => state.colorMode);
+  const themeVariant = useThemeStore(state => state.theme);
+  const systemColorMode = useSystemColorMode();
+  const resolvedMode = colorMode === 'auto' ? systemColorMode : colorMode;
+  const themeConfig = getThemeConfig(themeVariant);
+  const modeStyles =
+    resolvedMode === 'dark'
+      ? themeConfig.themeStyles.dark
+      : themeConfig.themeStyles.light;
+  const themeBackground =
+    (modeStyles as Record<string, string>).backgroundColor ??
+    'var(--bgColor-default)';
+  const lexicalTheme = resolvedMode === 'dark' ? 'dark' : 'light';
+  const lexicalId =
+    collaboration?.documentId || runtimePodName || 'desktop-lexical';
+
   return (
-    <ThemeProvider>
-      <BaseStyles>
-        <div className={`lexical-editor-container ${className}`}>
-          <LexicalComposer initialConfig={initialConfig}>
-            <CommentsProvider>
-              <ToolbarContext>
-                <div className="editor-shell">
-                  <RuntimeToolbar
-                    runtimePodName={runtimePodName}
-                    onRuntimeSelected={onRuntimeSelected}
-                    leftContent={<LexicalToolbar />}
-                  />
-                  <LexicalEditorContainer
-                    collaboration={collaboration}
-                    onContentChange={onContentChange}
-                    serviceManager={serviceManager}
-                  />
-                </div>
-              </ToolbarContext>
-            </CommentsProvider>
-          </LexicalComposer>
-        </div>
-      </BaseStyles>
-    </ThemeProvider>
+    <DatalayerThemeProvider
+      colorMode={colorMode}
+      theme={themeConfig.primerTheme}
+      themeStyles={themeConfig.themeStyles}
+    >
+      <div
+        className={`lexical-editor-container ${className}`}
+        style={{ backgroundColor: themeBackground }}
+      >
+        <ThemeContext.Provider value={{ theme: lexicalTheme }}>
+          <LexicalConfigProvider lexicalId={lexicalId}>
+            <LexicalProvider>
+              <LexicalComposer initialConfig={initialConfig}>
+                <CommentsProvider>
+                  <ToolbarContext>
+                    <div className="editor-shell">
+                      <RuntimeToolbar
+                        runtimePodName={runtimePodName}
+                        onRuntimeSelected={onRuntimeSelected}
+                        leftContent={<LexicalToolbar />}
+                      />
+                      <LexicalEditorContainer
+                        collaboration={collaboration}
+                        onContentChange={onContentChange}
+                        serviceManager={serviceManager}
+                      />
+                    </div>
+                  </ToolbarContext>
+                </CommentsProvider>
+              </LexicalComposer>
+            </LexicalProvider>
+          </LexicalConfigProvider>
+        </ThemeContext.Provider>
+      </div>
+    </DatalayerThemeProvider>
   );
 }
 

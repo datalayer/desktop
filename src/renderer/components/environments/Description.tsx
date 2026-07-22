@@ -56,7 +56,7 @@ const Description: React.FC<EnvironmentDescriptionProps> = ({
 
   return (
     <Text sx={{ fontSize: 1, color: 'fg.muted', mb: 2 }}>
-      {environment.description || `Environment: ${environment.name}`}
+      {environment.description || `Runtime Profile: ${environment.name}`}
     </Text>
   );
 };

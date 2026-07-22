@@ -39,10 +39,10 @@ const Header: React.FC<RuntimesHeaderProps> = ({
       >
         <Box>
           <Heading as="h2" sx={{ mb: 1 }}>
-            Active Runtimes
+            Agents
           </Heading>
           <Text sx={{ color: 'fg.subtle', mb: 2 }}>
-            Manage your compute resources
+            Manage your active agents
           </Text>
 
           {/* Runtime statistics */}
@@ -106,7 +106,7 @@ const Header: React.FC<RuntimesHeaderProps> = ({
           <Button
             leadingVisual={TrashIcon}
             variant="danger"
-            size="medium"
+            size="small"
             onClick={onTerminateAll}
             disabled={disabled || runtimeCount === 0}
             sx={{
@@ -128,36 +128,22 @@ const Header: React.FC<RuntimesHeaderProps> = ({
               },
             }}
           >
-            Terminate All
+            Terminate All Agents
           </Button>
 
-          {/* Create Runtime button - never disabled */}
+          {/* New Agent button - never disabled */}
           <Button
             leadingVisual={PlusIcon}
             variant="primary"
-            size="medium"
+            size="small"
             onClick={onCreateRuntime}
-            sx={{
-              backgroundColor: COLORS.brand.primary + ' !important',
-              color: 'white !important',
-              border: '1px solid',
-              borderColor: COLORS.brand.primary,
-              '& svg': {
-                color: 'white !important',
-                fill: 'white !important',
-              },
-              '&:hover:not([disabled])': {
-                backgroundColor: COLORS.brand.primaryHover + ' !important',
-                borderColor: COLORS.brand.primaryHover,
-              },
-            }}
           >
-            Create Runtime
+            New Agent
           </Button>
 
           {/* Refresh button - only disabled while refreshing */}
           <IconButton
-            aria-label="Refresh runtimes"
+            aria-label="Refresh agents"
             icon={SyncIcon}
             size="medium"
             variant="invisible"

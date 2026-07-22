@@ -20,8 +20,8 @@ import type {
   NotebookJSON,
   SpaceJSON,
   LexicalJSON,
-} from '@datalayer/core/lib/models';
-import type { UserJSON } from '@datalayer/core/lib/models/UserDTO';
+  UserJSON,
+} from '@datalayer/agent-runtimes/lib/models';
 
 /**
  * Electron API for system information and menu actions.
@@ -341,7 +341,17 @@ export interface DatalayerIPCClient {
   }>;
 
   // Environment and runtime methods - return SDK JSON types directly
-  listEnvironments: () => Promise<EnvironmentJSON[]>;
+  listEnvironments: () => Promise<
+    Array<
+      EnvironmentJSON & {
+        icon?: string;
+        resources?: Record<string, unknown>;
+        language?: string;
+        dockerImage?: string;
+        tags?: string[];
+      }
+    >
+  >;
   createRuntime: (options: {
     environmentName: string;
     type: 'notebook' | 'terminal' | 'job';

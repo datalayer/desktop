@@ -13,21 +13,31 @@ import React from 'react';
 import { Box, Text, Label } from '@primer/react';
 import { PackageIcon } from '@primer/octicons-react';
 import { EnvironmentResourcesProps } from '../../../shared/types';
-import { formatResources } from '../../utils/environments';
+
+const asDefaultValue = (value: unknown): unknown => {
+  if (value && typeof value === 'object' && 'default' in value) {
+    return (value as { default?: unknown }).default;
+  }
+  return value;
+};
+
+const asDisplayValue = (value: unknown, fallback = 'N/A'): string => {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+  return String(value);
+};
 
 /**
  * Renders environment resource specifications as formatted labels.
  */
 const Resources: React.FC<EnvironmentResourcesProps> = ({ resources }) => {
-  if (!resources) {
-    return null;
-  }
-
-  const formattedResources = formatResources(resources);
-
-  if (formattedResources.length === 0) {
-    return null;
-  }
+  const resourcesRecord = (resources || {}) as Record<string, unknown>;
+  const cpu = asDefaultValue(resourcesRecord.cpu);
+  const cpuMemory = asDefaultValue(resourcesRecord.memory);
+  const gpu =
+    asDefaultValue(resourcesRecord.gpu) ??
+    asDefaultValue(resourcesRecord['nvidia.com/gpu']);
 
   return (
     <Box
@@ -42,11 +52,9 @@ const Resources: React.FC<EnvironmentResourcesProps> = ({ resources }) => {
         <PackageIcon size={14} /> Resources:
       </Text>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {formattedResources.map((resource, idx) => (
-          <Label key={idx} size="small">
-            {resource}
-          </Label>
-        ))}
+        <Label size="small">GPU: {asDisplayValue(gpu, '0')}</Label>
+        <Label size="small">CPU: {asDisplayValue(cpu)}</Label>
+        <Label size="small">CPU memory: {asDisplayValue(cpuMemory)}</Label>
       </Box>
     </Box>
   );

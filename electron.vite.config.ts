@@ -16,7 +16,11 @@ export default defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin({
-        exclude: ['@datalayer/core'],
+        // Bundle these instead of externalizing so Rollup can resolve their
+        // internal ESM directory imports (e.g. '@datalayer/core/lib/client').
+        // Native Node ESM (Electron main) rejects directory imports with
+        // ERR_UNSUPPORTED_DIR_IMPORT, so leaving them external breaks at load.
+        exclude: ['@datalayer/core', '@datalayer/agent-runtimes'],
       }),
       {
         name: 'copy-static-files',
@@ -55,9 +59,6 @@ export default defineConfig({
       },
     ],
     resolve: {
-      alias: {
-        '@datalayer/core': resolve(__dirname, '../core'),
-      },
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
     build: {
@@ -76,9 +77,6 @@ export default defineConfig({
       }),
     ],
     resolve: {
-      alias: {
-        '@datalayer/core': resolve(__dirname, '../core'),
-      },
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
     build: {
@@ -182,6 +180,14 @@ export default defineConfig({
           // Intercept jsonpointer for compatibility issues
           if (id === 'jsonpointer') {
             return { id: '\0virtual:jsonpointer-stub', external: false };
+          }
+          // Intercept es6-promise-pool to force a stable constructor-shaped
+          // default export in renderer optimized deps (Excalidraw dependency).
+          if (id === 'es6-promise-pool') {
+            return {
+              id: '\0virtual:es6-promise-pool-stub',
+              external: false,
+            };
           }
           return null;
         },
@@ -479,6 +485,115 @@ export default defineConfig({
               export default jsonpointer;
             `;
           }
+          if (id === '\0virtual:es6-promise-pool-stub') {
+            return `
+              class PromisePoolEvent {
+                constructor(target, type, data) {
+                  this.target = target;
+                  this.type = type;
+                  this.data = data;
+                }
+              }
+
+              class PromisePool {
+                constructor(source, concurrency = 1) {
+                  this._source = source;
+                  this._concurrency = Math.max(1, Number(concurrency) || 1);
+                  this._listeners = new Map();
+                  this._active = 0;
+                  this._finished = false;
+                }
+
+                addEventListener(type, listener) {
+                  if (!this._listeners.has(type)) {
+                    this._listeners.set(type, new Set());
+                  }
+                  this._listeners.get(type).add(listener);
+                }
+
+                removeEventListener(type, listener) {
+                  const listeners = this._listeners.get(type);
+                  if (listeners) {
+                    listeners.delete(listener);
+                  }
+                }
+
+                _emit(type, data) {
+                  const listeners = this._listeners.get(type);
+                  if (!listeners) return;
+                  const event = new PromisePoolEvent(this, type, data);
+                  for (const listener of listeners) {
+                    try {
+                      listener(event);
+                    } catch {
+                      // Ignore listener errors to preserve pool progression.
+                    }
+                  }
+                }
+
+                async start() {
+                  return new Promise((resolve, reject) => {
+                    const schedule = () => {
+                      if (this._finished) {
+                        if (this._active === 0) {
+                          resolve();
+                        }
+                        return;
+                      }
+
+                      while (this._active < this._concurrency && !this._finished) {
+                        let next;
+                        try {
+                          next = this._source();
+                        } catch (error) {
+                          this._finished = true;
+                          reject(error);
+                          return;
+                        }
+
+                        if (next == null) {
+                          this._finished = true;
+                          if (this._active === 0) {
+                            resolve();
+                          }
+                          return;
+                        }
+
+                        this._active += 1;
+                        Promise.resolve(next)
+                          .then(result => {
+                            this._emit('fulfilled', { result });
+                          })
+                          .catch(error => {
+                            this._emit('rejected', { error });
+                            this._finished = true;
+                            reject(error);
+                          })
+                          .finally(() => {
+                            this._active -= 1;
+                            if (this._finished) {
+                              if (this._active === 0) {
+                                resolve();
+                              }
+                              return;
+                            }
+                            schedule();
+                          });
+                      }
+                    };
+
+                    schedule();
+                  });
+                }
+              }
+
+              PromisePool.PromisePool = PromisePool;
+              PromisePool.PromisePoolEvent = PromisePoolEvent;
+
+              export { PromisePool, PromisePoolEvent };
+              export default PromisePool;
+            `;
+          }
           return null;
         },
       },
@@ -684,103 +799,9 @@ export default defineConfig({
         // TDZ polyfills, constructor replacements, ListCache, Uint8Array etc. are no longer
         // needed because esbuild pre-bundles CJS deps without the TDZ issues rollup introduced.
         name: 'fix-prismjs-frozen-objects',
-        renderChunk(code: string, chunk: { fileName: string }) {
-          if (chunk.fileName.includes('index') && code.length > 1000000) {
-            let modified = code;
-
-            // Inject runtime protections at the beginning of the bundle
-            const runtimeProtections = `
-// === Runtime protections for PrismJS frozen objects & extend property ===
-(function() {
-  // Bulletproof extend function for PrismJS compatibility
-  function bulletproofExtend(object) {
-    var sources = Array.prototype.slice.call(arguments, 1);
-    var target = (object && typeof object === 'object') ? object : {};
-    sources.forEach(function(source) {
-      if (source != null && typeof source === 'object') {
-        for (var key in source) {
-          if (source.hasOwnProperty(key)) {
-            var finalKey = key === 'class-name' ? 'className' : key;
-            target[finalKey] = source[key];
-          }
-        }
-      }
-    });
-    return target;
-  }
-  globalThis.safeExtend = bulletproofExtend;
-  globalThis.extend = bulletproofExtend;
-  for (var i = 1; i <= 10; i++) {
-    globalThis['extend$' + i] = bulletproofExtend;
-  }
-
-  // Override Object.freeze/seal/preventExtensions to keep objects extensible
-  // (PrismJS freezes language definitions, then plugins try to add .extend property)
-  var origFreeze = Object.freeze;
-  var origSeal = Object.seal;
-  var origPreventExtensions = Object.preventExtensions;
-  Object.freeze = function(obj) { return obj; };
-  Object.seal = function(obj) { return obj; };
-  Object.preventExtensions = function(obj) { return obj; };
-
-  // Surgical defineProperty override: only intercept 'extend' property errors
-  var origDefineProperty = Object.defineProperty;
-  Object.defineProperty = function(obj, prop, descriptor) {
-    if (prop === 'extend') {
-      try {
-        return origDefineProperty.call(this, obj, prop, descriptor);
-      } catch(e) {
-        if (e.message && (e.message.includes('not extensible') || e.message.includes('Cannot add property'))) {
-          try {
-            var proto = Object.getPrototypeOf(obj);
-            if (proto && !proto.hasOwnProperty(prop) && descriptor && descriptor.value) {
-              proto[prop] = descriptor.value;
-            }
-          } catch(e2) { /* ignore */ }
-          return obj;
-        }
-        throw e;
-      }
-    }
-    return origDefineProperty.call(this, obj, prop, descriptor);
-  };
-
-  // Global error handlers to suppress extend property errors
-  var origOnerror = globalThis.onerror;
-  globalThis.onerror = function(message, source, lineno, colno, error) {
-    if (error && error.message &&
-       (error.message.includes('Cannot add property extend') ||
-        (error.message.includes('object is not extensible') && error.toString().includes('extend')))) {
-      return true;
-    }
-    return origOnerror ? origOnerror(message, source, lineno, colno, error) : false;
-  };
-  var origUnhandled = globalThis.onunhandledrejection;
-  globalThis.onunhandledrejection = function(event) {
-    if (event.reason && event.reason.message &&
-       (event.reason.message.includes('Cannot add property extend') ||
-        (event.reason.message.includes('object is not extensible') && event.reason.toString().includes('extend')))) {
-      event.preventDefault();
-      return;
-    }
-    if (origUnhandled) return origUnhandled(event);
-  };
-})();
-`;
-
-            // Inject at bundle start
-            if (modified.includes('const __vite__mapDeps=')) {
-              const viteMapIndex = modified.indexOf('const __vite__mapDeps=');
-              const lineEnd = modified.indexOf('\n', viteMapIndex);
-              modified = modified.substring(0, lineEnd + 1) + runtimeProtections + modified.substring(lineEnd + 1);
-            } else if (modified.includes("'use strict'")) {
-              modified = modified.replace("'use strict';", "'use strict';" + runtimeProtections);
-            } else {
-              modified = runtimeProtections + '\n' + modified;
-            }
-
-            return modified !== code ? modified : null;
-          }
+        renderChunk(_code: string, _chunk: { fileName: string }) {
+          // Disabled temporarily: this injected block was corrupting generated code
+          // and causing vite-plugin-top-level-await parser failures during CI builds.
           return null;
         },
       },
@@ -842,6 +863,25 @@ export default defineConfig({
       {
         name: 'fix-raw-css-imports',
         enforce: 'pre',
+        resolveId(source: string) {
+          // In dev mode, this module can be served through /@fs/... and lose the
+          // expected default export shape. Force a stable virtual module.
+          if (
+            source.endsWith('/style/scrollbar.raw.css') ||
+            source.endsWith('/style/scrollbar.raw.css?raw') ||
+            source.endsWith('scrollbar.raw.css') ||
+            source.endsWith('scrollbar.raw.css?raw')
+          ) {
+            return '\0virtual:jupyterlab-scrollbar-raw-css';
+          }
+          return null;
+        },
+        load(id: string) {
+          if (id === '\0virtual:jupyterlab-scrollbar-raw-css') {
+            return 'export default "";';
+          }
+          return null;
+        },
         transform(code: string, id: string) {
           // Fix the import in themesplugins.js
           if (id.includes('themesplugins.js')) {
@@ -897,10 +937,27 @@ export default defineConfig({
       alias: [
         { find: '@', replacement: resolve(__dirname, 'src/renderer') },
         { find: '@primer/css', replacement: resolve(__dirname, 'node_modules/@primer/css') },
-        { find: '@datalayer/core', replacement: resolve(__dirname, '../core') },
+        // IMPORTANT: exact-match aliases only. A plain string alias for
+        // "@primer/react" rewrites "@primer/react/experimental" to a non-existent
+        // filesystem path during optimizeDeps.
+        { find: /^@primer\/react$/, replacement: resolve(__dirname, 'node_modules/@primer/react') },
+        { find: /^styled-components$/, replacement: resolve(__dirname, 'node_modules/styled-components') },
         { find: '~react-toastify', replacement: 'react-toastify' },
         // Alias underscore to lodash
         { find: 'underscore', replacement: 'lodash' },
+      ],
+      // Force a single instance of these packages. In this monorepo the shared
+      // @datalayer/jupyter-lexical resolves @primer/react (and styled-components)
+      // from a sibling workspace, producing a second physical copy. Two copies
+      // means two React context trees, so Primer <Dialog>/<Overlay> rendered by
+      // the lexical package (Insert Table, Insert Equation, runtime dialogs)
+      // cannot see the app's ThemeProvider/BaseStyles and never mount. Deduping
+      // collapses them to one instance so overlays render correctly.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@primer/react',
+        'styled-components',
       ],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },

@@ -123,10 +123,10 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
       {/* Fixed header */}
       <Box sx={{ flexShrink: 0, mb: 4 }}>
         <Heading as="h2" sx={{ mb: 2 }}>
-          Runtime Environments
+          Runtime Profiles
         </Heading>
         <Text sx={{ color: 'fg.subtle' }}>
-          Available computing environments for your notebooks and runtimes
+          Available runtime profiles for your notebooks and agents
         </Text>
       </Box>
 
@@ -135,7 +135,10 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
         {!userAuthenticated && <AuthWarning />}
 
         {loading && (
-          <LoadingSpinner message="Loading environments..." variant="inline" />
+          <LoadingSpinner
+            message="Loading runtime profiles..."
+            variant="inline"
+          />
         )}
 
         {error && !loading && (

@@ -11,7 +11,7 @@
 
 import type { LexicalEditor } from 'lexical';
 import type { ServiceManager } from '@jupyterlab/services';
-import type { RuntimeJSON } from '@datalayer/core/lib/models';
+import type { RuntimeJSON } from '@datalayer/agent-runtimes/lib/models';
 
 /**
  * Document data structure for Lexical documents.
@@ -32,10 +32,7 @@ export interface DocumentViewProps {
 
 // Collaboration status type
 export type CollaborationStatus =
-  | 'disconnected'
-  | 'connecting'
-  | 'connected'
-  | 'error';
+  'disconnected' | 'connecting' | 'connected' | 'error';
 
 // Custom Lexical Editor props
 export interface CustomLexicalEditorProps {

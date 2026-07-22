@@ -13,21 +13,33 @@
  * Represents a compute environment configuration.
  */
 export interface Environment {
+  uid?: string;
   name: string;
   language?: string;
   title?: string;
   description?: string;
+  rich_description?: string;
   dockerImage?: string;
   condaEnvironment?: string;
   pipRequirements?: string;
   tags?: string[];
   isDefault?: boolean;
+  icon?: string;
   image?: string;
-  resources?: {
-    cpu?: { min?: number; max?: number; default?: number };
-    memory?: { min?: number; max?: number; default?: number };
-    gpu?: { min?: number; max?: number; default?: number };
-  };
+  burningRate?: number;
+  burning_rate?: number;
+  resources?:
+    | {
+        cpu?:
+          { min?: number; max?: number; default?: number } | string | number;
+        memory?:
+          { min?: number; max?: number; default?: number } | string | number;
+        gpu?:
+          { min?: number; max?: number; default?: number } | string | number;
+        ['nvidia.com/gpu']?: string | number;
+        [key: string]: unknown;
+      }
+    | Record<string, unknown>;
 }
 
 export interface ParsedEnvironmentDescription {

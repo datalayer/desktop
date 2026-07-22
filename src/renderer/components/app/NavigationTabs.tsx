@@ -12,14 +12,14 @@
 import React from 'react';
 import { Header, IconButton, Box } from '@primer/react';
 import {
-  DatabaseIcon,
+  ServerIcon,
   BookIcon,
   FileIcon,
   XIcon,
-  CpuIcon,
+  AgentIcon,
+  SpaceIcon,
 } from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
-import { COLORS } from '../../../shared/constants/colors';
 
 export interface NavigationTabsProps {
   activeTabId: string;
@@ -32,7 +32,7 @@ export interface NavigationTabsProps {
 
 /**
  * Container component for navigation tabs with horizontal scrolling.
- * Shows Environments, Spaces, and all open notebooks/documents.
+ * Shows Spaces, Agents, Runtime Profiles, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
@@ -65,24 +65,24 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
     >
       {/* Fixed tabs - cannot be closed */}
       <NavigationTab
-        label="Environments"
-        icon={DatabaseIcon as unknown as React.ComponentType<{ size?: number }>}
-        isActive={activeTabId === 'environments'}
-        onClick={() => onTabChange('environments')}
-      />
-
-      <NavigationTab
         label="Spaces"
-        icon={BookIcon as unknown as React.ComponentType<{ size?: number }>}
+        icon={SpaceIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'spaces'}
         onClick={() => onTabChange('spaces')}
       />
 
       <NavigationTab
-        label="Runtimes"
-        icon={CpuIcon as unknown as React.ComponentType<{ size?: number }>}
+        label="Agents"
+        icon={AgentIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'runtimes'}
         onClick={() => onTabChange('runtimes')}
+      />
+
+      <NavigationTab
+        label="Runtime Profiles"
+        icon={ServerIcon as unknown as React.ComponentType<{ size?: number }>}
+        isActive={activeTabId === 'environments'}
+        onClick={() => onTabChange('environments')}
       />
 
       {/* Dynamic notebook tabs - can be closed */}
@@ -103,43 +103,43 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
               pr: 1,
               color:
                 activeTabId === `notebook-${notebook.id}`
-                  ? `${COLORS.brand.primary} !important`
-                  : `${COLORS.text.primary} !important`,
+                  ? 'accent.fg'
+                  : 'fg.default',
               borderBottom:
                 activeTabId === `notebook-${notebook.id}`
-                  ? `2px solid ${COLORS.brand.primary}`
+                  ? '2px solid var(--borderColor-accent-emphasis)'
                   : '2px solid transparent',
               paddingBottom: '4px',
-              textDecoration: 'none !important',
-              backgroundColor: 'transparent !important',
+              textDecoration: 'none',
+              backgroundColor: 'transparent',
               outline: 'none',
               '&:hover': {
-                textDecoration: 'none !important',
-                color: `${COLORS.brand.primary} !important`,
-                backgroundColor: 'transparent !important',
+                textDecoration: 'none',
+                color: 'accent.fg',
+                backgroundColor: 'transparent',
               },
               '&:active, &:visited': {
                 color:
                   activeTabId === `notebook-${notebook.id}`
-                    ? `${COLORS.brand.primary} !important`
-                    : `${COLORS.text.primary} !important`,
-                backgroundColor: 'transparent !important',
+                    ? 'accent.fg'
+                    : 'fg.default',
+                backgroundColor: 'transparent',
               },
               '&:focus, &:focus-visible': {
                 color:
                   activeTabId === `notebook-${notebook.id}`
-                    ? `${COLORS.brand.primary} !important`
-                    : `${COLORS.text.primary} !important`,
-                backgroundColor: 'transparent !important',
+                    ? 'accent.fg'
+                    : 'fg.default',
+                backgroundColor: 'transparent',
                 outline: '2px solid',
                 outlineColor: 'accent.emphasis',
                 outlineOffset: '-2px',
               },
               '& span': {
-                color: 'inherit !important',
+                color: 'inherit',
               },
               '& svg': {
-                color: 'inherit !important',
+                color: 'inherit',
               },
             }}
           >
@@ -188,43 +188,43 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
               pr: 1,
               color:
                 activeTabId === `document-${document.id}`
-                  ? `${COLORS.brand.primary} !important`
-                  : `${COLORS.text.primary} !important`,
+                  ? 'accent.fg'
+                  : 'fg.default',
               borderBottom:
                 activeTabId === `document-${document.id}`
-                  ? `2px solid ${COLORS.brand.primary}`
+                  ? '2px solid var(--borderColor-accent-emphasis)'
                   : '2px solid transparent',
               paddingBottom: '4px',
-              textDecoration: 'none !important',
-              backgroundColor: 'transparent !important',
+              textDecoration: 'none',
+              backgroundColor: 'transparent',
               outline: 'none',
               '&:hover': {
-                textDecoration: 'none !important',
-                color: `${COLORS.brand.primary} !important`,
-                backgroundColor: 'transparent !important',
+                textDecoration: 'none',
+                color: 'accent.fg',
+                backgroundColor: 'transparent',
               },
               '&:active, &:visited': {
                 color:
                   activeTabId === `document-${document.id}`
-                    ? `${COLORS.brand.primary} !important`
-                    : `${COLORS.text.primary} !important`,
-                backgroundColor: 'transparent !important',
+                    ? 'accent.fg'
+                    : 'fg.default',
+                backgroundColor: 'transparent',
               },
               '&:focus, &:focus-visible': {
                 color:
                   activeTabId === `document-${document.id}`
-                    ? `${COLORS.brand.primary} !important`
-                    : `${COLORS.text.primary} !important`,
-                backgroundColor: 'transparent !important',
+                    ? 'accent.fg'
+                    : 'fg.default',
+                backgroundColor: 'transparent',
                 outline: '2px solid',
                 outlineColor: 'accent.emphasis',
                 outlineOffset: '-2px',
               },
               '& span': {
-                color: 'inherit !important',
+                color: 'inherit',
               },
               '& svg': {
-                color: 'inherit !important',
+                color: 'inherit',
               },
             }}
           >

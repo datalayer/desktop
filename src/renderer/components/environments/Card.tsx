@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Heading, Label, Text } from '@primer/react';
 import { EnvironmentCardProps } from '../../../shared/types';
 import Icon from './Icon';
 import TypeLabel from './TypeLabel';
@@ -21,6 +21,18 @@ import Resources from './Resources';
  * Environment card component displaying environment details.
  */
 const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
+  const displayName = (environment.title || environment.name || '').trim();
+  const normalizedDisplayName = displayName.toLowerCase();
+  const normalizedProfileName = (environment.name || '').trim().toLowerCase();
+  const shouldHideTypeLabel =
+    normalizedDisplayName === 'ai agents environment gpu' ||
+    normalizedDisplayName === 'ai agents environment';
+  const shouldHideProfileLabel =
+    normalizedProfileName === normalizedDisplayName ||
+    normalizedProfileName === 'ai agents environment gpu' ||
+    normalizedProfileName === 'ai agents environment';
+  const burningRate = environment.burningRate ?? environment.burning_rate;
+
   return (
     <Box
       key={environment.name}
@@ -55,10 +67,23 @@ const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
               <Heading as="h3" sx={{ fontSize: 2 }}>
                 {environment.title || environment.name}
               </Heading>
-              <TypeLabel environment={environment} />
+              {!shouldHideTypeLabel && <TypeLabel environment={environment} />}
             </Box>
 
             <Description environment={environment} />
+
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+              {environment.name && !shouldHideProfileLabel && (
+                <Label size="small" variant="accent">
+                  Profile: {environment.name}
+                </Label>
+              )}
+              {burningRate !== undefined && burningRate !== null && (
+                <Label size="small" variant="success">
+                  Burning rate: {burningRate} credits/s
+                </Label>
+              )}
+            </Box>
 
             {environment.image && (
               <Text
