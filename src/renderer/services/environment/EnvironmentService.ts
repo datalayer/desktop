@@ -11,7 +11,6 @@
  */
 
 import type { AgentRuntimesClient as DatalayerClient } from '@datalayer/agent-runtimes/lib/client/AgentRuntimesClient';
-import type { EnvironmentJSON } from '@datalayer/agent-runtimes/lib/models';
 import { BaseService } from '../core/BaseService';
 import { ILogger } from '../interfaces/ILogger';
 import {
@@ -107,7 +106,7 @@ export class EnvironmentService
       }
 
       // Map to our Environment interface
-      this.environments = rawEnvironments.map((env: EnvironmentJSON) => {
+      this.environments = rawEnvironments.map(env => {
         const envRecord = env as unknown as Record<string, unknown>;
         return {
           uid: env.name, // Use name as uid
@@ -116,6 +115,7 @@ export class EnvironmentService
           rich_description: env.richDescription,
           icon: envRecord.icon as string | undefined,
           image: envRecord.image as string | undefined,
+          language: envRecord.language as string | undefined,
           resources: envRecord.resources as Record<string, unknown> | undefined,
           burning_rate: env.burningRate,
           burningRate: env.burningRate,

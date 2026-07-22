@@ -23,9 +23,14 @@ import Resources from './Resources';
 const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
   const displayName = (environment.title || environment.name || '').trim();
   const normalizedDisplayName = displayName.toLowerCase();
+  const normalizedProfileName = (environment.name || '').trim().toLowerCase();
   const shouldHideTypeLabel =
     normalizedDisplayName === 'ai agents environment gpu' ||
     normalizedDisplayName === 'ai agents environment';
+  const shouldHideProfileLabel =
+    normalizedProfileName === normalizedDisplayName ||
+    normalizedProfileName === 'ai agents environment gpu' ||
+    normalizedProfileName === 'ai agents environment';
   const burningRate = environment.burningRate ?? environment.burning_rate;
 
   return (
@@ -68,7 +73,7 @@ const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
             <Description environment={environment} />
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-              {environment.name && (
+              {environment.name && !shouldHideProfileLabel && (
                 <Label size="small" variant="accent">
                   Profile: {environment.name}
                 </Label>

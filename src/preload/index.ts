@@ -341,7 +341,17 @@ export interface DatalayerIPCClient {
   }>;
 
   // Environment and runtime methods - return SDK JSON types directly
-  listEnvironments: () => Promise<EnvironmentJSON[]>;
+  listEnvironments: () => Promise<
+    Array<
+      EnvironmentJSON & {
+        icon?: string;
+        resources?: Record<string, unknown>;
+        language?: string;
+        dockerImage?: string;
+        tags?: string[];
+      }
+    >
+  >;
   createRuntime: (options: {
     environmentName: string;
     type: 'notebook' | 'terminal' | 'job';

@@ -167,8 +167,30 @@ function registerIPCHandlers(): void {
 
   // Environment and runtime handlers - using SDK bridge
   ipcMain.handle('datalayer:list-environments', async () => {
-    const environments = await sdkBridge.call('list_environments');
-    return environments; // Returns EnvironmentJSON[] directly, throws on error
+    // Access the SDK directly so we can preserve the raw `icon` and `resources`
+    // fields, which the generic toJSON() serialization drops. This mirrors how
+    // the UI (EnvironmentsPlatform) reads environments from the runtimes API.
+    const sdk = sdkBridge.getSDK() as unknown as {
+      listEnvironments: () => Promise<
+        Array<{
+          toJSON: () => Record<string, unknown>;
+          rawData: () => Record<string, unknown>;
+        }>
+      >;
+    };
+    const environments = await sdk.listEnvironments();
+    return environments.map(env => {
+      const json = env.toJSON();
+      const raw = env.rawData();
+      return {
+        ...json,
+        icon: raw.icon,
+        resources: raw.resources,
+        language: raw.language,
+        dockerImage: raw.dockerImage,
+        tags: raw.tags,
+      };
+    });
   });
 
   ipcMain.handle('datalayer:create-runtime', async (_, options) => {

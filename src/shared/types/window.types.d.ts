@@ -182,7 +182,15 @@ declare global {
 
       // Environments
       listEnvironments: () => Promise<
-        import('@datalayer/agent-runtimes/lib/models').EnvironmentJSON[]
+        Array<
+          import('@datalayer/agent-runtimes/lib/models').EnvironmentJSON & {
+            icon?: string;
+            resources?: Record<string, unknown>;
+            language?: string;
+            dockerImage?: string;
+            tags?: string[];
+          }
+        >
       >;
 
       // Runtimes

@@ -9,20 +9,48 @@
  * @module Icon
  */
 
-import React from 'react';
+import React, { ComponentType } from 'react';
 import { Box } from '@primer/react';
-import { CpuIcon, ZapIcon } from '@primer/octicons-react';
+import * as DatalayerIcons from '@datalayer/icons-react';
 import { EnvironmentIconProps } from '../../../shared/types';
-import {
-  isGPUEnvironmentType,
-  parseEnvironmentDescription,
-} from '../../utils/environments';
+
+const toPascalCase = (value: string): string => {
+  return value
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+};
+
+type EnvironmentIconComponent = ComponentType<{
+  size?: number;
+  colored?: boolean;
+}>;
+
+const getEnvironmentIconComponent = (
+  iconKey?: string
+): EnvironmentIconComponent => {
+  if (!iconKey) {
+    return DatalayerIcons.AlienIcon as EnvironmentIconComponent;
+  }
+  const componentName = `${toPascalCase(iconKey)}Icon`;
+  const iconsByName = DatalayerIcons as unknown as Record<
+    string,
+    EnvironmentIconComponent
+  >;
+  return (
+    iconsByName[componentName] ??
+    (DatalayerIcons.AlienIcon as EnvironmentIconComponent)
+  );
+};
 
 /**
  * Renders an icon for an environment.
  */
 const Icon: React.FC<EnvironmentIconProps> = ({ environment, size = 24 }) => {
-  const parsed = parseEnvironmentDescription(environment.description || '');
+  const iconValue =
+    (typeof environment.icon === 'string' && environment.icon.trim()) || '';
+  const EnvironmentIcon = getEnvironmentIconComponent(iconValue);
 
   return (
     <Box
@@ -37,19 +65,7 @@ const Icon: React.FC<EnvironmentIconProps> = ({ environment, size = 24 }) => {
         },
       }}
     >
-      {parsed?.imageUrl ? (
-        <img
-          src={parsed.imageUrl}
-          width={size}
-          height={size}
-          alt={`${environment.title || environment.name} environment`}
-          style={{ display: 'block' }}
-        />
-      ) : isGPUEnvironmentType(environment) ? (
-        <ZapIcon size={size} />
-      ) : (
-        <CpuIcon size={size} />
-      )}
+      <EnvironmentIcon size={size} />
     </Box>
   );
 };
