@@ -97,6 +97,62 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     };
   }, [runtimeService]); // Only depend on runtimeService, not runtimeInfo
 
+  // Auto-assign an existing agent when opening the editor.
+  useEffect(() => {
+    let cancelled = false;
+
+    const autoAssignRuntime = async () => {
+      if (!runtimeService || runtimeInfo) return;
+
+      try {
+        if (runtimeService.state === 'uninitialized') {
+          await runtimeService.initialize();
+        }
+
+        const runtimes = await runtimeService.listAllRuntimes();
+        if (cancelled || runtimeInfo) return;
+
+        const now = Date.now();
+        const availableRuntime = runtimes.find(runtime => {
+          if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
+            return false;
+          }
+          if (runtime.expiredAt) {
+            const expiresAt = new Date(runtime.expiredAt).getTime();
+            if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        if (availableRuntime) {
+          console.log(
+            '[NotebookEditor] Auto-assigning available agent:',
+            availableRuntime.podName
+          );
+          setRuntimeInfo({
+            id: availableRuntime.uid,
+            podName: availableRuntime.podName,
+            ingress: availableRuntime.ingress,
+            token: availableRuntime.token,
+          });
+        }
+      } catch (error) {
+        console.error(
+          '[NotebookEditor] Failed to auto-assign available agent:',
+          error
+        );
+      }
+    };
+
+    autoAssignRuntime();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeService, runtimeInfo, notebookId]);
+
   // Handle runtime selection - set runtime info which will trigger service manager creation
   const handleRuntimeSelected = useCallback(async (runtime: Runtime | null) => {
     if (!runtime) {

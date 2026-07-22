@@ -121,22 +121,19 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   };
 
   const handleRuntimeSelectorChange = async (runtime: Runtime | null) => {
-    if (!runtime) {
-      // User chose "Create New" - show dialog
-      setShowRuntimeDialog(true);
-    } else {
-      // User selected existing runtime - pass it directly to parent
-      setIsConnecting(true);
-      try {
-        if (onRuntimeSelected) {
-          await onRuntimeSelected(runtime);
-        }
-      } catch (error) {
-        console.error('Failed to connect to runtime:', error);
-        alert('Failed to connect to runtime: ' + (error as Error).message);
-      } finally {
-        setIsConnecting(false);
+    if (!runtime) return;
+
+    // User selected existing runtime - pass it directly to parent
+    setIsConnecting(true);
+    try {
+      if (onRuntimeSelected) {
+        await onRuntimeSelected(runtime);
       }
+    } catch (error) {
+      console.error('Failed to connect to runtime:', error);
+      alert('Failed to connect to runtime: ' + (error as Error).message);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -309,6 +306,9 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
             onRuntimeSelected={handleRuntimeSelectorChange}
             disabled={isConnecting || creating}
           />
+          <Button size="small" onClick={() => setShowRuntimeDialog(true)}>
+            New Agent
+          </Button>
           {runtimePodName && (
             <Button
               size="small"
@@ -324,13 +324,10 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
 
       {/* Create Runtime Dialog */}
       {showRuntimeDialog && (
-        <Dialog
-          onClose={() => setShowRuntimeDialog(false)}
-          title="Create Runtime"
-        >
+        <Dialog onClose={() => setShowRuntimeDialog(false)} title="New Agent">
           <Box sx={{ p: 3 }}>
             <FormControl required>
-              <FormControl.Label>Runtime Name</FormControl.Label>
+              <FormControl.Label>Agent Name</FormControl.Label>
               <TextInput
                 value={runtimeName}
                 onChange={e => setRuntimeName(e.target.value)}
@@ -357,8 +354,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
 
             <FormControl sx={{ mt: 3 }}>
               <FormControl.Label>
-                Runtime Duration: {minutes}{' '}
-                {minutes === 1 ? 'minute' : 'minutes'}
+                Agent Duration: {minutes} {minutes === 1 ? 'minute' : 'minutes'}
                 {minutes >= 60 &&
                   ` (${(minutes / 60).toFixed(1)} ${minutes === 60 ? 'hour' : 'hours'})`}
               </FormControl.Label>
@@ -417,7 +413,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
                 onClick={handleCreateRuntime}
                 disabled={!selectedEnvironment || !runtimeName || creating}
               >
-                {creating ? 'Creating...' : 'Create'}
+                {creating ? 'Creating...' : 'Create Agent'}
               </Button>
             </Box>
           </Box>

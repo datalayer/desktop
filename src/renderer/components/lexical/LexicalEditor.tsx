@@ -45,12 +45,18 @@ import { useJupyter } from '@datalayer/jupyter-react';
 import {
   AutoEmbedPlugin,
   AutoLinkPlugin,
+  CollapsibleContainerNode,
+  CollapsibleContentNode,
+  CollapsiblePlugin,
+  CollapsibleTitleNode,
   CodeActionMenuPlugin,
   CommentPlugin,
   ComponentPickerMenuPlugin,
   DraggableBlockPlugin,
   EquationNode,
   EquationsPlugin,
+  ExcalidrawNode,
+  ExcalidrawPlugin,
   FloatingTextFormatToolbarPlugin,
   HorizontalRulePlugin,
   ImageNode,
@@ -138,7 +144,11 @@ const initialConfig = {
   nodes: [
     AutoLinkNode,
     CodeNode,
+    CollapsibleContainerNode,
+    CollapsibleContentNode,
+    CollapsibleTitleNode,
     EquationNode,
+    ExcalidrawNode,
     HashtagNode,
     HeadingNode,
     HorizontalRuleNode,
@@ -301,6 +311,7 @@ function LexicalEditorContainer({
               kernel={defaultKernel}
             />
             <EquationsPlugin />
+            <CollapsiblePlugin />
             <AutoFocusPlugin />
             <TablePlugin />
             <TableCellResizerPlugin />
@@ -314,6 +325,7 @@ function LexicalEditorContainer({
             <MarkdownPlugin />
             <JupyterInputOutputPlugin kernel={defaultKernel} />
             <ImagesPlugin />
+            <ExcalidrawPlugin />
             <HorizontalRulePlugin />
             <YouTubePlugin />
             <AutoEmbedPlugin />

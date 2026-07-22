@@ -187,6 +187,14 @@ export default defineConfig({
           if (id === 'jsonpointer') {
             return { id: '\0virtual:jsonpointer-stub', external: false };
           }
+          // Intercept es6-promise-pool to force a stable constructor-shaped
+          // default export in renderer optimized deps (Excalidraw dependency).
+          if (id === 'es6-promise-pool') {
+            return {
+              id: '\0virtual:es6-promise-pool-stub',
+              external: false,
+            };
+          }
           return null;
         },
         load(id: string) {
@@ -481,6 +489,115 @@ export default defineConfig({
               // Default export for compatibility
               const jsonpointer = { get, set, has, remove };
               export default jsonpointer;
+            `;
+          }
+          if (id === '\0virtual:es6-promise-pool-stub') {
+            return `
+              class PromisePoolEvent {
+                constructor(target, type, data) {
+                  this.target = target;
+                  this.type = type;
+                  this.data = data;
+                }
+              }
+
+              class PromisePool {
+                constructor(source, concurrency = 1) {
+                  this._source = source;
+                  this._concurrency = Math.max(1, Number(concurrency) || 1);
+                  this._listeners = new Map();
+                  this._active = 0;
+                  this._finished = false;
+                }
+
+                addEventListener(type, listener) {
+                  if (!this._listeners.has(type)) {
+                    this._listeners.set(type, new Set());
+                  }
+                  this._listeners.get(type).add(listener);
+                }
+
+                removeEventListener(type, listener) {
+                  const listeners = this._listeners.get(type);
+                  if (listeners) {
+                    listeners.delete(listener);
+                  }
+                }
+
+                _emit(type, data) {
+                  const listeners = this._listeners.get(type);
+                  if (!listeners) return;
+                  const event = new PromisePoolEvent(this, type, data);
+                  for (const listener of listeners) {
+                    try {
+                      listener(event);
+                    } catch {
+                      // Ignore listener errors to preserve pool progression.
+                    }
+                  }
+                }
+
+                async start() {
+                  return new Promise((resolve, reject) => {
+                    const schedule = () => {
+                      if (this._finished) {
+                        if (this._active === 0) {
+                          resolve();
+                        }
+                        return;
+                      }
+
+                      while (this._active < this._concurrency && !this._finished) {
+                        let next;
+                        try {
+                          next = this._source();
+                        } catch (error) {
+                          this._finished = true;
+                          reject(error);
+                          return;
+                        }
+
+                        if (next == null) {
+                          this._finished = true;
+                          if (this._active === 0) {
+                            resolve();
+                          }
+                          return;
+                        }
+
+                        this._active += 1;
+                        Promise.resolve(next)
+                          .then(result => {
+                            this._emit('fulfilled', { result });
+                          })
+                          .catch(error => {
+                            this._emit('rejected', { error });
+                            this._finished = true;
+                            reject(error);
+                          })
+                          .finally(() => {
+                            this._active -= 1;
+                            if (this._finished) {
+                              if (this._active === 0) {
+                                resolve();
+                              }
+                              return;
+                            }
+                            schedule();
+                          });
+                      }
+                    };
+
+                    schedule();
+                  });
+                }
+              }
+
+              PromisePool.PromisePool = PromisePool;
+              PromisePool.PromisePoolEvent = PromisePoolEvent;
+
+              export { PromisePool, PromisePoolEvent };
+              export default PromisePool;
             `;
           }
           return null;
