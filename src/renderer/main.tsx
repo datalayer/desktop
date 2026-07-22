@@ -177,6 +177,7 @@ if (Prism && Prism.languages) {
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { setupPrimerPortals } from '@datalayer/primer-addons';
 import App from './App';
 import { ServiceProvider } from './contexts/ServiceContext';
 import './index.css';
@@ -244,6 +245,9 @@ const loadDatalayerConfig = async () => {
  */
 const init = async () => {
   await loadDatalayerConfig();
+
+  // Ensure Primer overlays/dialogs mount to dedicated portal roots in Electron.
+  setupPrimerPortals();
 
   const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement

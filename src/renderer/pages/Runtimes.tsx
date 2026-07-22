@@ -452,7 +452,7 @@ const Runtimes: React.FC<RuntimesPageProps> = ({ isAuthenticated = false }) => {
       {/* Scrollable content area */}
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', pr: 1 }}>
         {!userAuthenticated && (
-          <ErrorMessage warning="Please log in to view active runtimes" />
+          <ErrorMessage warning="Please log in to view active agents" />
         )}
 
         {error && !loading && <ErrorMessage error={error} />}

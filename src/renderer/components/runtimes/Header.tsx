@@ -39,10 +39,10 @@ const Header: React.FC<RuntimesHeaderProps> = ({
       >
         <Box>
           <Heading as="h2" sx={{ mb: 1 }}>
-            Active Runtimes
+            Agents
           </Heading>
           <Text sx={{ color: 'fg.subtle', mb: 2 }}>
-            Manage your compute resources
+            Manage your active agents
           </Text>
 
           {/* Runtime statistics */}
@@ -128,7 +128,7 @@ const Header: React.FC<RuntimesHeaderProps> = ({
               },
             }}
           >
-            Terminate All
+            Terminate All Agents
           </Button>
 
           {/* Create Runtime button - never disabled */}
@@ -152,12 +152,12 @@ const Header: React.FC<RuntimesHeaderProps> = ({
               },
             }}
           >
-            Create Runtime
+            Create Agent
           </Button>
 
           {/* Refresh button - only disabled while refreshing */}
           <IconButton
-            aria-label="Refresh runtimes"
+            aria-label="Refresh agents"
             icon={SyncIcon}
             size="medium"
             variant="invisible"

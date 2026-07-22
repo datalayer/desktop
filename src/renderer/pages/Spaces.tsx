@@ -155,13 +155,46 @@ const Documents: React.FC<DocumentsListProps> = ({
       const spacesData = await window.datalayerClient.getMySpaces();
 
       if (spacesData && spacesData.length > 0) {
-        // Processing spaces (basic info only)
-        const spaces: SpaceInfo[] = spacesData.map((space: SpaceJSON) => ({
-          id: space.uid,
-          uid: space.uid,
-          name: space.name,
-          handle: space.handle,
-        }));
+        // getMySpaces() returns SpaceDTO instances; normalize each item to the
+        // stable JSON contract first so variant/name/handle are reliably read.
+        const spaces: SpaceInfo[] = spacesData.map(spaceModel => {
+          const modelAny = spaceModel as unknown as {
+            uid?: string;
+            id?: string;
+            name?: string;
+            handle?: string;
+            variant?: string;
+            toJSON?: () => SpaceJSON;
+            rawData?: () => {
+              uid?: string;
+              name_t?: string;
+              handle_s?: string;
+              variant_s?: string;
+            };
+          };
+
+          const json =
+            typeof modelAny.toJSON === 'function'
+              ? modelAny.toJSON()
+              : (modelAny as unknown as SpaceJSON);
+          const raw =
+            typeof modelAny.rawData === 'function'
+              ? modelAny.rawData()
+              : undefined;
+
+          const uid =
+            String(
+              json?.uid || modelAny.uid || modelAny.id || raw?.uid || ''
+            ) || '';
+
+          return {
+            id: uid,
+            uid,
+            name: json?.name || modelAny.name || raw?.name_t || '',
+            handle: json?.handle || modelAny.handle || raw?.handle_s,
+            variant: json?.variant || modelAny.variant || raw?.variant_s,
+          };
+        });
 
         setUserSpaces(spaces);
 
@@ -594,7 +627,7 @@ const Documents: React.FC<DocumentsListProps> = ({
           getItemIcon={getDocumentIcon}
           previousItemCount={previousDocumentCount}
           onCreateNew={handleCreateLexical}
-          createButtonLabel="New Lexical"
+          createButtonLabel="New Document"
         />
       </Box>
 

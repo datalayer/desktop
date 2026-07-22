@@ -11,7 +11,6 @@
 
 import React from 'react';
 import { Header } from '@primer/react';
-import { COLORS } from '../../../shared/constants/colors';
 import { NavigationTabProps } from '../../../shared/types';
 
 /**
@@ -40,39 +39,35 @@ const NavigationTab: React.FC<NavigationTabProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
+          color: isActive ? 'accent.fg' : 'fg.default',
           borderBottom: isActive
-            ? `2px solid ${COLORS.brand.primary}`
+            ? '2px solid var(--borderColor-accent-emphasis)'
             : '2px solid transparent',
           paddingBottom: '4px',
-          textDecoration: 'none !important',
-          backgroundColor: 'transparent !important',
+          textDecoration: 'none',
+          backgroundColor: 'transparent',
           outline: 'none',
           '&:hover': {
-            textDecoration: 'none !important',
-            color: `${COLORS.brand.primary} !important`,
-            backgroundColor: 'transparent !important',
+            textDecoration: 'none',
+            color: 'accent.fg',
+            backgroundColor: 'transparent',
             borderBottom: isActive
-              ? `2px solid ${COLORS.brand.primary}`
+              ? '2px solid var(--borderColor-accent-emphasis)'
               : '2px solid transparent',
           },
           '&:active, &:visited': {
-            color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
-            backgroundColor: 'transparent !important',
+            color: isActive ? 'accent.fg' : 'fg.default',
+            backgroundColor: 'transparent',
           },
           '&:focus, &:focus-visible': {
-            color: `${isActive ? COLORS.brand.primary : COLORS.text.primary} !important`,
-            backgroundColor: 'transparent !important',
+            color: isActive ? 'accent.fg' : 'fg.default',
+            backgroundColor: 'transparent',
             outline: '2px solid',
             outlineColor: 'accent.emphasis',
             outlineOffset: '-2px',
           },
-          '& span': {
-            color: 'inherit !important',
-          },
-          '& svg': {
-            color: 'inherit !important',
-          },
+          '& span': { color: 'inherit' },
+          '& svg': { color: 'inherit' },
         }}
       >
         <Icon size={16} />

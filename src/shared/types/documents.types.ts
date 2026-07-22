@@ -25,6 +25,7 @@ export interface SpaceInfo {
   uid?: string;
   name: string;
   handle?: string;
+  variant?: string;
 }
 
 export interface GroupedDocuments {

@@ -26,7 +26,7 @@ const RuntimesList: React.FC<RuntimesListProps> = ({
 }) => {
   // Show loading spinner
   if (loading && runtimes.length === 0) {
-    return <LoadingSpinner message="Loading runtimes..." variant="inline" />;
+    return <LoadingSpinner message="Loading agents..." variant="inline" />;
   }
 
   // Show empty state
@@ -52,10 +52,10 @@ const RuntimesList: React.FC<RuntimesListProps> = ({
             color: 'fg.muted',
           }}
         >
-          No Active Runtimes
+          No Active Agents
         </Text>
         <Text sx={{ fontSize: 1, color: 'fg.subtle' }}>
-          Create a runtime here or directly within a document.
+          Create an agent here or directly within a document.
         </Text>
       </Box>
     );

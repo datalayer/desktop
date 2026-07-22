@@ -31,17 +31,13 @@ const TerminateAllDialog: React.FC<TerminateAllDialogProps> = ({
   return (
     <Dialog
       onClose={onCancel}
-      aria-labelledby="terminate-all-dialog-title"
+      title="Terminate All Agents"
       sx={{ maxWidth: '500px' }}
     >
-      <Dialog.Header id="terminate-all-dialog-title">
-        Terminate All Runtimes
-      </Dialog.Header>
-
       <Box sx={{ p: 3 }}>
         <Box sx={{ mb: 3 }}>
           <Text sx={{ fontWeight: 'semibold', display: 'block', mb: 2 }}>
-            Runtimes to be terminated:
+            Agents to be terminated:
           </Text>
           <Box
             sx={{
@@ -63,7 +59,7 @@ const TerminateAllDialog: React.FC<TerminateAllDialogProps> = ({
               {runtimeCount}
             </Text>
             <Text sx={{ fontSize: 1, color: 'fg.subtle', display: 'block' }}>
-              {runtimeCount === 1 ? 'runtime' : 'runtimes'}
+              {runtimeCount === 1 ? 'agent' : 'agents'}
             </Text>
           </Box>
         </Box>
@@ -88,7 +84,7 @@ const TerminateAllDialog: React.FC<TerminateAllDialogProps> = ({
               },
             }}
           >
-            {isTerminating ? 'Terminating All...' : 'Terminate All Runtimes'}
+            {isTerminating ? 'Terminating All...' : 'Terminate All Agents'}
           </Button>
         </Box>
       </Box>

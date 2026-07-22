@@ -21,6 +21,12 @@ import Resources from './Resources';
  * Environment card component displaying environment details.
  */
 const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
+  const displayName = (environment.title || environment.name || '').trim();
+  const normalizedDisplayName = displayName.toLowerCase();
+  const shouldHideTypeLabel =
+    normalizedDisplayName === 'ai agents environment gpu' ||
+    normalizedDisplayName === 'ai agents environment';
+
   return (
     <Box
       key={environment.name}
@@ -55,7 +61,7 @@ const Card: React.FC<EnvironmentCardProps> = ({ environment }) => {
               <Heading as="h3" sx={{ fontSize: 2 }}>
                 {environment.title || environment.name}
               </Heading>
-              <TypeLabel environment={environment} />
+              {!shouldHideTypeLabel && <TypeLabel environment={environment} />}
             </Box>
 
             <Description environment={environment} />

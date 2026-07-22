@@ -48,12 +48,10 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
           onCancel();
         }
       }}
-      aria-labelledby="delete-item-title"
+      title="Delete Item"
       aria-describedby="delete-item-description"
       role="alertdialog"
     >
-      <Dialog.Header id="delete-item-title">Delete Item</Dialog.Header>
-
       <Box sx={{ p: 4 }}>
         <Text
           id="delete-item-description"

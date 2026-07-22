@@ -104,8 +104,7 @@ const CreateDocumentDialog: React.FC<CreateDocumentDialogProps> = ({
   }
 
   return (
-    <Dialog onClose={handleCancel} aria-labelledby="create-dialog-title">
-      <Dialog.Header id="create-dialog-title">{title}</Dialog.Header>
+    <Dialog onClose={handleCancel} title={title}>
       <Box p={3}>
         <FormControl required>
           <FormControl.Label>Name</FormControl.Label>

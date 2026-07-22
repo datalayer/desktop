@@ -11,8 +11,13 @@
  */
 
 import React from 'react';
-import { Box, Text, ActionList, IconButton, Button } from '@primer/react';
-import { PencilIcon, DownloadIcon, TrashIcon } from '@primer/octicons-react';
+import { Box, Text, ActionList } from '@primer/react';
+import {
+  PencilIcon,
+  GearIcon,
+  DownloadIcon,
+  TrashIcon,
+} from '@primer/octicons-react';
 import { COLORS } from '../../../shared/constants/colors';
 import type { DocumentItem } from '../../../shared/types';
 
@@ -41,6 +46,17 @@ const SpaceItem: React.FC<SpaceItemProps> = ({
   onDownload,
   onDelete,
 }) => {
+  const onActionKeyDown = (
+    e: React.KeyboardEvent<HTMLSpanElement>,
+    action: () => void
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      action();
+    }
+  };
+
   return (
     <ActionList.Item
       as="div"
@@ -87,62 +103,136 @@ const SpaceItem: React.FC<SpaceItemProps> = ({
         )}
       </Box>
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-        <Button
-          size="small"
-          variant="invisible"
-          onClick={e => {
+        <Box
+          as="span"
+          role="button"
+          tabIndex={0}
+          aria-label="Open"
+          onClick={(e: React.MouseEvent<HTMLSpanElement>) => {
             e.stopPropagation();
             onOpen();
           }}
+          onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) =>
+            onActionKeyDown(e, onOpen)
+          }
           sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            cursor: 'pointer',
             color: COLORS.brand.primary + ' !important',
-            fontWeight: 'semibold',
+            '& svg': {
+              width: '20px',
+              height: '20px',
+            },
             '&:hover': {
               color: COLORS.brand.primaryHover + ' !important',
               backgroundColor: `${COLORS.brand.primary}15`,
             },
-          }}
-        >
-          Open
-        </Button>
-        <IconButton
-          aria-label="Edit"
-          icon={PencilIcon}
-          size="large"
-          variant="invisible"
-          sx={{
-            '& svg': {
-              width: '20px',
-              height: '20px',
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'accent.emphasis',
+              outlineOffset: '2px',
             },
           }}
-          onClick={e => {
+        >
+          <PencilIcon size={20} />
+        </Box>
+        <Box
+          as="span"
+          role="button"
+          tabIndex={0}
+          aria-label="Edit details"
+          onClick={(e: React.MouseEvent<HTMLSpanElement>) => {
             e.stopPropagation();
             onEdit();
           }}
-        />
-        <IconButton
-          aria-label="Download"
-          icon={DownloadIcon}
-          size="large"
-          variant="invisible"
+          onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) =>
+            onActionKeyDown(e, onEdit)
+          }
           sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            cursor: 'pointer',
             '& svg': {
               width: '20px',
               height: '20px',
             },
+            '&:hover': {
+              backgroundColor: 'canvas.subtle',
+            },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'accent.emphasis',
+              outlineOffset: '2px',
+            },
           }}
-          onClick={e => {
+        >
+          <GearIcon size={20} />
+        </Box>
+        <Box
+          as="span"
+          role="button"
+          tabIndex={0}
+          aria-label="Download"
+          onClick={(e: React.MouseEvent<HTMLSpanElement>) => {
             e.stopPropagation();
             onDownload();
           }}
-        />
-        <IconButton
-          aria-label="Delete"
-          icon={TrashIcon}
-          size="large"
-          variant="invisible"
+          onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) =>
+            onActionKeyDown(e, onDownload)
+          }
           sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            '& svg': {
+              width: '20px',
+              height: '20px',
+            },
+            '&:hover': {
+              backgroundColor: 'canvas.subtle',
+            },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'accent.emphasis',
+              outlineOffset: '2px',
+            },
+          }}
+        >
+          <DownloadIcon size={20} />
+        </Box>
+        <Box
+          as="span"
+          role="button"
+          tabIndex={0}
+          aria-label="Delete"
+          onClick={(e: React.MouseEvent<HTMLSpanElement>) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) =>
+            onActionKeyDown(e, onDelete)
+          }
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            cursor: 'pointer',
             color: COLORS.palette.redPrimary + ' !important',
             '& svg': {
               color: COLORS.palette.redPrimary + ' !important',
@@ -158,12 +248,15 @@ const SpaceItem: React.FC<SpaceItemProps> = ({
                 fill: COLORS.palette.redHover + ' !important',
               },
             },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'danger.emphasis',
+              outlineOffset: '2px',
+            },
           }}
-          onClick={e => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        />
+        >
+          <TrashIcon size={20} />
+        </Box>
       </Box>
     </ActionList.Item>
   );

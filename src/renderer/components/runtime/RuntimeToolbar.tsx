@@ -291,11 +291,8 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       {showRuntimeDialog && (
         <Dialog
           onClose={() => setShowRuntimeDialog(false)}
-          aria-labelledby="runtime-dialog-title"
+          title="Create Runtime"
         >
-          <Dialog.Header id="runtime-dialog-title">
-            Create Runtime
-          </Dialog.Header>
           <Box sx={{ p: 3 }}>
             <FormControl required>
               <FormControl.Label>Runtime Name</FormControl.Label>
@@ -396,11 +393,8 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       {showTerminateDialog && (
         <Dialog
           onClose={() => !terminating && setShowTerminateDialog(false)}
-          aria-labelledby="terminate-dialog-title"
+          title="Terminate Runtime"
         >
-          <Dialog.Header id="terminate-dialog-title">
-            Terminate Runtime
-          </Dialog.Header>
           <Box sx={{ p: 3 }}>
             <Box sx={{ mb: 3 }}>
               Are you sure you want to terminate this runtime? This action

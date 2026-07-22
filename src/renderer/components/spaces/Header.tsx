@@ -11,7 +11,14 @@
  */
 
 import React from 'react';
-import { Box, Heading, IconButton, FormControl, Select } from '@primer/react';
+import {
+  Box,
+  Heading,
+  IconButton,
+  FormControl,
+  Select,
+  Label,
+} from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import { COLORS } from '../../../shared/constants/colors';
 import { HeaderProps } from '../../../shared/types';
@@ -38,9 +45,16 @@ const Header: React.FC<HeaderProps> = ({
         }}
       >
         <Box>
-          <Heading as="h2" sx={{ mb: 1 }}>
-            Space
-          </Heading>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+            <Heading as="h2" sx={{ m: 0 }}>
+              {selectedSpace?.name || 'Spaces'}
+            </Heading>
+            {selectedSpace?.variant && (
+              <Label size="small" sx={{ textTransform: 'capitalize' }}>
+                {selectedSpace.variant}
+              </Label>
+            )}
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
@@ -65,6 +79,7 @@ const Header: React.FC<HeaderProps> = ({
             }}
           >
             <FormControl disabled={loading}>
+              <FormControl.Label visuallyHidden>Select space</FormControl.Label>
               <Select
                 value={selectedSpace?.uid || selectedSpace?.id || ''}
                 onChange={onSpaceChange}

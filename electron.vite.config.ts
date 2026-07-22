@@ -846,6 +846,25 @@ export default defineConfig({
       {
         name: 'fix-raw-css-imports',
         enforce: 'pre',
+        resolveId(source: string) {
+          // In dev mode, this module can be served through /@fs/... and lose the
+          // expected default export shape. Force a stable virtual module.
+          if (
+            source.endsWith('/style/scrollbar.raw.css') ||
+            source.endsWith('/style/scrollbar.raw.css?raw') ||
+            source.endsWith('scrollbar.raw.css') ||
+            source.endsWith('scrollbar.raw.css?raw')
+          ) {
+            return '\0virtual:jupyterlab-scrollbar-raw-css';
+          }
+          return null;
+        },
+        load(id: string) {
+          if (id === '\0virtual:jupyterlab-scrollbar-raw-css') {
+            return 'export default "";';
+          }
+          return null;
+        },
         transform(code: string, id: string) {
           // Fix the import in themesplugins.js
           if (id.includes('themesplugins.js')) {
@@ -901,10 +920,28 @@ export default defineConfig({
       alias: [
         { find: '@', replacement: resolve(__dirname, 'src/renderer') },
         { find: '@primer/css', replacement: resolve(__dirname, 'node_modules/@primer/css') },
+        // IMPORTANT: exact-match aliases only. A plain string alias for
+        // "@primer/react" rewrites "@primer/react/experimental" to a non-existent
+        // filesystem path during optimizeDeps.
+        { find: /^@primer\/react$/, replacement: resolve(__dirname, 'node_modules/@primer/react') },
+        { find: /^styled-components$/, replacement: resolve(__dirname, 'node_modules/styled-components') },
         { find: '@datalayer/core', replacement: resolve(__dirname, '../core') },
         { find: '~react-toastify', replacement: 'react-toastify' },
         // Alias underscore to lodash
         { find: 'underscore', replacement: 'lodash' },
+      ],
+      // Force a single instance of these packages. In this monorepo the shared
+      // @datalayer/jupyter-lexical resolves @primer/react (and styled-components)
+      // from a sibling workspace, producing a second physical copy. Two copies
+      // means two React context trees, so Primer <Dialog>/<Overlay> rendered by
+      // the lexical package (Insert Table, Insert Equation, runtime dialogs)
+      // cannot see the app's ThemeProvider/BaseStyles and never mount. Deduping
+      // collapses them to one instance so overlays render correctly.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@primer/react',
+        'styled-components',
       ],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },

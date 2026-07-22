@@ -10,8 +10,13 @@
  */
 
 import React, { useState } from 'react';
-import { Header, Text } from '@primer/react';
-import { COLORS } from '../../../shared/constants/colors';
+import { Header } from '@primer/react';
+import {
+  AppearanceControlsWithStore,
+  DatalayerLogoText,
+  useSystemColorMode,
+} from '@datalayer/primer-addons';
+import { useThemeStore } from '../../theme/themeStore';
 import NavigationTabs from './NavigationTabs';
 import UserMenu from './UserMenu';
 import { User } from '../../../shared/types';
@@ -43,26 +48,28 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onLogout,
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const colorMode = useThemeStore(state => state.colorMode);
+  const themeVariant = useThemeStore(state => state.theme);
+  const systemColorMode = useSystemColorMode();
+  const resolvedColorMode = colorMode === 'auto' ? systemColorMode : colorMode;
 
   return (
     <Header
       sx={{
-        backgroundColor: COLORS.background.secondary,
+        backgroundColor: 'canvas.default',
+        color: 'fg.default',
         borderBottom: '1px solid',
         borderColor: 'border.default',
       }}
     >
-      <Header.Item>
-        <Text
-          sx={{
-            fontSize: 3,
-            fontWeight: 'bold',
-            color: COLORS.brand.primary,
-            mr: 4,
-          }}
-        >
-          Datalayer Desktop
-        </Text>
+      <Header.Item sx={{ mr: 3 }}>
+        <DatalayerLogoText
+          size={24}
+          colorMode={resolvedColorMode}
+          variant={themeVariant}
+          inverse
+          aria-label="Datalayer"
+        />
       </Header.Item>
 
       <NavigationTabs
@@ -73,6 +80,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         onNotebookClose={onNotebookClose}
         onDocumentClose={onDocumentClose}
       />
+
+      <Header.Item sx={{ mr: 2 }}>
+        <AppearanceControlsWithStore useStore={useThemeStore} />
+      </Header.Item>
 
       {isAuthenticated && user && (
         <UserMenu
