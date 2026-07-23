@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/desktop",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Datalayer Desktop - Official desktop application",
   "main": "dist/main/index.js",
   "author": "Datalayer",
