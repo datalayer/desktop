@@ -166,10 +166,11 @@ window.define = function (name, deps, factory) {
   }
 };
 
-// AMD flag
-window.define.amd = {
-  jQuery: true,
-};
+// Do not advertise full AMD support. Some UMD packages (notably Backbone)
+// switch to AMD mode when this flag is truthy, but our lightweight shim does
+// not emulate enough loader semantics for those modules. Keeping this falsy
+// forces their CommonJS path, which correctly initializes exports.
+window.define.amd = false;
 
 // Pre-register underscore/lodash if available
 if (window._ || window.lodash) {

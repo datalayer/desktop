@@ -19,9 +19,10 @@ import { createThemeStore } from '@datalayer/primer-addons';
 /**
  * Persisted theme store instance for the desktop app.
  */
-export const useThemeStore = createThemeStore('datalayer-desktop-theme', {
-  colorMode: 'light',
-  theme: 'matrix',
-});
+export const useThemeStore: ReturnType<typeof createThemeStore> =
+  createThemeStore('datalayer-desktop-theme', {
+    colorMode: 'light',
+    theme: 'matrix',
+  });
 
 export default useThemeStore;
