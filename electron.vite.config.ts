@@ -12,6 +12,14 @@ import importAsString from 'vite-plugin-string';
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
 
+const resolveWorkspaceDependency = (pkgPath: string) => {
+  const localPath = resolve(__dirname, 'node_modules', pkgPath);
+  if (existsSync(localPath)) {
+    return localPath;
+  }
+  return resolve(__dirname, '../../../node_modules', pkgPath);
+};
+
 export default defineConfig({
   main: {
     plugins: [
@@ -936,12 +944,21 @@ export default defineConfig({
     resolve: {
       alias: [
         { find: '@', replacement: resolve(__dirname, 'src/renderer') },
-        { find: '@primer/css', replacement: resolve(__dirname, 'node_modules/@primer/css') },
+        {
+          find: '@primer/css',
+          replacement: resolveWorkspaceDependency('@primer/css'),
+        },
         // IMPORTANT: exact-match aliases only. A plain string alias for
         // "@primer/react" rewrites "@primer/react/experimental" to a non-existent
         // filesystem path during optimizeDeps.
-        { find: /^@primer\/react$/, replacement: resolve(__dirname, 'node_modules/@primer/react') },
-        { find: /^styled-components$/, replacement: resolve(__dirname, 'node_modules/styled-components') },
+        {
+          find: /^@primer\/react$/,
+          replacement: resolveWorkspaceDependency('@primer/react'),
+        },
+        {
+          find: /^styled-components$/,
+          replacement: resolveWorkspaceDependency('styled-components'),
+        },
         { find: '~react-toastify', replacement: 'react-toastify' },
         // Alias underscore to lodash
         { find: 'underscore', replacement: 'lodash' },
