@@ -29,7 +29,7 @@ import { useService } from '../../contexts/ServiceContext';
 import type { Runtime } from '../../services/interfaces/IRuntimeService';
 
 export interface RuntimeToolbarProps {
-  runtimePodName?: string;
+  runtimeName?: string;
   onRuntimeSelected?: (runtime: Runtime | null) => void;
   /** Left content slot (e.g., notebook controls, lexical toolbar) */
   leftContent?: React.ReactNode;
@@ -38,7 +38,7 @@ export interface RuntimeToolbarProps {
 }
 
 export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
-  runtimePodName,
+  runtimeName,
   onRuntimeSelected,
   leftContent,
   rightContent,
@@ -47,7 +47,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState(() =>
+  const [givenName, setGivenName] = useState(() =>
     createRandomTimestampName()
   );
   const [minutes, setMinutes] = useState(10);
@@ -57,27 +57,27 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
 
   const handleOpenRuntimeDialog = () => {
-    setRuntimeName(createRandomTimestampName());
+    setGivenName(createRandomTimestampName());
     setMinutes(10);
     setShowRuntimeDialog(true);
   };
 
   const handleCloseRuntimeDialog = () => {
     setShowRuntimeDialog(false);
-    setRuntimeName(createRandomTimestampName());
+    setGivenName(createRandomTimestampName());
     setMinutes(10);
   };
 
   // Subscribe to runtime expiration events
   useEffect(() => {
-    if (!runtimeService || !runtimePodName) return;
+    if (!runtimeService || !runtimeName) return;
 
-    const unsubscribe = runtimeService.onRuntimeExpired(expiredPodName => {
+    const unsubscribe = runtimeService.onRuntimeExpired(expiredRuntimeName => {
       // If the current runtime expired, notify parent to reset
-      if (expiredPodName === runtimePodName) {
+      if (expiredRuntimeName === runtimeName) {
         console.log(
           '[RuntimeToolbar] Current runtime expired:',
-          expiredPodName
+          expiredRuntimeName
         );
         if (onRuntimeSelected) {
           onRuntimeSelected(null);
@@ -86,7 +86,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
     });
 
     return () => unsubscribe();
-  }, [runtimeService, runtimePodName, onRuntimeSelected]);
+  }, [runtimeService, runtimeName, onRuntimeSelected]);
 
   // Load environments when dialog opens
   useEffect(() => {
@@ -155,14 +155,14 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   };
 
   const handleCreateRuntime = async () => {
-    if (!selectedEnvironment || !runtimeName || creating) return;
+    if (!selectedEnvironment || !givenName || creating) return;
 
     setCreating(true);
     try {
       const runtime = await window.datalayerClient.createRuntime({
         environmentName: selectedEnvironment,
         type: 'notebook',
-        givenName: runtimeName,
+        givenName: givenName,
         minutesLimit: minutes,
       });
 
@@ -197,7 +197,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
       event.key === 'Enter' &&
       !creating &&
       selectedEnvironment &&
-      runtimeName
+      givenName
     ) {
       event.preventDefault();
       handleCreateRuntime();
@@ -205,17 +205,17 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   };
 
   const handleTerminateRuntime = async () => {
-    if (!runtimePodName || terminating) return;
+    if (!runtimeName || terminating) return;
 
     setTerminating(true);
     try {
-      await window.datalayerClient.deleteRuntime(runtimePodName);
+      await window.datalayerClient.deleteRuntime(runtimeName);
 
       // Refresh global runtime list so ALL notebooks see the updated list
       if (runtimeService) {
         await runtimeService.refreshAllRuntimes();
         // Fire expiration event so ALL editors connected to this runtime reset
-        runtimeService.notifyRuntimeTerminated(runtimePodName);
+        runtimeService.notifyRuntimeTerminated(runtimeName);
       }
 
       if (onRuntimeSelected) {
@@ -234,7 +234,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   return (
     <>
       {/* Runtime progress bar at the top */}
-      <RuntimeProgressBar runtimePodName={runtimePodName} />
+      <RuntimeProgressBar runtimeName={runtimeName} />
 
       <Box
         sx={{
@@ -277,14 +277,14 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
           {rightContent}
 
           <RuntimeSelector
-            selectedRuntimePodName={runtimePodName}
+            selectedRuntimeName={runtimeName}
             onRuntimeSelected={handleRuntimeSelectorChange}
             disabled={isConnecting || creating}
           />
           <Button size="small" onClick={handleOpenRuntimeDialog}>
             New Agent
           </Button>
-          {runtimePodName && (
+          {runtimeName && (
             <IconButton
               size="small"
               aria-label="Terminate runtime"
@@ -303,8 +303,8 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
             <FormControl required>
               <FormControl.Label>Agent Name</FormControl.Label>
               <TextInput
-                value={runtimeName}
-                onChange={e => setRuntimeName(e.target.value)}
+                value={givenName}
+                onChange={e => setGivenName(e.target.value)}
                 onKeyDown={handleRuntimeKeyDown}
                 placeholder="my-runtime"
                 sx={{ width: '100%' }}
@@ -382,7 +382,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
               <Button
                 variant="primary"
                 onClick={handleCreateRuntime}
-                disabled={!selectedEnvironment || !runtimeName || creating}
+                disabled={!selectedEnvironment || !givenName || creating}
               >
                 {creating ? 'Creating...' : 'Create Agent'}
               </Button>

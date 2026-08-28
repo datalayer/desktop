@@ -54,7 +54,7 @@ export class RuntimeService extends BaseService implements IRuntimeService {
 
   // Global runtime expiration monitoring
   private globalExpirationTimers = new Map<string, NodeJS.Timeout>();
-  private globalExpirationCallbacks = new Set<(podName: string) => void>();
+  private globalExpirationCallbacks = new Set<(runtimeName: string) => void>();
 
   // Runtime list refresh callbacks
   private runtimeListRefreshCallbacks = new Set<
@@ -168,7 +168,7 @@ export class RuntimeService extends BaseService implements IRuntimeService {
       const runtime: Runtime = {
         uid: result.uid,
         givenName: runtimeName,
-        podName: result.podName,
+        runtimeName: result.runtimeName,
         ingress: result.ingress,
         token: result.token,
         environmentName: options?.environmentId || '',
@@ -466,10 +466,10 @@ export class RuntimeService extends BaseService implements IRuntimeService {
   /**
    * Subscribe to global runtime expiration events.
    * Called when ANY runtime on the platform expires.
-   * @param callback - Function to call with the expired runtime's podName
+   * @param callback - Function to call with the expired runtime's runtimeName
    * @returns Unsubscribe function
    */
-  onRuntimeExpired(callback: (podName: string) => void): () => void {
+  onRuntimeExpired(callback: (runtimeName: string) => void): () => void {
     this.globalExpirationCallbacks.add(callback);
     return () => {
       this.globalExpirationCallbacks.delete(callback);
@@ -497,18 +497,18 @@ export class RuntimeService extends BaseService implements IRuntimeService {
 
       if (timeUntilExpiration <= 0) {
         // Already expired
-        this.handleGlobalRuntimeExpired(runtime.podName);
+        this.handleGlobalRuntimeExpired(runtime.runtimeName);
         continue;
       }
 
       // Set timer for future expiration
       const timer = setTimeout(() => {
-        this.handleGlobalRuntimeExpired(runtime.podName);
+        this.handleGlobalRuntimeExpired(runtime.runtimeName);
       }, timeUntilExpiration);
 
-      this.globalExpirationTimers.set(runtime.podName, timer);
+      this.globalExpirationTimers.set(runtime.runtimeName, timer);
 
-      this.logger.debug(`Set expiration timer for runtime ${runtime.podName}`, {
+      this.logger.debug(`Set expiration timer for runtime ${runtime.runtimeName}`, {
         expiresIn: Math.round(timeUntilExpiration / 1000),
       });
     }
@@ -522,8 +522,8 @@ export class RuntimeService extends BaseService implements IRuntimeService {
    * Manually trigger runtime expiration (e.g., when user terminates a runtime)
    * This will notify all subscribers that the runtime is no longer available
    */
-  public notifyRuntimeTerminated(podName: string): void {
-    this.handleGlobalRuntimeExpired(podName);
+  public notifyRuntimeTerminated(runtimeName: string): void {
+    this.handleGlobalRuntimeExpired(runtimeName);
   }
 
   /**
@@ -553,19 +553,19 @@ export class RuntimeService extends BaseService implements IRuntimeService {
     }
   }
 
-  private handleGlobalRuntimeExpired(podName: string): void {
-    this.logger.warn(`Runtime ${podName} has expired globally`);
+  private handleGlobalRuntimeExpired(runtimeName: string): void {
+    this.logger.warn(`Runtime ${runtimeName} has expired globally`);
 
     // Remove from global timers
-    this.globalExpirationTimers.delete(podName);
+    this.globalExpirationTimers.delete(runtimeName);
 
     // Remove from allRuntimes cache
-    this.allRuntimes = this.allRuntimes.filter(r => r.podName !== podName);
+    this.allRuntimes = this.allRuntimes.filter(r => r.runtimeName !== runtimeName);
 
     // Notify all subscribers
     for (const callback of this.globalExpirationCallbacks) {
       try {
-        callback(podName);
+        callback(runtimeName);
       } catch (error) {
         this.logger.error(
           'Error in runtime expiration callback',

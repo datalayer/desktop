@@ -37,14 +37,14 @@ import type { Runtime } from '../../services/interfaces/IRuntimeService';
 
 export interface INotebook2ToolbarProps {
   notebookId?: string;
-  runtimePodName?: string;
+  runtimeName?: string;
   showNotebookControls?: boolean;
   onRuntimeSelected?: (runtime: Runtime | null) => void;
 }
 
 export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   notebookId,
-  runtimePodName,
+  runtimeName,
   showNotebookControls = true,
   onRuntimeSelected,
 }) => {
@@ -53,7 +53,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [runtimeName, setRuntimeName] = useState(() =>
+  const [givenName, setGivenName] = useState(() =>
     createRandomTimestampName()
   );
   const [minutes, setMinutes] = useState(10);
@@ -64,14 +64,14 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   const [isCellRunning, setIsCellRunning] = useState(false);
 
   const handleOpenRuntimeDialog = () => {
-    setRuntimeName(createRandomTimestampName());
+    setGivenName(createRandomTimestampName());
     setMinutes(10);
     setShowRuntimeDialog(true);
   };
 
   const handleCloseRuntimeDialog = () => {
     setShowRuntimeDialog(false);
-    setRuntimeName(createRandomTimestampName());
+    setGivenName(createRandomTimestampName());
     setMinutes(10);
   };
 
@@ -153,14 +153,14 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   };
 
   const handleCreateRuntime = async () => {
-    if (!selectedEnvironment || !runtimeName || creating) return;
+    if (!selectedEnvironment || !givenName || creating) return;
 
     setCreating(true);
     try {
       const runtime = await window.datalayerClient.createRuntime({
         environmentName: selectedEnvironment,
         type: 'notebook',
-        givenName: runtimeName,
+        givenName: givenName,
         minutesLimit: minutes,
       });
 
@@ -192,7 +192,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
       event.key === 'Enter' &&
       !creating &&
       selectedEnvironment &&
-      runtimeName
+      givenName
     ) {
       event.preventDefault();
       handleCreateRuntime();
@@ -200,11 +200,11 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   };
 
   const handleTerminateRuntime = async () => {
-    if (!runtimePodName || terminating) return;
+    if (!runtimeName || terminating) return;
 
     setTerminating(true);
     try {
-      await window.datalayerClient.deleteRuntime(runtimePodName);
+      await window.datalayerClient.deleteRuntime(runtimeName);
 
       // Refresh global runtime list so ALL notebooks see the updated list
       if (runtimeService) {
@@ -227,7 +227,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   return (
     <>
       {/* Runtime progress bar at the top */}
-      <RuntimeProgressBar runtimePodName={runtimePodName} />
+      <RuntimeProgressBar runtimeName={runtimeName} />
 
       <Box
         role="toolbar"
@@ -251,28 +251,28 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
                 variant="invisible"
                 size="small"
                 aria-label="Run cell"
-                title={!runtimePodName ? 'No runtime connected' : 'Run cell'}
+                title={!runtimeName ? 'No runtime connected' : 'Run cell'}
                 onClick={handleRun}
                 icon={PlayIcon}
-                disabled={!runtimePodName}
+                disabled={!runtimeName}
               />
               <IconButton
                 variant="invisible"
                 size="small"
                 aria-label="Run all cells"
                 title={
-                  !runtimePodName ? 'No runtime connected' : 'Run all cells'
+                  !runtimeName ? 'No runtime connected' : 'Run all cells'
                 }
                 onClick={handleRunAll}
                 icon={PaperAirplaneIcon}
-                disabled={!runtimePodName}
+                disabled={!runtimeName}
               />
               <IconButton
                 variant="invisible"
                 size="small"
                 aria-label="Interrupt"
                 title={
-                  !runtimePodName
+                  !runtimeName
                     ? 'No runtime connected'
                     : !isCellRunning
                       ? 'No cells running'
@@ -280,7 +280,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
                 }
                 onClick={handleInterrupt}
                 icon={StopIcon}
-                disabled={!runtimePodName || !isCellRunning}
+                disabled={!runtimeName || !isCellRunning}
               />
               <Box sx={{ width: 1, height: 20, bg: 'border.default', mx: 1 }} />
               <IconButton
@@ -315,14 +315,14 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
         {/* Right side: Runtime selector, terminate button, and close button */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <RuntimeSelector
-            selectedRuntimePodName={runtimePodName}
+            selectedRuntimeName={runtimeName}
             onRuntimeSelected={handleRuntimeSelectorChange}
             disabled={isConnecting || creating}
           />
           <Button size="small" onClick={handleOpenRuntimeDialog}>
             New Agent
           </Button>
-          {runtimePodName && (
+          {runtimeName && (
             <Button
               size="small"
               variant="danger"
@@ -342,8 +342,8 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
             <FormControl required>
               <FormControl.Label>Agent Name</FormControl.Label>
               <TextInput
-                value={runtimeName}
-                onChange={e => setRuntimeName(e.target.value)}
+                value={givenName}
+                onChange={e => setGivenName(e.target.value)}
                 onKeyDown={handleRuntimeKeyDown}
                 placeholder="my-runtime"
                 sx={{ width: '100%' }}
@@ -421,7 +421,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
               <Button
                 variant="primary"
                 onClick={handleCreateRuntime}
-                disabled={!selectedEnvironment || !runtimeName || creating}
+                disabled={!selectedEnvironment || !givenName || creating}
               >
                 {creating ? 'Creating...' : 'Create Agent'}
               </Button>

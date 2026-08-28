@@ -123,7 +123,7 @@ describe('Notebook2Toolbar', () => {
 
   it('should render RuntimeProgressBar when runtime pod name is provided', () => {
     render(
-      <Notebook2Toolbar {...defaultProps} runtimePodName="test-pod-123" />
+      <Notebook2Toolbar {...defaultProps} runtimeName="test-pod-123" />
     );
 
     // RuntimeProgressBar should be rendered (we'd need to check for its elements)
@@ -181,7 +181,7 @@ describe('Notebook2Toolbar', () => {
 describe('Notebook2Toolbar - Integration', () => {
   const defaultProps = {
     notebookId: 'test-notebook-1',
-    runtimePodName: 'test-runtime-pod',
+    runtimeName: 'test-runtime-pod',
   };
 
   it('should integrate with RuntimeProgressBar when runtime is provided', () => {

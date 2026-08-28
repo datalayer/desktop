@@ -90,17 +90,17 @@ export interface IRuntimeService extends ILifecycle {
   /**
    * Subscribe to global runtime expiration events.
    * Called when ANY runtime on the platform expires.
-   * @param callback - Function to call with the expired runtime's podName
+   * @param callback - Function to call with the expired runtime's runtimeName
    * @returns Unsubscribe function
    */
-  onRuntimeExpired(callback: (podName: string) => void): () => void;
+  onRuntimeExpired(callback: (runtimeName: string) => void): () => void;
 
   /**
    * Manually notify all subscribers that a runtime has been terminated.
    * This propagates the termination to ALL editors connected to that runtime.
-   * @param podName - The pod name of the terminated runtime
+   * @param runtimeName - The pod name of the terminated runtime
    */
-  notifyRuntimeTerminated(podName: string): void;
+  notifyRuntimeTerminated(runtimeName: string): void;
 
   /**
    * Subscribe to runtime list refresh events.

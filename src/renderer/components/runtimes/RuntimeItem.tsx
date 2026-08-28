@@ -118,7 +118,7 @@ const RuntimeItem: React.FC<RuntimeItemProps> = ({ runtime, onTerminate }) => {
               display: 'block',
             }}
           >
-            Pod: {runtime.podName}
+            Pod: {runtime.runtimeName}
           </Text>
         </Box>
 

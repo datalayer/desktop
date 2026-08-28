@@ -303,15 +303,15 @@ const Runtimes: React.FC<RuntimesPageProps> = ({ isAuthenticated = false }) => {
   const confirmTerminateRuntime = useCallback(async () => {
     if (!runtimeToTerminate) return;
 
-    logger.info('[Runtimes] Terminating runtime:', runtimeToTerminate.podName);
+    logger.info('[Runtimes] Terminating runtime:', runtimeToTerminate.runtimeName);
     setIsTerminating(true);
 
     try {
-      await window.datalayerClient.deleteRuntime(runtimeToTerminate.podName);
+      await window.datalayerClient.deleteRuntime(runtimeToTerminate.runtimeName);
 
       // Notify RuntimeService to update global state
       if (runtimeService) {
-        runtimeService.notifyRuntimeTerminated(runtimeToTerminate.podName);
+        runtimeService.notifyRuntimeTerminated(runtimeToTerminate.runtimeName);
       }
 
       // Refresh list
@@ -344,8 +344,8 @@ const Runtimes: React.FC<RuntimesPageProps> = ({ isAuthenticated = false }) => {
   const confirmTerminateAll = useCallback(async () => {
     logger.info('[Runtimes] Terminating all runtimes:', runtimes.length);
     logger.debug(
-      '[Runtimes] Runtime podNames:',
-      runtimes.map(r => r.podName)
+      '[Runtimes] Runtime names:',
+      runtimes.map(r => r.runtimeName)
     );
     setIsTerminating(true);
 
@@ -370,7 +370,7 @@ const Runtimes: React.FC<RuntimesPageProps> = ({ isAuthenticated = false }) => {
       // Notify RuntimeService for each terminated runtime
       if (runtimeService) {
         runtimes.forEach(runtime => {
-          runtimeService.notifyRuntimeTerminated(runtime.podName);
+          runtimeService.notifyRuntimeTerminated(runtime.runtimeName);
         });
       }
 

@@ -627,7 +627,7 @@ Renderer → IPC (proxy:websocket-open) → Main Process → WebSocket → Kerne
 const serviceManager = await createProxyServiceManager(
   runtime.runtime.ingress,  // Jupyter server URL
   runtime.runtime.token,    // Runtime-specific token
-  runtime.runtime.pod_name  // Runtime ID
+  runtime.runtime.runtime_name  // Runtime ID
 );
 
 // Now use serviceManager for kernel operations
@@ -1103,7 +1103,7 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     const serviceManager = await createProxyServiceManager(
       runtime.runtime.ingress,
       runtime.runtime.token,
-      runtime.runtime.pod_name
+      runtime.runtime.runtime_name
     );
 
     // Update state
@@ -1135,7 +1135,7 @@ const MyComponent = () => {
     </Button>;
   }
 
-  return <div>Runtime: {runtime.runtime.pod_name}</div>;
+  return <div>Runtime: {runtime.runtime.runtime_name}</div>;
 };
 ```
 
@@ -1367,7 +1367,7 @@ npx electron-rebuild
 #### Issue: WebSocket connection failures
 
 **Check**:
-1. Runtime is actually running: `await window.datalayerClient.getRuntime(podName)`
+1. Runtime is actually running: `await window.datalayerClient.getRuntime(runtimeName)`
 2. WebSocket proxy logs in main process
 3. Token is valid and not expired
 

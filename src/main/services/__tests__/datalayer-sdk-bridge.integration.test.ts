@@ -32,7 +32,7 @@ const mockData = vi.hoisted(() => ({
   runtimes: [
     {
       uid: 'runtime-123',
-      podName: 'pod-name-123',
+      runtimeName: 'pod-name-123',
       ingress: 'https://example.run',
       token: 'runtime-token',
     },

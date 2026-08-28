@@ -123,7 +123,7 @@ const Environments: React.FC<EnvironmentsProps> = ({ isAuthenticated }) => {
       {/* Fixed header */}
       <Box sx={{ flexShrink: 0, mb: 4 }}>
         <Heading as="h2" sx={{ mb: 2 }}>
-          Runtime Profiles
+          Environments
         </Heading>
         <Text sx={{ color: 'fg.subtle' }}>
           Available runtime profiles for your notebooks and agents

@@ -75,7 +75,7 @@ export const mockRuntimes = [
   {
     uid: 'runtime-123',
     given_name: 'test-notebook-runtime',
-    pod_name: 'datalayer-runtime-abc123',
+    runtime_name: 'datalayer-runtime-abc123',
     ingress: 'https://runtime-abc123.prod1.datalayer.run',
     token: 'mock-runtime-token',
     environment_name: 'python-cpu-env',
@@ -90,7 +90,7 @@ export const mockRuntimes = [
   {
     uid: 'runtime-456',
     given_name: 'test-terminal-runtime',
-    pod_name: 'datalayer-runtime-def456',
+    runtime_name: 'datalayer-runtime-def456',
     ingress: 'https://runtime-def456.prod1.datalayer.run',
     token: 'mock-runtime-token-2',
     environment_name: 'python-gpu-env',

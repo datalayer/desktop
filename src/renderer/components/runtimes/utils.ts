@@ -136,7 +136,7 @@ export const sortRuntimes = (
   switch (sortBy) {
     case 'name':
       return sorted.sort((a, b) =>
-        (a.givenName || a.podName).localeCompare(b.givenName || b.podName)
+        (a.givenName || a.runtimeName).localeCompare(b.givenName || b.runtimeName)
       );
 
     case 'environment':
@@ -197,7 +197,7 @@ export const calculateRuntimeStats = (runtimes: Runtime[]): RuntimeStats => {
  * @returns Formatted name
  */
 export const formatRuntimeName = (runtime: Runtime): string => {
-  return runtime.givenName || runtime.podName || 'Unnamed Runtime';
+  return runtime.givenName || runtime.runtimeName || 'Unnamed Runtime';
 };
 
 /**

@@ -126,7 +126,7 @@ export interface LexicalEditorProps {
   className?: string;
   editable?: boolean;
   collaboration?: CollaborationConfig;
-  runtimePodName?: string;
+  runtimeName?: string;
   onRuntimeSelected?: (runtime: Runtime | null) => void;
   serviceManager?: import('@jupyterlab/services').ServiceManager.IManager;
 }
@@ -355,7 +355,7 @@ export function LexicalEditor({
   className = '',
   collaboration,
   onContentChange,
-  runtimePodName,
+  runtimeName,
   onRuntimeSelected,
   serviceManager,
 }: LexicalEditorProps) {
@@ -373,7 +373,7 @@ export function LexicalEditor({
     'var(--bgColor-default)';
   const lexicalTheme = resolvedMode === 'dark' ? 'dark' : 'light';
   const lexicalId =
-    collaboration?.documentId || runtimePodName || 'desktop-lexical';
+    collaboration?.documentId || runtimeName || 'desktop-lexical';
 
   return (
     <DatalayerThemeProvider
@@ -393,7 +393,7 @@ export function LexicalEditor({
                   <ToolbarContext>
                     <div className="editor-shell">
                       <RuntimeToolbar
-                        runtimePodName={runtimePodName}
+                        runtimeName={runtimeName}
                         onRuntimeSelected={onRuntimeSelected}
                         leftContent={<LexicalToolbar />}
                       />

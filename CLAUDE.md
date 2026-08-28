@@ -554,14 +554,14 @@ The system provides multiple layers of protection:
 const proxyServiceManager = await createProxyServiceManager(
   configuration.runUrl, // ❌ General platform URL
   configuration.token, // ❌ General platform token
-  runtime.runtime?.pod_name || ''
+  runtime.runtime?.runtime_name || ''
 );
 
 // AFTER (CORRECT)
 const proxyServiceManager = await createProxyServiceManager(
   runtime.runtime.ingress, // ✅ Runtime-specific URL
   runtime.runtime.token, // ✅ Runtime-specific token
-  runtime.runtime?.pod_name || ''
+  runtime.runtime?.runtime_name || ''
 );
 ```
 
@@ -664,7 +664,7 @@ if (!runtime?.runtime?.ingress || !runtime?.runtime?.token) {
       const proxyServiceManager = await createProxyServiceManager(
         newRuntime.runtime.ingress,
         newRuntime.runtime.token,
-        newRuntime.runtime?.pod_name || ''
+        newRuntime.runtime?.runtime_name || ''
       );
     }
   }

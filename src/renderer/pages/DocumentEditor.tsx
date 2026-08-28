@@ -32,7 +32,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   const runtimeService = useService('runtimeService');
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
-    podName: string;
+    runtimeName: string;
     ingress: string;
     token: string;
   } | null>(null);
@@ -58,12 +58,12 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
   useEffect(() => {
     if (!runtimeService) return;
 
-    const unsubscribe = runtimeService.onRuntimeExpired(expiredPodName => {
-      console.log('[DocumentEditor] Runtime expired globally:', expiredPodName);
+    const unsubscribe = runtimeService.onRuntimeExpired(expiredRuntimeName => {
+      console.log('[DocumentEditor] Runtime expired globally:', expiredRuntimeName);
 
       // Check current runtime using setState callback to avoid dependency
       setRuntimeInfo(current => {
-        if (current?.podName === expiredPodName) {
+        if (current?.runtimeName === expiredRuntimeName) {
           console.log(
             '[DocumentEditor] Current runtime expired, switching to mock'
           );
@@ -96,7 +96,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
         const now = Date.now();
         const availableRuntimes = runtimes
           .filter(runtime => {
-            if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
+            if (!runtime?.runtimeName || !runtime?.ingress || !runtime?.token) {
               return false;
             }
             if (runtime.expiredAt) {
@@ -122,11 +122,11 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
         if (availableRuntime) {
           console.log(
             '[DocumentEditor] Auto-assigning available agent:',
-            availableRuntime.podName
+            availableRuntime.runtimeName
           );
           setRuntimeInfo({
             id: availableRuntime.uid,
-            podName: availableRuntime.podName,
+            runtimeName: availableRuntime.runtimeName,
             ingress: availableRuntime.ingress,
             token: availableRuntime.token,
           });
@@ -188,7 +188,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
         console.log('[DocumentEditor] Creating real service manager with:', {
           ingress: runtimeInfo.ingress,
           id: runtimeInfo.id,
-          podName: runtimeInfo.podName,
+          runtimeName: runtimeInfo.runtimeName,
         });
         try {
           const realManager = await createProxyServiceManager(
@@ -308,7 +308,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
     console.log('[DocumentEditor] Runtime selected:', runtime);
     const info = {
       id: runtime.uid,
-      podName: runtime.podName,
+      runtimeName: runtime.runtimeName,
       ingress: runtime.ingress,
       token: runtime.token,
     };
@@ -318,8 +318,8 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
 
   // Generate unique key to force complete remount when runtime changes
   const editorKey = useMemo(() => {
-    return `lexical-${selectedDocument?.uid || 'new'}-runtime-${runtimeInfo?.podName || 'mock'}`;
-  }, [selectedDocument?.uid, runtimeInfo?.podName]);
+    return `lexical-${selectedDocument?.uid || 'new'}-runtime-${runtimeInfo?.runtimeName || 'mock'}`;
+  }, [selectedDocument?.uid, runtimeInfo?.runtimeName]);
 
   // Show loading state while service manager is being created
   if (!serviceManager) {
@@ -361,7 +361,7 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
           key={editorKey}
           collaboration={collaborationConfig || undefined}
           editable={true}
-          runtimePodName={runtimeInfo?.podName}
+          runtimeName={runtimeInfo?.runtimeName}
           onRuntimeSelected={handleRuntimeSelected}
           serviceManager={serviceManager}
         />
