@@ -47,8 +47,9 @@ jobs:
             platform: mac
             arch: universal
 
-          # macOS Intel only
-          - os: macos-13
+          # macOS Intel only (GitHub retired the macos-13 image; jobs on it
+          # queue forever)
+          - os: macos-15-intel
             platform: mac
             arch: x64
 
