@@ -1,6 +1,10 @@
-# CLAUDE.md - Electron Example
+# AGENTS.md - Datalayer Desktop
 
-This document contains important configuration and troubleshooting information for the Datalayer Electron example application.
+Instructions for coding agents (and humans) working on the Datalayer Desktop Electron application: configuration, conventions and troubleshooting.
+
+## Dependencies come from npm
+
+The app builds against the published `@datalayer/core` and `@datalayer/agent-runtimes` packages listed in `package.json`; there is no sibling checkout of the core repository to build first, and CI does not clone one. Runtime-related APIs (runtime models, the `AgentRuntimesClient`, runtime state) live in `@datalayer/agent-runtimes`; `@datalayer/core` only provides the shared state store and naming utilities. To pick up a new release, bump the range in `package.json` and run `npm install`.
 
 ## Quick Start
 
@@ -409,7 +413,10 @@ npm run dist:linux    # Package for Linux
 - `@rollup/plugin-commonjs` - Critical for CJS/ESM handling
 - `electron-vite` - Build tool for Electron + Vite
 - `vite-plugin-string` - Handles raw CSS imports
+- `@datalayer/core` - Shared state store (`lib/state`) and naming utilities (`lib/utils/Name`)
+- `@datalayer/agent-runtimes` - Runtime models and the `AgentRuntimesClient` (runtime features moved here from core)
 - `@datalayer/jupyter-react` - Jupyter components
+- `@swc/core` / `@swc/wasm` are pinned to 1.12.14 through `overrides`: `vite-plugin-top-level-await` 1.6.0 hand-builds SWC AST nodes and fails with `missing field \`type\`` against newer SWC releases during `electron-vite build`
 - `@jupyterlab/services` - Kernel and session management
 
 ## Polyfill Files Overview
@@ -554,14 +561,14 @@ The system provides multiple layers of protection:
 const proxyServiceManager = await createProxyServiceManager(
   configuration.runUrl, // ❌ General platform URL
   configuration.token, // ❌ General platform token
-  runtime.runtime?.pod_name || ''
+  runtime.runtime?.runtime_name || ''
 );
 
 // AFTER (CORRECT)
 const proxyServiceManager = await createProxyServiceManager(
   runtime.runtime.ingress, // ✅ Runtime-specific URL
   runtime.runtime.token, // ✅ Runtime-specific token
-  runtime.runtime?.pod_name || ''
+  runtime.runtime?.runtime_name || ''
 );
 ```
 
@@ -664,7 +671,7 @@ if (!runtime?.runtime?.ingress || !runtime?.runtime?.token) {
       const proxyServiceManager = await createProxyServiceManager(
         newRuntime.runtime.ingress,
         newRuntime.runtime.token,
-        newRuntime.runtime?.pod_name || ''
+        newRuntime.runtime?.runtime_name || ''
       );
     }
   }
@@ -709,7 +716,7 @@ if (
 | ServiceManager Config | ✅ Runtime-specific credentials       | ✅ Runtime-specific credentials |
 | Save Button           | ❌ Removed (cleaner UI)               | ✅ Present                      |
 
-## For AI Assistants
+## For Coding Agents
 
 When working with this codebase:
 

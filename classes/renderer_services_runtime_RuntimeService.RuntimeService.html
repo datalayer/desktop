@@ -1,5 +1,5 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>RuntimeService | Datalayer Desktop - v0.0.2</title><meta name="description" content="Documentation for Datalayer Desktop"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
-<div class="tsd-toolbar-contents container"><a href="../index.html" class="title">Datalayer Desktop - v0.0.2</a>
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>RuntimeService | Datalayer Desktop - v0.0.3</title><meta name="description" content="Documentation for Datalayer Desktop"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container"><a href="../index.html" class="title">Datalayer Desktop - v0.0.3</a>
 <div id="tsd-toolbar-links"><a href="https://github.com/datalayer/desktop">GitHub</a><a href="https://datalayer.io">Datalayer</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/>
 <ul role="listbox" id="tsd-search-results"></ul>
 <div id="tsd-search-status" aria-live="polite" aria-atomic="true">
@@ -116,7 +116,7 @@ No global state, no singletons - all dependencies injected.</p>
 <li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L46">renderer/services/runtime/RuntimeService.ts:46</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private">
 <h3 class="tsd-anchor-link" id="globalexpirationcallbacks"><code class="tsd-tag">Private</code><span>global<wbr/>Expiration<wbr/>Callbacks</span><a href="#globalexpirationcallbacks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">globalExpirationCallbacks</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">podName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">globalExpirationCallbacks</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">runtimeName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L57">renderer/services/runtime/RuntimeService.ts:57</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private">
@@ -221,7 +221,7 @@ Throws an error if the service is not in the Ready state.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L381">renderer/services/runtime/RuntimeService.ts:381</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L383">renderer/services/runtime/RuntimeService.ts:383</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="createruntime"><span>create<wbr/>Runtime</span><a href="#createruntime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -285,7 +285,7 @@ Ensures disposal only happens once.</p>
 <li><span><span class="tsd-kind-parameter">change</span>: <a href="../interfaces/renderer_services_interfaces_IRuntimeService.RuntimeStateChange.html" class="tsd-signature-type tsd-kind-interface">RuntimeStateChange</a></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L391">renderer/services/runtime/RuntimeService.ts:391</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L393">renderer/services/runtime/RuntimeService.ts:393</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="getruntimefornotebook"><span>get<wbr/>Runtime<wbr/>For<wbr/>Notebook</span><a href="#getruntimefornotebook" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -301,7 +301,7 @@ Ensures disposal only happens once.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">RuntimeJSON</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#getruntimefornotebook">getRuntimeForNotebook</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L288">renderer/services/runtime/RuntimeService.ts:288</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L290">renderer/services/runtime/RuntimeService.ts:290</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="getservicemanager"><span>get<wbr/>Service<wbr/>Manager</span><a href="#getservicemanager" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -317,20 +317,20 @@ Ensures disposal only happens once.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">IManager</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#getservicemanager">getServiceManager</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L295">renderer/services/runtime/RuntimeService.ts:295</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L297">renderer/services/runtime/RuntimeService.ts:297</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private">
 <h3 class="tsd-anchor-link" id="handleglobalruntimeexpired"><code class="tsd-tag">Private</code><span>handle<wbr/>Global<wbr/>Runtime<wbr/>Expired</span><a href="#handleglobalruntimeexpired" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
 <li class="">
-<div class="tsd-signature tsd-anchor-link" id="handleglobalruntimeexpired-1"><span class="tsd-kind-call-signature">handleGlobalRuntimeExpired</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">podName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#handleglobalruntimeexpired-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-signature tsd-anchor-link" id="handleglobalruntimeexpired-1"><span class="tsd-kind-call-signature">handleGlobalRuntimeExpired</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">runtimeName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#handleglobalruntimeexpired-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
-<li><span><span class="tsd-kind-parameter">podName</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
+<li><span><span class="tsd-kind-parameter">runtimeName</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L556">renderer/services/runtime/RuntimeService.ts:556</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L561">renderer/services/runtime/RuntimeService.ts:561</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private">
 <h3 class="tsd-anchor-link" id="handleruntimeexpired"><code class="tsd-tag">Private</code><span>handle<wbr/>Runtime<wbr/>Expired</span><a href="#handleruntimeexpired" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
@@ -345,7 +345,7 @@ Ensures disposal only happens once.</p>
 <li><span><span class="tsd-kind-parameter">runtimeUid</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L351">renderer/services/runtime/RuntimeService.ts:351</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L353">renderer/services/runtime/RuntimeService.ts:353</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="initialize"><span>initialize</span><a href="#initialize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -372,7 +372,7 @@ Uses cached data if available and fresh (&lt; 30 seconds old).</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">RuntimeJSON</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#listallruntimes">listAllRuntimes</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L408">renderer/services/runtime/RuntimeService.ts:408</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L410">renderer/services/runtime/RuntimeService.ts:410</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private">
 <h3 class="tsd-anchor-link" id="notifyruntimelistrefreshed"><code class="tsd-tag">Private</code><span>notify<wbr/>Runtime<wbr/>List<wbr/>Refreshed</span><a href="#notifyruntimelistrefreshed" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
@@ -387,12 +387,12 @@ Uses cached data if available and fresh (&lt; 30 seconds old).</p>
 <li><span><span class="tsd-kind-parameter">runtimes</span>: <span class="tsd-signature-type">RuntimeJSON</span><span class="tsd-signature-symbol">[]</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L543">renderer/services/runtime/RuntimeService.ts:543</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L548">renderer/services/runtime/RuntimeService.ts:548</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="notifyruntimeterminated"><span>notify<wbr/>Runtime<wbr/>Terminated</span><a href="#notifyruntimeterminated" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
-<div class="tsd-signature tsd-anchor-link" id="notifyruntimeterminated-1"><span class="tsd-kind-call-signature">notifyRuntimeTerminated</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">podName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#notifyruntimeterminated-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-signature tsd-anchor-link" id="notifyruntimeterminated-1"><span class="tsd-kind-call-signature">notifyRuntimeTerminated</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">runtimeName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#notifyruntimeterminated-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Manually trigger runtime expiration (e.g., when user terminates a runtime)
 This will notify all subscribers that the runtime is no longer available</p>
@@ -400,11 +400,11 @@ This will notify all subscribers that the runtime is no longer available</p>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
-<li><span><span class="tsd-kind-parameter">podName</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
+<li><span><span class="tsd-kind-parameter">runtimeName</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#notifyruntimeterminated">notifyRuntimeTerminated</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L525">renderer/services/runtime/RuntimeService.ts:525</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L530">renderer/services/runtime/RuntimeService.ts:530</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
 <h3 class="tsd-anchor-link" id="ondispose"><code class="tsd-tag">Protected</code><span>on<wbr/>Dispose</span><a href="#ondispose" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-protected">
@@ -435,7 +435,7 @@ Called once during initialize().</p>
 <h3 class="tsd-anchor-link" id="onruntimeexpired"><span>on<wbr/>Runtime<wbr/>Expired</span><a href="#onruntimeexpired" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
-<div class="tsd-signature tsd-anchor-link" id="onruntimeexpired-1"><span class="tsd-kind-call-signature">onRuntimeExpired</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">callback</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">podName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><a href="#onruntimeexpired-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-signature tsd-anchor-link" id="onruntimeexpired-1"><span class="tsd-kind-call-signature">onRuntimeExpired</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">callback</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">runtimeName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><a href="#onruntimeexpired-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Subscribe to global runtime expiration events.
 Called when ANY runtime on the platform expires.</p>
@@ -443,14 +443,14 @@ Called when ANY runtime on the platform expires.</p>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
-<li><span><span class="tsd-kind-parameter">callback</span>: <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">podName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></span>
-<div class="tsd-comment tsd-typography"><p>Function to call with the expired runtime's podName</p>
+<li><span><span class="tsd-kind-parameter">callback</span>: <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">runtimeName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></span>
+<div class="tsd-comment tsd-typography"><p>Function to call with the expired runtime's runtimeName</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></h4><p>Unsubscribe function</p>
 <aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#onruntimeexpired">onRuntimeExpired</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L472">renderer/services/runtime/RuntimeService.ts:472</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L474">renderer/services/runtime/RuntimeService.ts:474</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="onruntimelistrefreshed"><span>on<wbr/>Runtime<wbr/>List<wbr/>Refreshed</span><a href="#onruntimelistrefreshed" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -467,7 +467,7 @@ Called when the list of all runtimes has been updated.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#onruntimelistrefreshed">onRuntimeListRefreshed</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L533">renderer/services/runtime/RuntimeService.ts:533</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L538">renderer/services/runtime/RuntimeService.ts:538</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="onruntimestatechanged"><span>on<wbr/>Runtime<wbr/>State<wbr/>Changed</span><a href="#onruntimestatechanged" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -483,7 +483,7 @@ Called when the list of all runtimes has been updated.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#onruntimestatechanged">onRuntimeStateChanged</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L319">renderer/services/runtime/RuntimeService.ts:319</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L321">renderer/services/runtime/RuntimeService.ts:321</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="refreshallruntimes"><span>refresh<wbr/>All<wbr/>Runtimes</span><a href="#refreshallruntimes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -496,7 +496,7 @@ Forces a fresh fetch even if cached data exists.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">RuntimeJSON</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#refreshallruntimes">refreshAllRuntimes</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L433">renderer/services/runtime/RuntimeService.ts:433</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L435">renderer/services/runtime/RuntimeService.ts:435</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setservicemanager"><span>set<wbr/>Service<wbr/>Manager</span><a href="#setservicemanager" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -513,7 +513,7 @@ Forces a fresh fetch even if cached data exists.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Implementation of <a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html">IRuntimeService</a>.<a href="../interfaces/renderer_services_interfaces_IRuntimeService.IRuntimeService.html#setservicemanager">setServiceManager</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L302">renderer/services/runtime/RuntimeService.ts:302</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L304">renderer/services/runtime/RuntimeService.ts:304</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private">
 <h3 class="tsd-anchor-link" id="startexpirationtimer"><code class="tsd-tag">Private</code><span>start<wbr/>Expiration<wbr/>Timer</span><a href="#startexpirationtimer" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
@@ -528,7 +528,7 @@ Forces a fresh fetch even if cached data exists.</p>
 <li><span><span class="tsd-kind-parameter">runtime</span>: <span class="tsd-signature-type">RuntimeJSON</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L329">renderer/services/runtime/RuntimeService.ts:329</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L331">renderer/services/runtime/RuntimeService.ts:331</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="terminateruntime"><span>terminate<wbr/>Runtime</span><a href="#terminateruntime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -560,7 +560,7 @@ This monitors ALL runtimes and notifies when they expire.</p>
 <li><span><span class="tsd-kind-parameter">runtimes</span>: <span class="tsd-signature-type">RuntimeJSON</span><span class="tsd-signature-symbol">[]</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L483">renderer/services/runtime/RuntimeService.ts:483</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/datalayer/desktop/blob/main/src/renderer/services/runtime/RuntimeService.ts#L485">renderer/services/runtime/RuntimeService.ts:485</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -587,7 +587,7 @@ This monitors ALL runtimes and notifies when they expire.</p>
 <div><a href="#assertready" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>assert<wbr/>Ready</span></a><a href="#clearallexpirationtimers" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>clear<wbr/>All<wbr/>Expiration<wbr/>Timers</span></a><a href="#createruntime"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>create<wbr/>Runtime</span></a><a href="#createruntimeinternal" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>create<wbr/>Runtime<wbr/>Internal</span></a><a href="#dispose" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>dispose</span></a><a href="#emitstatechange" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>emit<wbr/>State<wbr/>Change</span></a><a href="#getruntimefornotebook"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>get<wbr/>Runtime<wbr/>For<wbr/>Notebook</span></a><a href="#getservicemanager"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>get<wbr/>Service<wbr/>Manager</span></a><a href="#handleglobalruntimeexpired" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>handle<wbr/>Global<wbr/>Runtime<wbr/>Expired</span></a><a href="#handleruntimeexpired" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>handle<wbr/>Runtime<wbr/>Expired</span></a><a href="#initialize" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>initialize</span></a><a href="#listallruntimes"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>list<wbr/>All<wbr/>Runtimes</span></a><a href="#notifyruntimelistrefreshed" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>notify<wbr/>Runtime<wbr/>List<wbr/>Refreshed</span></a><a href="#notifyruntimeterminated"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>notify<wbr/>Runtime<wbr/>Terminated</span></a><a href="#ondispose" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Dispose</span></a><a href="#oninitialize" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Initialize</span></a><a href="#onruntimeexpired"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Runtime<wbr/>Expired</span></a><a href="#onruntimelistrefreshed"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Runtime<wbr/>List<wbr/>Refreshed</span></a><a href="#onruntimestatechanged"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Runtime<wbr/>State<wbr/>Changed</span></a><a href="#refreshallruntimes"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>refresh<wbr/>All<wbr/>Runtimes</span></a><a href="#setservicemanager"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>Service<wbr/>Manager</span></a><a href="#startexpirationtimer" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>start<wbr/>Expiration<wbr/>Timer</span></a><a href="#terminateruntime"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>terminate<wbr/>Runtime</span></a><a href="#updateglobalexpirationtimers" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>update<wbr/>Global<wbr/>Expiration<wbr/>Timers</span></a></div></details></div></details></div>
 <div class="site-menu">
 <nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/datalayer/desktop" class="tsd-nav-link">GitHub</a><a href="https://datalayer.io" class="tsd-nav-link">Datalayer</a></nav>
-<nav class="tsd-navigation"><a href="../modules.html">Datalayer Desktop - v0.0.2</a>
+<nav class="tsd-navigation"><a href="../modules.html">Datalayer Desktop - v0.0.3</a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container">
 <li>Loading...</li></ul></nav></div></div></div><footer>
 <p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer>
