@@ -60,31 +60,19 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Setup directory structure
-        run: mkdir -p datalayer
-
-      - name: Checkout desktop repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: datalayer/desktop
           fetch-depth: 0
 
-      - name: Checkout core repository
-        uses: actions/checkout@v4
-        with:
-          repository: goanpeca/core
-          ref: sdk/core-updates
-          path: datalayer/core
-
       - name: Setup build environment
-        uses: ./datalayer/desktop/.github/actions/setup-environment
+        uses: ./.github/actions/setup-environment
         with:
           os: ${{ matrix.os }}
 
       # Linux Build
       - name: Build for Linux
         if: matrix.platform == 'linux'
-        working-directory: datalayer/desktop
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
             npm run dist:dev-prod:linux
@@ -101,16 +89,15 @@ jobs:
         with:
           name: datalayer-desktop-linux-${{ matrix.arch }}
           path: |
-            datalayer/desktop/dist-electron/*.AppImage
-            datalayer/desktop/dist-electron/*.deb
-            datalayer/desktop/dist-electron/*.rpm
-            datalayer/desktop/dist-electron/*.snap
+            dist-electron/*.AppImage
+            dist-electron/*.deb
+            dist-electron/*.rpm
+            dist-electron/*.snap
           retention-days: 30
 
       # Windows Build
       - name: Build for Windows
         if: matrix.platform == 'win'
-        working-directory: datalayer/desktop
         shell: bash
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
@@ -128,14 +115,13 @@ jobs:
         with:
           name: datalayer-desktop-win-${{ matrix.arch }}
           path: |
-            datalayer/desktop/dist-electron/*.exe
-            datalayer/desktop/dist-electron/*.msi
+            dist-electron/*.exe
+            dist-electron/*.msi
           retention-days: 30
 
       # macOS Build
       - name: Build for macOS
         if: matrix.platform == 'mac'
-        working-directory: datalayer/desktop
         run: |
           # Skip code signing if certificates aren't available
           if [ -z "${{ secrets.MACOS_CERTIFICATE }}" ]; then
@@ -166,9 +152,9 @@ jobs:
         with:
           name: datalayer-desktop-mac-${{ matrix.arch }}
           path: |
-            datalayer/desktop/dist-electron/*.dmg
-            datalayer/desktop/dist-electron/*.zip
-            datalayer/desktop/dist-electron/*.pkg
+            dist-electron/*.dmg
+            dist-electron/*.zip
+            dist-electron/*.pkg
           retention-days: 30
 
       # Upload build logs on failure
@@ -178,9 +164,9 @@ jobs:
         with:
           name: build-logs-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            datalayer/desktop/npm-debug.log
-            datalayer/desktop/dist-electron/builder-debug.yml
-            datalayer/desktop/dist-electron/builder-effective-config.yaml
+            npm-debug.log
+            dist-electron/builder-debug.yml
+            dist-electron/builder-effective-config.yaml
           retention-days: 7
 
   test-artifacts:

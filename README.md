@@ -68,7 +68,7 @@ If you want to contribute or build from source, please see:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and architecture
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [RELEASE.md](RELEASE.md) - Release and packaging instructions
-- [CLAUDE.md](CLAUDE.md) - AI assistant context and troubleshooting guide
+- [AGENTS.md](AGENTS.md) - Coding agent instructions and troubleshooting guide
 
 ### Testing (January 2025) 🧪
 

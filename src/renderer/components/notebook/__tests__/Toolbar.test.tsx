@@ -122,9 +122,7 @@ describe('Notebook2Toolbar', () => {
   });
 
   it('should render RuntimeProgressBar when runtime pod name is provided', () => {
-    render(
-      <Notebook2Toolbar {...defaultProps} runtimeName="test-pod-123" />
-    );
+    render(<Notebook2Toolbar {...defaultProps} runtimeName="test-pod-123" />);
 
     // RuntimeProgressBar should be rendered (we'd need to check for its elements)
     expect(screen.getByRole('toolbar')).toBeInTheDocument();

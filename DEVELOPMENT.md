@@ -877,10 +877,12 @@ The build system has **three separate configurations**:
 
 ```typescript
 main: {
-  plugins: [externalizeDepsPlugin(), copyStaticFilesPlugin()],
-  resolve: {
-    alias: { '@datalayer/core': resolve(__dirname, '../core') },
-  },
+  plugins: [
+    // @datalayer/core and @datalayer/agent-runtimes are bundled (not
+    // externalized) so Rollup resolves their internal directory imports.
+    externalizeDepsPlugin({ exclude: ['@datalayer/core', '@datalayer/agent-runtimes'] }),
+    copyStaticFilesPlugin(),
+  ],
   build: {
     outDir: 'dist/main',
     rollupOptions: {
@@ -1692,9 +1694,9 @@ npm run dist:mac-universal
 
 All workflows use the reusable action `.github/actions/setup-environment` which:
 1. Sets up Node.js 22
-2. Installs desktop dependencies
-3. Clones and builds core SDK from `goanpeca/core` (branch: `sdk/core-updates`)
-4. Configures environment variables
+2. Installs the desktop dependencies with `npm install` (`--force` on Windows)
+
+The Datalayer packages (`@datalayer/core`, `@datalayer/agent-runtimes`, `@datalayer/jupyter-react`, ...) are the published npm releases pinned in `package.json`; no sibling checkout is cloned or built.
 
 ### Debugging Failed Workflows
 
@@ -1718,7 +1720,7 @@ All workflows use the reusable action `.github/actions/setup-environment` which:
 - [README.md](README.md) - User-facing documentation
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [RELEASE.md](RELEASE.md) - Release process
-- [CLAUDE.md](CLAUDE.md) - Detailed technical notes and troubleshooting
+- [AGENTS.md](AGENTS.md) - Detailed technical notes and troubleshooting
 
 ### External Documentation
 - [Electron Docs](https://www.electronjs.org/docs) - Electron API reference

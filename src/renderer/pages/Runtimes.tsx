@@ -303,11 +303,16 @@ const Runtimes: React.FC<RuntimesPageProps> = ({ isAuthenticated = false }) => {
   const confirmTerminateRuntime = useCallback(async () => {
     if (!runtimeToTerminate) return;
 
-    logger.info('[Runtimes] Terminating runtime:', runtimeToTerminate.runtimeName);
+    logger.info(
+      '[Runtimes] Terminating runtime:',
+      runtimeToTerminate.runtimeName
+    );
     setIsTerminating(true);
 
     try {
-      await window.datalayerClient.deleteRuntime(runtimeToTerminate.runtimeName);
+      await window.datalayerClient.deleteRuntime(
+        runtimeToTerminate.runtimeName
+      );
 
       // Notify RuntimeService to update global state
       if (runtimeService) {

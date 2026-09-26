@@ -136,7 +136,9 @@ export const sortRuntimes = (
   switch (sortBy) {
     case 'name':
       return sorted.sort((a, b) =>
-        (a.givenName || a.runtimeName).localeCompare(b.givenName || b.runtimeName)
+        (a.givenName || a.runtimeName).localeCompare(
+          b.givenName || b.runtimeName
+        )
       );
 
     case 'environment':

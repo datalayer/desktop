@@ -1,6 +1,10 @@
-# CLAUDE.md - Electron Example
+# AGENTS.md - Datalayer Desktop
 
-This document contains important configuration and troubleshooting information for the Datalayer Electron example application.
+Instructions for coding agents (and humans) working on the Datalayer Desktop Electron application: configuration, conventions and troubleshooting.
+
+## Dependencies come from npm
+
+The app builds against the published `@datalayer/core` and `@datalayer/agent-runtimes` packages listed in `package.json`; there is no sibling checkout of the core repository to build first, and CI does not clone one. Runtime-related APIs (runtime models, the `AgentRuntimesClient`, runtime state) live in `@datalayer/agent-runtimes`; `@datalayer/core` only provides the shared state store and naming utilities. To pick up a new release, bump the range in `package.json` and run `npm install`.
 
 ## Quick Start
 
@@ -409,6 +413,8 @@ npm run dist:linux    # Package for Linux
 - `@rollup/plugin-commonjs` - Critical for CJS/ESM handling
 - `electron-vite` - Build tool for Electron + Vite
 - `vite-plugin-string` - Handles raw CSS imports
+- `@datalayer/core` - Shared state store (`lib/state`) and naming utilities (`lib/utils/Name`)
+- `@datalayer/agent-runtimes` - Runtime models and the `AgentRuntimesClient` (runtime features moved here from core)
 - `@datalayer/jupyter-react` - Jupyter components
 - `@jupyterlab/services` - Kernel and session management
 
@@ -709,7 +715,7 @@ if (
 | ServiceManager Config | ✅ Runtime-specific credentials       | ✅ Runtime-specific credentials |
 | Save Button           | ❌ Removed (cleaner UI)               | ✅ Present                      |
 
-## For AI Assistants
+## For Coding Agents
 
 When working with this codebase:
 

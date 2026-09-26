@@ -59,7 +59,10 @@ const DocumentEditor: React.FC<DocumentViewProps> = ({ selectedDocument }) => {
     if (!runtimeService) return;
 
     const unsubscribe = runtimeService.onRuntimeExpired(expiredRuntimeName => {
-      console.log('[DocumentEditor] Runtime expired globally:', expiredRuntimeName);
+      console.log(
+        '[DocumentEditor] Runtime expired globally:',
+        expiredRuntimeName
+      );
 
       // Check current runtime using setState callback to avoid dependency
       setRuntimeInfo(current => {

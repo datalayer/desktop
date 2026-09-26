@@ -47,9 +47,7 @@ export const RuntimeToolbar: React.FC<RuntimeToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [givenName, setGivenName] = useState(() =>
-    createRandomTimestampName()
-  );
+  const [givenName, setGivenName] = useState(() => createRandomTimestampName());
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);

@@ -78,7 +78,10 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     if (!runtimeService) return;
 
     const unsubscribe = runtimeService.onRuntimeExpired(expiredRuntimeName => {
-      console.log('[NotebookEditor] Runtime expired globally:', expiredRuntimeName);
+      console.log(
+        '[NotebookEditor] Runtime expired globally:',
+        expiredRuntimeName
+      );
 
       // Check current runtime using setRuntimeInfo callback to avoid dependency
       setRuntimeInfo(current => {

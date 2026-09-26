@@ -508,9 +508,12 @@ export class RuntimeService extends BaseService implements IRuntimeService {
 
       this.globalExpirationTimers.set(runtime.runtimeName, timer);
 
-      this.logger.debug(`Set expiration timer for runtime ${runtime.runtimeName}`, {
-        expiresIn: Math.round(timeUntilExpiration / 1000),
-      });
+      this.logger.debug(
+        `Set expiration timer for runtime ${runtime.runtimeName}`,
+        {
+          expiresIn: Math.round(timeUntilExpiration / 1000),
+        }
+      );
     }
   }
 
@@ -560,7 +563,9 @@ export class RuntimeService extends BaseService implements IRuntimeService {
     this.globalExpirationTimers.delete(runtimeName);
 
     // Remove from allRuntimes cache
-    this.allRuntimes = this.allRuntimes.filter(r => r.runtimeName !== runtimeName);
+    this.allRuntimes = this.allRuntimes.filter(
+      r => r.runtimeName !== runtimeName
+    );
 
     // Notify all subscribers
     for (const callback of this.globalExpirationCallbacks) {

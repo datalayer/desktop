@@ -53,9 +53,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
   const [showRuntimeDialog, setShowRuntimeDialog] = useState(false);
   const [environments, setEnvironments] = useState<EnvironmentJSON[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
-  const [givenName, setGivenName] = useState(() =>
-    createRandomTimestampName()
-  );
+  const [givenName, setGivenName] = useState(() => createRandomTimestampName());
   const [minutes, setMinutes] = useState(10);
   const [creating, setCreating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -260,9 +258,7 @@ export const Notebook2Toolbar: React.FC<INotebook2ToolbarProps> = ({
                 variant="invisible"
                 size="small"
                 aria-label="Run all cells"
-                title={
-                  !runtimeName ? 'No runtime connected' : 'Run all cells'
-                }
+                title={!runtimeName ? 'No runtime connected' : 'Run all cells'}
                 onClick={handleRunAll}
                 icon={PaperAirplaneIcon}
                 disabled={!runtimeName}
