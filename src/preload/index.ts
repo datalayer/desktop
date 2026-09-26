@@ -176,8 +176,8 @@ contextBridge.exposeInMainWorld('datalayerClient', {
   getRuntime: (runtimeId: string) =>
     ipcRenderer.invoke('datalayer:get-runtime', runtimeId),
 
-  isRuntimeActive: (podName: string) =>
-    ipcRenderer.invoke('datalayer:is-runtime-active', podName),
+  isRuntimeActive: (runtimeName: string) =>
+    ipcRenderer.invoke('datalayer:is-runtime-active', runtimeName),
 
   listRuntimes: () => ipcRenderer.invoke('datalayer:list-runtimes'),
 
@@ -358,13 +358,13 @@ export interface DatalayerIPCClient {
     givenName: string;
     minutesLimit: number;
   }) => Promise<RuntimeJSON>;
-  deleteRuntime: (podName: string) => Promise<void>;
+  deleteRuntime: (runtimeName: string) => Promise<void>;
   terminateAllRuntimes: () => Promise<PromiseSettledResult<void>[]>;
   getRuntime: (runtimeId: string) => Promise<RuntimeJSON>;
   listRuntimes: () => Promise<RuntimeJSON[]>;
 
   // Special runtime method with custom return type
-  isRuntimeActive: (podName: string) => Promise<{
+  isRuntimeActive: (runtimeName: string) => Promise<{
     isActive: boolean;
     runtime?: RuntimeJSON;
   }>;

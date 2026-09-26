@@ -21,29 +21,15 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Setup directory structure
-        run: mkdir -p datalayer
-
-      - name: Checkout desktop repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: datalayer/desktop
           fetch-depth: 0
 
-      - name: Checkout core repository
-        uses: actions/checkout@v4
-        with:
-          repository: goanpeca/core
-          ref: sdk/core-updates
-          path: datalayer/core
-
       - name: Setup build environment
-        uses: ./datalayer/desktop/.github/actions/setup-environment
-        with:
-          skip-debug: "true"
+        uses: ./.github/actions/setup-environment
 
       - name: Generate TypeDoc documentation
-        working-directory: datalayer/desktop
         run: |
           echo "Generating TypeDoc documentation..."
           npm run docs
@@ -52,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: datalayer/desktop/docs/
+          path: docs/
           retention-days: 30
 
       - name: Deploy to GitHub Pages
@@ -60,5 +46,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./datalayer/desktop/docs
+          publish_dir: ./docs
           cname: datalayer-desktop.netlify.app

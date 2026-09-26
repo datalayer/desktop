@@ -63,7 +63,7 @@ const Header: React.FC<DocumentHeaderProps> = ({
         <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Runtime:</Text>
         {serviceManager ? (
           <Text sx={{ fontSize: 1, color: 'success.fg' }}>
-            ✓ Connected ({documentRuntime?.podName})
+            ✓ Connected ({documentRuntime?.runtimeName})
           </Text>
         ) : (
           <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Not connected</Text>

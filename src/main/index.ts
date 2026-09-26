@@ -205,8 +205,8 @@ function registerIPCHandlers(): void {
     return runtime; // Returns RuntimeJSON directly, throws on error
   });
 
-  ipcMain.handle('datalayer:delete-runtime', async (_, podName) => {
-    await sdkBridge.call('delete_runtime', podName);
+  ipcMain.handle('datalayer:delete-runtime', async (_, runtimeName) => {
+    await sdkBridge.call('delete_runtime', runtimeName);
     // Returns void on success, throws on error
   });
 
@@ -220,9 +220,9 @@ function registerIPCHandlers(): void {
     return runtime; // Returns RuntimeJSON directly, throws on error
   });
 
-  ipcMain.handle('datalayer:is-runtime-active', async (_, podName) => {
+  ipcMain.handle('datalayer:is-runtime-active', async (_, runtimeName) => {
     try {
-      const runtime = await sdkBridge.call('get_runtime', podName);
+      const runtime = await sdkBridge.call('get_runtime', runtimeName);
       // Check if runtime is ready
       return { isActive: !!runtime, runtime };
     } catch {

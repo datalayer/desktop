@@ -153,12 +153,12 @@ export const mockDatalayerAPI = {
       data: mockRuntimes[0],
     })
   ),
-  deleteRuntime: vi.fn((_podName: string) =>
+  deleteRuntime: vi.fn((_runtimeName: string) =>
     Promise.resolve({
       success: true,
     })
   ),
-  isRuntimeActive: vi.fn((_podName: string) =>
+  isRuntimeActive: vi.fn((_runtimeName: string) =>
     Promise.resolve({
       success: true,
       isActive: true,

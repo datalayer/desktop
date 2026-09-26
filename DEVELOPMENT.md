@@ -627,7 +627,7 @@ Renderer → IPC (proxy:websocket-open) → Main Process → WebSocket → Kerne
 const serviceManager = await createProxyServiceManager(
   runtime.runtime.ingress,  // Jupyter server URL
   runtime.runtime.token,    // Runtime-specific token
-  runtime.runtime.pod_name  // Runtime ID
+  runtime.runtime.runtime_name  // Runtime ID
 );
 
 // Now use serviceManager for kernel operations
@@ -877,10 +877,12 @@ The build system has **three separate configurations**:
 
 ```typescript
 main: {
-  plugins: [externalizeDepsPlugin(), copyStaticFilesPlugin()],
-  resolve: {
-    alias: { '@datalayer/core': resolve(__dirname, '../core') },
-  },
+  plugins: [
+    // @datalayer/core and @datalayer/agent-runtimes are bundled (not
+    // externalized) so Rollup resolves their internal directory imports.
+    externalizeDepsPlugin({ exclude: ['@datalayer/core', '@datalayer/agent-runtimes'] }),
+    copyStaticFilesPlugin(),
+  ],
   build: {
     outDir: 'dist/main',
     rollupOptions: {
@@ -1103,7 +1105,7 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     const serviceManager = await createProxyServiceManager(
       runtime.runtime.ingress,
       runtime.runtime.token,
-      runtime.runtime.pod_name
+      runtime.runtime.runtime_name
     );
 
     // Update state
@@ -1135,7 +1137,7 @@ const MyComponent = () => {
     </Button>;
   }
 
-  return <div>Runtime: {runtime.runtime.pod_name}</div>;
+  return <div>Runtime: {runtime.runtime.runtime_name}</div>;
 };
 ```
 
@@ -1367,7 +1369,7 @@ npx electron-rebuild
 #### Issue: WebSocket connection failures
 
 **Check**:
-1. Runtime is actually running: `await window.datalayerClient.getRuntime(podName)`
+1. Runtime is actually running: `await window.datalayerClient.getRuntime(runtimeName)`
 2. WebSocket proxy logs in main process
 3. Token is valid and not expired
 
@@ -1692,9 +1694,9 @@ npm run dist:mac-universal
 
 All workflows use the reusable action `.github/actions/setup-environment` which:
 1. Sets up Node.js 22
-2. Installs desktop dependencies
-3. Clones and builds core SDK from `goanpeca/core` (branch: `sdk/core-updates`)
-4. Configures environment variables
+2. Installs the desktop dependencies with `npm install` (`--force` on Windows)
+
+The Datalayer packages (`@datalayer/core`, `@datalayer/agent-runtimes`, `@datalayer/jupyter-react`, ...) are the published npm releases pinned in `package.json`; no sibling checkout is cloned or built.
 
 ### Debugging Failed Workflows
 
@@ -1718,7 +1720,7 @@ All workflows use the reusable action `.github/actions/setup-environment` which:
 - [README.md](README.md) - User-facing documentation
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [RELEASE.md](RELEASE.md) - Release process
-- [CLAUDE.md](CLAUDE.md) - Detailed technical notes and troubleshooting
+- [AGENTS.md](AGENTS.md) - Detailed technical notes and troubleshooting
 
 ### External Documentation
 - [Electron Docs](https://www.electronjs.org/docs) - Electron API reference

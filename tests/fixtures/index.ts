@@ -69,37 +69,38 @@ export const mockEnvironments = [
 ];
 
 /**
- * Mock runtime data.
+ * Mock runtime data, in the camelCase `RuntimeJSON` shape the SDK bridge hands the
+ * renderer (`runtimeName`, `givenName`, ...), not the backend's snake_case records.
  */
 export const mockRuntimes = [
   {
     uid: 'runtime-123',
-    given_name: 'test-notebook-runtime',
-    pod_name: 'datalayer-runtime-abc123',
+    givenName: 'test-notebook-runtime',
+    runtimeName: 'datalayer-runtime-abc123',
     ingress: 'https://runtime-abc123.prod1.datalayer.run',
     token: 'mock-runtime-token',
-    environment_name: 'python-cpu-env',
-    environment_title: 'Python CPU Environment',
+    environmentName: 'python-cpu-env',
+    environmentTitle: 'Python CPU Environment',
     type: 'notebook',
-    burning_rate: 5.0,
-    reservation_id: 'reservation-123',
-    started_at: '1704067200',
-    expired_at: '1704070800',
+    burningRate: 5.0,
+    reservationId: 'reservation-123',
+    startedAt: '1704067200',
+    expiredAt: '1704070800',
     status: 'Running',
   },
   {
     uid: 'runtime-456',
-    given_name: 'test-terminal-runtime',
-    pod_name: 'datalayer-runtime-def456',
+    givenName: 'test-terminal-runtime',
+    runtimeName: 'datalayer-runtime-def456',
     ingress: 'https://runtime-def456.prod1.datalayer.run',
     token: 'mock-runtime-token-2',
-    environment_name: 'python-gpu-env',
-    environment_title: 'Python GPU Environment',
+    environmentName: 'python-gpu-env',
+    environmentTitle: 'Python GPU Environment',
     type: 'terminal',
-    burning_rate: 10.0,
-    reservation_id: 'reservation-456',
-    started_at: '1704067200',
-    expired_at: '1704074400',
+    burningRate: 10.0,
+    reservationId: 'reservation-456',
+    startedAt: '1704067200',
+    expiredAt: '1704074400',
     status: 'Running',
   },
 ];

@@ -41,7 +41,7 @@ describe('RuntimeProgressBar', () => {
         expiredAt: new Date(now + 59000).toISOString(),
       });
 
-      render(<RuntimeProgressBar runtimePodName="runtime-test" />);
+      render(<RuntimeProgressBar runtimeName="runtime-test" />);
 
       await waitFor(
         () => {
@@ -59,7 +59,7 @@ describe('RuntimeProgressBar', () => {
       mockGetRuntime.mockRejectedValue(new Error('API Error'));
 
       const { container } = render(
-        <RuntimeProgressBar runtimePodName="runtime-error" />
+        <RuntimeProgressBar runtimeName="runtime-error" />
       );
 
       await waitFor(() => {
@@ -73,7 +73,7 @@ describe('RuntimeProgressBar', () => {
       consoleError.mockRestore();
     });
 
-    it('should refetch when runtimePodName changes', async () => {
+    it('should refetch when runtimeName changes', async () => {
       const now = Date.now();
       mockGetRuntime.mockResolvedValue({
         startedAt: new Date(now - 1000).toISOString(),
@@ -81,14 +81,14 @@ describe('RuntimeProgressBar', () => {
       });
 
       const { rerender } = render(
-        <RuntimeProgressBar runtimePodName="runtime-1" />
+        <RuntimeProgressBar runtimeName="runtime-1" />
       );
 
       await waitFor(() => {
         expect(mockGetRuntime).toHaveBeenCalledWith('runtime-1');
       });
 
-      rerender(<RuntimeProgressBar runtimePodName="runtime-2" />);
+      rerender(<RuntimeProgressBar runtimeName="runtime-2" />);
 
       await waitFor(() => {
         expect(mockGetRuntime).toHaveBeenCalledWith('runtime-2');
@@ -96,7 +96,7 @@ describe('RuntimeProgressBar', () => {
       });
     });
 
-    it('should clear runtime details when runtimePodName becomes undefined', async () => {
+    it('should clear runtime details when runtimeName becomes undefined', async () => {
       const now = Date.now();
       mockGetRuntime.mockResolvedValue({
         startedAt: new Date(now - 1000).toISOString(),
@@ -104,7 +104,7 @@ describe('RuntimeProgressBar', () => {
       });
 
       const { rerender, container } = render(
-        <RuntimeProgressBar runtimePodName="runtime-1" />
+        <RuntimeProgressBar runtimeName="runtime-1" />
       );
 
       await waitFor(() => {

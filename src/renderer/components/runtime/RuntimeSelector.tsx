@@ -16,7 +16,7 @@ import { useService } from '../../contexts/ServiceContext';
 
 export interface RuntimeSelectorProps {
   /** Currently selected runtime pod name */
-  selectedRuntimePodName?: string;
+  selectedRuntimeName?: string;
   /** Callback when runtime is selected */
   onRuntimeSelected: (runtime: Runtime | null) => void;
   /** Disable the selector */
@@ -27,7 +27,7 @@ export interface RuntimeSelectorProps {
  * Dropdown component for selecting running agents.
  */
 export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
-  selectedRuntimePodName,
+  selectedRuntimeName,
   onRuntimeSelected,
   disabled = false,
 }) => {
@@ -87,7 +87,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 
   // Format display name for runtime
   const getDisplayName = (runtime: Runtime): string => {
-    const name = runtime.givenName || runtime.podName;
+    const name = runtime.givenName || runtime.runtimeName;
     const envTitle = runtime.environmentTitle || 'Unknown Env';
     const remaining = getRemainingTime(runtime);
     return `${name} - ${envTitle} (${remaining})`;
@@ -95,14 +95,14 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    const selectedRuntime = allRuntimes.find(r => r.podName === value);
+    const selectedRuntime = allRuntimes.find(r => r.runtimeName === value);
     if (selectedRuntime) {
       onRuntimeSelected(selectedRuntime);
     }
   };
 
   // Get current value for select - always use placeholder if no runtime selected
-  const currentValue = selectedRuntimePodName || '__placeholder__';
+  const currentValue = selectedRuntimeName || '__placeholder__';
   const hasAvailableAgents = allRuntimes.length > 0;
 
   return (
@@ -120,7 +120,7 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
         }}
       >
         {/* Only show placeholder when no runtime is selected */}
-        {!selectedRuntimePodName && (
+        {!selectedRuntimeName && (
           <Select.Option value="__placeholder__" disabled>
             {hasAvailableAgents ? 'Select an agent' : 'No agents available'}
           </Select.Option>
@@ -129,9 +129,9 @@ export const RuntimeSelector: React.FC<RuntimeSelectorProps> = ({
         {allRuntimes.length > 0 && (
           <Select.OptGroup label="Running Agents">
             {allRuntimes.map(runtime => {
-              const podName = runtime.podName;
+              const runtimeName = runtime.runtimeName;
               return (
-                <Select.Option key={podName} value={podName}>
+                <Select.Option key={runtimeName} value={runtimeName}>
                   {getDisplayName(runtime)}
                 </Select.Option>
               );

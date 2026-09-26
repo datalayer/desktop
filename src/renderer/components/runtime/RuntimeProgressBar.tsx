@@ -16,7 +16,7 @@ import type { RuntimeJSON } from '@datalayer/agent-runtimes/lib/models';
 
 export interface RuntimeProgressBarProps {
   /** Runtime pod name - used to fetch runtime details */
-  runtimePodName?: string;
+  runtimeName?: string;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface RuntimeProgressBarProps {
  * Fetches runtime details from the API to get start time and duration.
  */
 export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
-  runtimePodName,
+  runtimeName,
 }) => {
   const [percentage, setPercentage] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
@@ -36,7 +36,7 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
 
   // Fetch runtime details when pod name changes
   useEffect(() => {
-    if (!runtimePodName) {
+    if (!runtimeName) {
       setRuntimeDetails(null);
       return;
     }
@@ -44,7 +44,7 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
     // Fetch runtime info from API
     // Bridge returns plain JSON object (RuntimeJSON), not SDK model
     window.datalayerClient
-      .getRuntime(runtimePodName)
+      .getRuntime(runtimeName)
       .then((runtimeJSON: RuntimeJSON) => {
         // Bridge already serialized to RuntimeJSON with camelCase and ISO strings
         if (runtimeJSON.startedAt && runtimeJSON.expiredAt) {
@@ -61,11 +61,11 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
         );
         setRuntimeDetails(null);
       });
-  }, [runtimePodName]);
+  }, [runtimeName]);
 
   // Calculate initial time remaining and total duration
   const { initialSeconds, totalSeconds } = useMemo(() => {
-    if (!runtimePodName || !runtimeDetails) {
+    if (!runtimeName || !runtimeDetails) {
       return { initialSeconds: 0, totalSeconds: 0 };
     }
 
@@ -77,11 +77,11 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
     const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
     return { initialSeconds: remaining, totalSeconds: totalDuration };
-  }, [runtimePodName, runtimeDetails]);
+  }, [runtimeName, runtimeDetails]);
 
   // Set up countdown timer
   useEffect(() => {
-    if (!runtimePodName || initialSeconds <= 0) {
+    if (!runtimeName || initialSeconds <= 0) {
       setPercentage(0);
       return;
     }
@@ -111,10 +111,10 @@ export const RuntimeProgressBar: React.FC<RuntimeProgressBarProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [runtimePodName, initialSeconds, totalSeconds, isExpired]);
+  }, [runtimeName, initialSeconds, totalSeconds, isExpired]);
 
   // Don't show bar if no runtime
-  if (!runtimePodName) {
+  if (!runtimeName) {
     return null;
   }
 

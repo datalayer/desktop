@@ -109,7 +109,7 @@ const RuntimeItem: React.FC<RuntimeItemProps> = ({ runtime, onTerminate }) => {
             </Text>
           )}
 
-          {/* Pod name */}
+          {/* Runtime name */}
           <Text
             sx={{
               fontSize: 0,
@@ -118,7 +118,7 @@ const RuntimeItem: React.FC<RuntimeItemProps> = ({ runtime, onTerminate }) => {
               display: 'block',
             }}
           >
-            Pod: {runtime.podName}
+            Runtime: {runtime.runtimeName}
           </Text>
         </Box>
 

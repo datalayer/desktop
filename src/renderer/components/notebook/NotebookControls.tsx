@@ -19,12 +19,12 @@ import { notebookStore, type NotebookState } from '@datalayer/jupyter-react';
 
 export interface NotebookControlsProps {
   notebookId?: string;
-  runtimePodName?: string;
+  runtimeName?: string;
 }
 
 export const NotebookControls: React.FC<NotebookControlsProps> = ({
   notebookId,
-  runtimePodName,
+  runtimeName,
 }) => {
   const [cellType, setCellType] = useState('code');
   const [isCellRunning, setIsCellRunning] = useState(false);
@@ -76,26 +76,26 @@ export const NotebookControls: React.FC<NotebookControlsProps> = ({
         variant="invisible"
         size="small"
         aria-label="Run cell"
-        title={!runtimePodName ? 'No runtime connected' : 'Run cell'}
+        title={!runtimeName ? 'No runtime connected' : 'Run cell'}
         onClick={handleRun}
         icon={PlayIcon}
-        disabled={!runtimePodName}
+        disabled={!runtimeName}
       />
       <IconButton
         variant="invisible"
         size="small"
         aria-label="Run all cells"
-        title={!runtimePodName ? 'No runtime connected' : 'Run all cells'}
+        title={!runtimeName ? 'No runtime connected' : 'Run all cells'}
         onClick={handleRunAll}
         icon={PaperAirplaneIcon}
-        disabled={!runtimePodName}
+        disabled={!runtimeName}
       />
       <IconButton
         variant="invisible"
         size="small"
         aria-label="Interrupt"
         title={
-          !runtimePodName
+          !runtimeName
             ? 'No runtime connected'
             : !isCellRunning
               ? 'No cells running'
@@ -103,7 +103,7 @@ export const NotebookControls: React.FC<NotebookControlsProps> = ({
         }
         onClick={handleInterrupt}
         icon={StopIcon}
-        disabled={!runtimePodName || !isCellRunning}
+        disabled={!runtimeName || !isCellRunning}
       />
       <Box sx={{ width: 1, height: 20, bg: 'border.default', mx: 1 }} />
       <IconButton

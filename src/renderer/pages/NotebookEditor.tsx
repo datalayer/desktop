@@ -51,7 +51,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [runtimeInfo, setRuntimeInfo] = useState<{
     id: string;
-    podName: string;
+    runtimeName: string;
     ingress: string;
     token: string;
   } | null>(null);
@@ -77,12 +77,15 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
   useEffect(() => {
     if (!runtimeService) return;
 
-    const unsubscribe = runtimeService.onRuntimeExpired(expiredPodName => {
-      console.log('[NotebookEditor] Runtime expired globally:', expiredPodName);
+    const unsubscribe = runtimeService.onRuntimeExpired(expiredRuntimeName => {
+      console.log(
+        '[NotebookEditor] Runtime expired globally:',
+        expiredRuntimeName
+      );
 
       // Check current runtime using setRuntimeInfo callback to avoid dependency
       setRuntimeInfo(current => {
-        if (current?.podName === expiredPodName) {
+        if (current?.runtimeName === expiredRuntimeName) {
           console.log(
             '[NotebookEditor] Current runtime expired, switching to mock'
           );
@@ -115,7 +118,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         const now = Date.now();
         const availableRuntimes = runtimes
           .filter(runtime => {
-            if (!runtime?.podName || !runtime?.ingress || !runtime?.token) {
+            if (!runtime?.runtimeName || !runtime?.ingress || !runtime?.token) {
               return false;
             }
             if (runtime.expiredAt) {
@@ -141,11 +144,11 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         if (availableRuntime) {
           console.log(
             '[NotebookEditor] Auto-assigning available agent:',
-            availableRuntime.podName
+            availableRuntime.runtimeName
           );
           setRuntimeInfo({
             id: availableRuntime.uid,
-            podName: availableRuntime.podName,
+            runtimeName: availableRuntime.runtimeName,
             ingress: availableRuntime.ingress,
             token: availableRuntime.token,
           });
@@ -176,7 +179,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
     console.log('[NotebookEditor] Runtime selected:', runtime);
     const info = {
       id: runtime.uid,
-      podName: runtime.podName,
+      runtimeName: runtime.runtimeName,
       ingress: runtime.ingress,
       token: runtime.token,
     };
@@ -262,7 +265,7 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
         console.log('[NotebookEditor] Creating real service manager with:', {
           ingress: runtimeInfo.ingress,
           id: runtimeInfo.id,
-          podName: runtimeInfo.podName,
+          runtimeName: runtimeInfo.runtimeName,
         });
         try {
           const realManager = await createProxyServiceManager(
@@ -443,8 +446,8 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
 
   // Generate unique key to force complete remount when runtime changes
   const notebookKey = useMemo(() => {
-    return `notebook-${notebookId}-runtime-${runtimeInfo?.podName || 'mock'}`;
-  }, [notebookId, runtimeInfo?.podName]);
+    return `notebook-${notebookId}-runtime-${runtimeInfo?.runtimeName || 'mock'}`;
+  }, [notebookId, runtimeInfo?.runtimeName]);
 
   // Show loading state while service manager is being created
   if (!serviceManager) {
@@ -461,12 +464,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       >
         <Box sx={{ flexShrink: 0 }}>
           <RuntimeToolbar
-            runtimePodName={runtimeInfo?.podName}
+            runtimeName={runtimeInfo?.runtimeName}
             onRuntimeSelected={handleRuntimeSelected}
             leftContent={
               <NotebookControls
                 notebookId={notebookId}
-                runtimePodName={runtimeInfo?.podName}
+                runtimeName={runtimeInfo?.runtimeName}
               />
             }
           />
@@ -495,12 +498,12 @@ const NotebookEditor: React.FC<NotebookEditorProps> = ({ notebookId }) => {
       {/* Toolbar */}
       <Box sx={{ flexShrink: 0 }}>
         <RuntimeToolbar
-          runtimePodName={runtimeInfo?.podName}
+          runtimeName={runtimeInfo?.runtimeName}
           onRuntimeSelected={handleRuntimeSelected}
           leftContent={
             <NotebookControls
               notebookId={notebookId}
-              runtimePodName={runtimeInfo?.podName}
+              runtimeName={runtimeInfo?.runtimeName}
             />
           }
         />
