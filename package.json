@@ -51,7 +51,7 @@
     "@datalayer/core": "^1.2.12",
     "@datalayer/jupyter-lexical": "^2.0.18",
     "@datalayer/jupyter-react": "^2.0.18",
-    "@datalayer/lexical-loro": "^1.0.7",
+    "@datalayer/lexical-loro": "^1.0.6",
     "@datalayer/primer-addons": "^1.0.23",
     "@jupyterlab/services": "^7.0.0",
     "@lexical/code": "0.49.0",
