@@ -416,6 +416,7 @@ npm run dist:linux    # Package for Linux
 - `@datalayer/core` - Shared state store (`lib/state`) and naming utilities (`lib/utils/Name`)
 - `@datalayer/agent-runtimes` - Runtime models and the `AgentRuntimesClient` (runtime features moved here from core)
 - `@datalayer/jupyter-react` - Jupyter components
+- `@swc/core` / `@swc/wasm` are pinned to 1.12.14 through `overrides`: `vite-plugin-top-level-await` 1.6.0 hand-builds SWC AST nodes and fails with `missing field \`type\`` against newer SWC releases during `electron-vite build`
 - `@jupyterlab/services` - Kernel and session management
 
 ## Polyfill Files Overview

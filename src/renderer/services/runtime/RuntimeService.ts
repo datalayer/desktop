@@ -251,7 +251,9 @@ export class RuntimeService extends BaseService implements IRuntimeService {
       }
 
       // Terminate via SDK
-      await window.datalayerClient.deleteRuntime(notebookRuntime.runtime.uid);
+      await window.datalayerClient.deleteRuntime(
+        notebookRuntime.runtime.runtimeName
+      );
 
       // Remove from map
       this.notebookRuntimes.delete(notebookId);

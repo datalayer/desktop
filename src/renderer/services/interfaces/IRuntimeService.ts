@@ -98,7 +98,7 @@ export interface IRuntimeService extends ILifecycle {
   /**
    * Manually notify all subscribers that a runtime has been terminated.
    * This propagates the termination to ALL editors connected to that runtime.
-   * @param runtimeName - The pod name of the terminated runtime
+   * @param runtimeName - The name of the terminated runtime
    */
   notifyRuntimeTerminated(runtimeName: string): void;
 
