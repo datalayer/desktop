@@ -190,7 +190,7 @@ export function deploymentsUrl(aiAgentsUrl: string): string {
  * @param spacerUrl - The Spacer service's base URL.
  * @param appUid - The application's uid.
  *
- * @returns The item's URL.
+ * @returns Where Spacer answers the application's item.
  */
 export function appItemUrl(spacerUrl: string, appUid: string): string {
   return `${base(spacerUrl)}/api/spacer/v1/lexicals/${encodeURIComponent(appUid)}`;
@@ -229,7 +229,7 @@ export function pendingApprovalsUrl(
  * Slack thread, VS Code and JupyterLab decide it (`decide_tool_approval`).
  *
  * @param aiAgentsUrl - The ai-agents service's base URL.
- * @param approvalId - The approval.
+ * @param approvalId - The approval decided, by its id at ai-agents.
  * @param approved - Approve, or decline.
  *
  * @returns The route's URL.
@@ -393,7 +393,7 @@ export function noneTalkableSentence(
  *
  * @param choices - The picker's choices.
  *
- * @returns The key.
+ * @returns One line per deployment talked to: uid, version, runtime, agent.
  */
 export function talkableKeyOf(choices: readonly AppChatChoice[]): string {
   return choices
@@ -530,7 +530,7 @@ export function takesSignedUser(host: Pick<AppHost, 'user'>): boolean {
  * @param name - The application's name.
  * @param why - What ai-agents said.
  *
- * @returns The refusal.
+ * @returns The sentence said in the chat's place.
  */
 export function userTokenRefusal(name: string, why: string): string {
   return `${name} takes only a signed user (deployment.embedded.host.user: signed), and Datalayer did not sign you for it: ${why}`;
@@ -541,7 +541,7 @@ export function userTokenRefusal(name: string, why: string): string {
  * only a signed user (`POST …/deployments/{uid}/user-token`, D-21).
  *
  * @param aiAgentsUrl - The ai-agents service's base URL.
- * @param deploymentUid - The deployment.
+ * @param deploymentUid - The uid of the deployment talked to.
  *
  * @returns The route's URL.
  */
@@ -596,7 +596,7 @@ export function signedUserFresh(
  * Agents and Datalayer Desktop (agent-runtimes' `fetchUserToken`).
  *
  * @param aiAgentsUrl - The ai-agents service's base URL.
- * @param deploymentUid - The deployment.
+ * @param deploymentUid - The uid of the deployment talked to.
  * @param token - The person's Datalayer token.
  * @param fetcher - What asks; `fetch` unless given.
  *
@@ -634,7 +634,7 @@ export async function fetchUserToken(
  * JSON object goes as it was.
  *
  * @param body - The run's body, as `<Chat>` sent it.
- * @param token - The user token.
+ * @param token - What ai-agents signed for the person.
  *
  * @returns The body to send.
  */
@@ -662,7 +662,7 @@ export function withUserToken(body: string, token: string): string {
  * Whether a request is a run of the deployment's agent — a `POST` to its
  * session API's AG-UI route — which the user token goes with.
  *
- * @param url - The request's URL.
+ * @param url - Where the request goes.
  * @param method - Its method.
  * @param handle - The deployment talked to.
  *
@@ -698,7 +698,7 @@ export function isRunOf(
  * @param handle - The deployment talked to.
  * @param userToken - The user token now.
  *
- * @returns The fetch.
+ * @returns A fetch with the same signature.
  */
 export function signedRunFetch(
   fetcher: typeof fetch,
@@ -755,7 +755,7 @@ export function notebookContextRefusal(
  * else the rule of the class `read` (what `host_context` does).
  *
  * @param host - What its Appspec says.
- * @param tool - The tool.
+ * @param tool - The name of the tool called.
  *
  * @returns The behaviour, or `undefined` when no rule applies.
  */
@@ -973,7 +973,7 @@ export function hostContextTool(
  * @param tool - The tool called.
  * @param host - What its Appspec says, for its connections.
  *
- * @returns The line.
+ * @returns The line, as the transcript says it.
  */
 export function toolLineOf(
   appName: string,
@@ -1029,6 +1029,8 @@ export function pendingApprovalsOf(
  *
  * @param handles - The deployments talked to.
  * @param services - The ai-agents and Spacer base URLs.
+ * @param services.aiAgentsUrl - The ai-agents service's base URL.
+ * @param services.spacerUrl - The Spacer service's base URL.
  *
  * @returns The prefixes, each ending with `/` (or `?` for a listing).
  */
@@ -1048,7 +1050,7 @@ export function signedPrefixesOf(
  * Whether a request of the chat is signed with the person's token: an
  * HTTPS URL under one of the prefixes, its origin the prefix's own.
  *
- * @param url - The request's URL.
+ * @param url - Where the request goes.
  * @param prefixes - What {@link signedPrefixesOf} gave.
  *
  * @returns Whether the token goes with it.
@@ -1085,7 +1087,7 @@ export function signsRequest(
  * where the view sent none, or an empty bearer — as VS Code's network
  * bridge lends it (A-18). The view never holds the token.
  *
- * @param url - The request's URL.
+ * @param url - Where the request goes.
  * @param headers - The headers the view sent.
  * @param token - The person's Datalayer token, held by the main process.
  * @param prefixes - What {@link signedPrefixesOf} gave.
