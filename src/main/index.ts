@@ -28,6 +28,7 @@ import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
 import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
 import {
+  appChatUserToken,
   forgetAppChats,
   lendTokenToAppChats,
   listAppChatDeployments,
@@ -389,6 +390,11 @@ function registerIPCHandlers(): void {
   // are kept on are the only ones the session lends it to.
   ipcMain.handle('app-chat:list-deployments', async () =>
     listAppChatDeployments()
+  );
+  // A deployment that takes only a signed user (D-21): signed here, with
+  // the token this process holds; only the user token goes back.
+  ipcMain.handle('app-chat:user-token', async (_event, deploymentUid: string) =>
+    appChatUserToken(deploymentUid)
   );
 
   // Configuration handlers

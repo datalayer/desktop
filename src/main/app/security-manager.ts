@@ -12,6 +12,7 @@
 
 import { session } from 'electron';
 import { shouldUseProductionSecurity } from './environment';
+import { appChatConnectSources } from '../services/app-chat';
 
 /**
  * Set up Content Security Policy headers for the application.
@@ -29,7 +30,9 @@ export function setupContentSecurityPolicy(): void {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
               "img-src 'self' data: https: blob:; " +
-              "connect-src 'self' https://prod1.datalayer.run https://*.datalayer.io https://*.datalayer.run wss://*.datalayer.run wss://*.datalayer.io; " +
+              // The Datalayer domains and the configured services' validated
+              // origins: what the chats of applications reach (STUDIO A-20).
+              `connect-src 'self' ${appChatConnectSources().join(' ')}; ` +
               "font-src 'self' data: https://cdn.jsdelivr.net; " +
               "worker-src 'self' blob:;",
           ],

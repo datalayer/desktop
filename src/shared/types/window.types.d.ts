@@ -263,6 +263,10 @@ declare global {
      */
     appChatAPI: {
       listDeployments: () => Promise<import('../appChat').AppChatDeployments>;
+      /** A user token for a deployment that takes only a signed user (D-21). */
+      userToken: (
+        deploymentUid: string
+      ) => Promise<import('../appChat').SignedUser>;
     };
   }
 }

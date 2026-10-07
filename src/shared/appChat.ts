@@ -20,9 +20,9 @@
  * selected cell, the cell's source and its outputs as text — and only when
  * the application's Appspec names it under `deployment.embedded.host.context`
  * and a rule lets `host_context` run. An application that takes only a user
- * its host's server signed (D-21) is not opened: Datalayer has no route that
- * signs for the person signed in, and Desktop cannot hold the deployment's
- * secret.
+ * its host's server signed (D-21) is opened with a user token ai-agents
+ * signs for the person signed in (`fetchUserToken`), sent with each run;
+ * the deployed version's Appspec decides, never another's.
  *
  * The same logic, and the same sentences with the surface's name, as the
  * VS Code extension's `src/chat/appChat.ts` (A-18) and Jupyter AI Agents'
@@ -78,7 +78,7 @@ export type NotebookCellRead = {
   /** Its source. */
   source: string;
   /** Its outputs, as nbformat writes them; none for a markdown cell. */
-  outputs?: unknown[];
+  outputs?: Iterable<unknown>;
 };
 
 /** The notebook last in front, as Desktop passes it for the host's `page`. */
@@ -155,7 +155,7 @@ const BEHAVIOURS = ['do_it', 'if_asked', 'ask_first', 'leave_to_me'];
 /** The words the view says, in one place. */
 export const APP_CHAT_WORDS = {
   pickerGroup: 'Your applications',
-  none: "None of your applications is kept always on: turn on Always on in an application's Ship tab to talk to it here.",
+  closedGroup: 'Not available here',
   reading: 'Reading the application...',
   transcript: 'What it did',
   noLines: 'Nothing yet.',
@@ -277,9 +277,11 @@ const texts = (value: unknown): string[] =>
     : [];
 
 /**
- * A deployment as ai-agents answers it, offered in the picker: one kept
- * always on, live, on a running runtime is talked to; any other says why
- * not, in a sentence.
+ * A deployment as ai-agents answers it, offered in the picker: one live
+ * (`state` exactly `live`), saying the version it runs, kept always on, on
+ * a running runtime is talked to; any other says why not, in a sentence —
+ * nothing is guessed, a version least of all (what the deployed version
+ * lets its host pass is read from it).
  *
  * @param raw - One of the deployments `GET /apps/deployments` answers.
  *
@@ -293,37 +295,51 @@ export function deploymentChoiceOf(raw: unknown): AppChatChoice | undefined {
   }
   const name = text(deployment.app_name) || 'This application';
   const kept = record(deployment.kept);
-  if (deployment.state === 'paused') {
-    return { kind: 'closed', uid, name, why: `${name} is paused.` };
+  const closed = (why: string): AppChatChoice => ({
+    kind: 'closed',
+    uid,
+    name,
+    why,
+  });
+  const state = text(deployment.state);
+  if (state === 'paused') {
+    return closed(`${name} is paused.`);
   }
-  if (!deployment.always_on) {
-    return {
-      kind: 'closed',
-      uid,
-      name,
-      why: `${name} is not kept always on, so no runtime holds its agent: turn on Always on in its Ship tab to talk to it here.`,
-    };
+  if (state !== 'live') {
+    return closed(
+      `${name} is not live${state ? ` (${state})` : ''}, so it is not offered here.`
+    );
+  }
+  const version = deployment.version;
+  if (
+    typeof version !== 'number' ||
+    !Number.isInteger(version) ||
+    version < 1
+  ) {
+    return closed(
+      `${name} does not say which version it runs, so what it lets ${SURFACE} do is not known: it is not offered here.`
+    );
+  }
+  if (deployment.always_on !== true) {
+    return closed(
+      `${name} is not kept always on, so no runtime holds its agent: turn on Always on in its Ship tab to talk to it here.`
+    );
   }
   const url = text(kept.url);
   const agentId = text(kept.agent_id);
   if (kept.state !== 'running' || !url || !agentId) {
     const why = text(kept.why);
-    return {
-      kind: 'closed',
-      uid,
-      name,
-      why: `${name} is kept always on, but its runtime is not running${why ? `: ${why}` : '.'}`,
-    };
+    return closed(
+      `${name} is kept always on, but its runtime is not running${why ? `: ${why}` : '.'}`
+    );
   }
-  const version = Number(deployment.version);
   return {
     kind: 'talk',
     handle: {
       uid,
       appUid: text(deployment.app_uid),
       name,
-      version:
-        Number.isFinite(version) && version > 0 ? Math.trunc(version) : 1,
+      version,
       target: text(deployment.target) || 'hosted',
       slug: text(deployment.slug),
       url: base(url),
@@ -348,6 +364,77 @@ export function deploymentChoicesOf(body: unknown): AppChatChoice[] {
     ...choices.filter(choice => choice.kind === 'talk'),
     ...choices.filter(choice => choice.kind === 'closed'),
   ];
+}
+
+/**
+ * What the picker says when none of the person's applications can be talked
+ * to: none deployed, or each closed for its own reason — paused, not live,
+ * not kept always on, its runtime not running — said beside it.
+ *
+ * @param choices - The picker's choices.
+ *
+ * @returns The sentence, or `""` when one can be talked to.
+ */
+export function noneTalkableSentence(
+  choices: readonly AppChatChoice[]
+): string {
+  if (choices.some(choice => choice.kind === 'talk')) {
+    return '';
+  }
+  return choices.length === 0
+    ? "You have no deployed applications: ship one from the Studio's Ship tab to talk to it here."
+    : 'None of your applications can be talked to here now: each one says why — paused, not kept always on, or its runtime not running.';
+}
+
+/**
+ * A key of the deployments talked to — each one's uid, version, runtime and
+ * agent — so that a refresh answering the same ones changes nothing: the
+ * view memoizes on it, and the conversation open survives.
+ *
+ * @param choices - The picker's choices.
+ *
+ * @returns The key.
+ */
+export function talkableKeyOf(choices: readonly AppChatChoice[]): string {
+  return choices
+    .flatMap(choice =>
+      choice.kind === 'talk'
+        ? [
+            [
+              choice.handle.uid,
+              choice.handle.version,
+              choice.handle.url,
+              choice.handle.agentId,
+            ].join(' '),
+          ]
+        : []
+    )
+    .join('\n');
+}
+
+/**
+ * The deployment picked, as the newest listing has it: its runtime, agent
+ * or version may have changed since it was picked; `null` when it can no
+ * longer be talked to.
+ *
+ * @param choices - The newest listing.
+ * @param pickedUid - The deployment picked.
+ *
+ * @returns Its newest handle, or `null`.
+ */
+export function pickedHandleOf(
+  choices: readonly AppChatChoice[],
+  pickedUid: string | null | undefined
+): AppChatHandle | null {
+  if (!pickedUid) {
+    return null;
+  }
+  for (const choice of choices) {
+    if (choice.kind === 'talk' && choice.handle.uid === pickedUid) {
+      return choice.handle;
+    }
+  }
+  return null;
 }
 
 /**
@@ -404,18 +491,239 @@ export function appHostOf(body: unknown): AppHost {
 }
 
 /**
- * Why a deployment is not opened here, when it is not (D-21): an
- * application that takes only a user its host's server signed.
+ * Why a deployment is not opened here, when the Appspec read is not the
+ * version it runs: who its user is (D-21) and what its host may pass (D-10)
+ * are the deployed version's, and nothing is decided on another's — closed,
+ * rather than guessed.
  *
- * @param name - The application's name.
+ * @param handle - The deployment talked to.
+ * @param host - What the Appspec read says of its host.
+ *
+ * @returns The refusal, or `""` when the Appspec read is the version deployed.
+ */
+export function revisionRefusal(
+  handle: Pick<AppChatHandle, 'name' | 'version'>,
+  host: AppHost
+): string {
+  return host.revision === handle.version
+    ? ''
+    : `${handle.name} runs version ${handle.version}, and its Appspec read is version ${host.revision}: what the version it runs says of its host and its user is not known, so it is not opened here. Deploy the version you are at to talk to it here.`;
+}
+
+/**
+ * Whether the deployed application takes only a signed user (D-21): then
+ * Datalayer signs the person signed in for it (`fetchUserToken`), and the
+ * token goes with each run as `forwardedProps.loop.user_token`.
+ *
  * @param host - What its Appspec says of its host.
  *
- * @returns The refusal, or `""` when it opens.
+ * @returns Whether a user token is fetched.
  */
-export function signedRefusal(name: string, host: AppHost): string {
-  return host.user === 'signed'
-    ? `${name} takes only a user its host's server signed (deployment.embedded.host.user: signed). ${SURFACE} cannot sign you: it does not hold the deployment's secret, and Datalayer has no route that signs for the person signed in, so it is not opened here.`
-    : '';
+export function takesSignedUser(host: Pick<AppHost, 'user'>): boolean {
+  return host.user === 'signed';
+}
+
+/**
+ * Why a signed application is not opened: Datalayer did not sign the
+ * person for it, with ai-agents' sentence.
+ *
+ * @param name - The application's name.
+ * @param why - What ai-agents said.
+ *
+ * @returns The refusal.
+ */
+export function userTokenRefusal(name: string, why: string): string {
+  return `${name} takes only a signed user (deployment.embedded.host.user: signed), and Datalayer did not sign you for it: ${why}`;
+}
+
+/**
+ * Where ai-agents signs the person signed in for a deployment that takes
+ * only a signed user (`POST …/deployments/{uid}/user-token`, D-21).
+ *
+ * @param aiAgentsUrl - The ai-agents service's base URL.
+ * @param deploymentUid - The deployment.
+ *
+ * @returns The route's URL.
+ */
+export function userTokenUrl(
+  aiAgentsUrl: string,
+  deploymentUid: string
+): string {
+  return `${base(aiAgentsUrl)}/api/ai-agents/v1/apps/deployments/${encodeURIComponent(deploymentUid)}/user-token`;
+}
+
+/** A user token ai-agents signed, and when it ends (seconds since the epoch). */
+export type SignedUser = { token: string; exp: number };
+
+/**
+ * The user token of ai-agents' answer.
+ *
+ * @param body - The answer of `POST …/user-token`.
+ *
+ * @returns The token and when it ends.
+ *
+ * @throws When the answer holds none.
+ */
+export function signedUserOf(body: unknown): SignedUser {
+  const answered = record(body);
+  const token = text(answered.user_token);
+  const exp = Number(answered.exp);
+  if (!token || !Number.isFinite(exp)) {
+    throw new Error('ai-agents answered no user token.');
+  }
+  return { token, exp };
+}
+
+/**
+ * Whether a user token still has a minute to live: the runtime reads it as
+ * a session opens, and a new conversation after it ends asks for another.
+ *
+ * @param signed - The token, or none.
+ * @param nowSeconds - Now, in seconds since the epoch.
+ *
+ * @returns Whether it is sent as it is.
+ */
+export function signedUserFresh(
+  signed: SignedUser | null | undefined,
+  nowSeconds: number
+): boolean {
+  return Boolean(signed && signed.exp - 60 > nowSeconds);
+}
+
+/**
+ * Asks ai-agents to sign the person signed in for a deployment (D-21),
+ * with their own token: the same in the VS Code extension, Jupyter AI
+ * Agents and Datalayer Desktop (agent-runtimes' `fetchUserToken`).
+ *
+ * @param aiAgentsUrl - The ai-agents service's base URL.
+ * @param deploymentUid - The deployment.
+ * @param token - The person's Datalayer token.
+ * @param fetcher - What asks; `fetch` unless given.
+ *
+ * @returns The user token and when it ends.
+ *
+ * @throws With ai-agents' sentence when it refuses.
+ */
+export async function fetchUserToken(
+  aiAgentsUrl: string,
+  deploymentUid: string,
+  token: string,
+  fetcher: (url: string, init: RequestInit) => Promise<Response> = fetch
+): Promise<SignedUser> {
+  const response = await fetcher(userTokenUrl(aiAgentsUrl, deploymentUid), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    let detail = '';
+    try {
+      detail = text(record(await response.json()).detail);
+    } catch {
+      // The status says it.
+    }
+    throw new Error(
+      detail || `ai-agents refused to sign you (${response.status}).`
+    );
+  }
+  return signedUserOf(await response.json());
+}
+
+/**
+ * A run's body with the user token in it, as `forwardedProps.loop.user_token`
+ * — what the runtime verifies as the session opens. A body that is not a
+ * JSON object goes as it was.
+ *
+ * @param body - The run's body, as `<Chat>` sent it.
+ * @param token - The user token.
+ *
+ * @returns The body to send.
+ */
+export function withUserToken(body: string, token: string): string {
+  let run: unknown;
+  try {
+    run = JSON.parse(body);
+  } catch {
+    return body;
+  }
+  if (run === null || typeof run !== 'object' || Array.isArray(run)) {
+    return body;
+  }
+  const given = record((run as Record<string, unknown>).forwardedProps);
+  return JSON.stringify({
+    ...(run as Record<string, unknown>),
+    forwardedProps: {
+      ...given,
+      loop: { ...record(given.loop), user_token: token },
+    },
+  });
+}
+
+/**
+ * Whether a request is a run of the deployment's agent — a `POST` to its
+ * session API's AG-UI route — which the user token goes with.
+ *
+ * @param url - The request's URL.
+ * @param method - Its method.
+ * @param handle - The deployment talked to.
+ *
+ * @returns Whether the token goes in its body.
+ */
+export function isRunOf(
+  url: string,
+  method: string | undefined,
+  handle: Pick<AppChatHandle, 'url' | 'agentId'>
+): boolean {
+  if ((method ?? 'GET').toUpperCase() !== 'POST') {
+    return false;
+  }
+  try {
+    const target = new URL(url);
+    const endpoint = new URL(agUiEndpoint(handle));
+    return (
+      target.origin === endpoint.origin &&
+      target.pathname.replace(/\/+$/, '/') === endpoint.pathname
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A fetch that puts the user token in each run of the deployment's agent
+ * (D-21) and leaves every other request as it was: the token asked for
+ * when the run goes, so that a conversation begun after the last one ended
+ * is sent a new one.
+ *
+ * @param fetcher - The fetch it wraps.
+ * @param handle - The deployment talked to.
+ * @param userToken - The user token now.
+ *
+ * @returns The fetch.
+ */
+export function signedRunFetch(
+  fetcher: typeof fetch,
+  handle: Pick<AppChatHandle, 'url' | 'agentId'>,
+  userToken: () => Promise<string>
+): typeof fetch {
+  return async (input, init) => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+    const method =
+      init?.method ??
+      (typeof input === 'object' && 'method' in input ? input.method : 'GET');
+    const body = init?.body;
+    if (!isRunOf(url, method, handle) || typeof body !== 'string') {
+      return fetcher(input, init);
+    }
+    return fetcher(input, {
+      ...init,
+      body: withUserToken(body, await userToken()),
+    });
+  };
 }
 
 /**
@@ -459,52 +767,90 @@ export function behaviourOf(host: AppHost, tool: string): string | undefined {
 }
 
 /**
- * Joins nbformat's multiline string (a string, or a list of lines).
+ * Up to `room` characters of nbformat's multiline string (a string, or a
+ * list of lines), joined no further than that.
  *
  * @param value - A multiline string.
+ * @param room - The most characters wanted.
  *
- * @returns The text.
+ * @returns The text, at most `room + 1` characters (one more says it was cut).
  */
-const multiline = (value: unknown): string =>
-  typeof value === 'string' ? value : texts(value).join('');
+function multilineUpTo(value: unknown, room: number): string {
+  if (typeof value === 'string') {
+    return value.slice(0, room + 1);
+  }
+  let joined = '';
+  for (const line of texts(value)) {
+    joined += line;
+    if (joined.length > room) {
+      break;
+    }
+  }
+  return joined.slice(0, room + 1);
+}
 
 /**
- * A cell's outputs as text: a stream's text, a result's or a display's
- * `text/plain` (else the kinds it holds, in brackets), an error's name and
- * value — not its traceback, which is the kernel's colours.
+ * A cell's outputs as text, read one output at a time and no further than
+ * `budget`: a stream's text, a result's or a display's `text/plain` (else
+ * the kinds it holds, in brackets), an error's name and value — not its
+ * traceback, which is the kernel's colours. Nothing is serialized beyond
+ * what is passed.
  *
- * @param outputs - The outputs, as nbformat writes them.
+ * @param outputs - The outputs, as nbformat writes them, read in order.
+ * @param budget - The most characters passed.
  *
- * @returns The text, one output after another.
+ * @returns The text, and whether anything was left out.
  */
-export function outputsText(outputs: readonly unknown[]): string {
-  return outputs
-    .map(record)
-    .map(output => {
-      switch (output.output_type) {
-        case 'stream':
-          return multiline(output.text);
-        case 'execute_result':
-        case 'display_data': {
-          const data = record(output.data);
-          const plain = multiline(data['text/plain']);
-          return plain || `[${Object.keys(data).join(', ')}]`;
-        }
-        case 'error':
-          return `${text(output.ename)}: ${text(output.evalue)}`;
-        default:
-          return '';
+export function outputsText(
+  outputs: Iterable<unknown>,
+  budget: number = NOTEBOOK_TEXT_LIMIT
+): { text: string; cut: boolean } {
+  let said = '';
+  for (const raw of outputs) {
+    const room = budget - said.length - (said ? 1 : 0);
+    if (room <= 0) {
+      return { text: said, cut: true };
+    }
+    const output = record(raw);
+    let piece = '';
+    switch (output.output_type) {
+      case 'stream':
+        piece = multilineUpTo(output.text, room);
+        break;
+      case 'execute_result':
+      case 'display_data': {
+        const data = record(output.data);
+        piece =
+          multilineUpTo(data['text/plain'], room) ||
+          `[${Object.keys(data).join(', ')}]`;
+        break;
       }
-    })
-    .filter(Boolean)
-    .map(one => one.replace(/\n+$/, ''))
-    .join('\n');
+      case 'error':
+        piece = `${text(output.ename)}: ${text(output.evalue)}`;
+        break;
+      default:
+        piece = '';
+    }
+    piece = piece.replace(/\n+$/, '');
+    if (!piece) {
+      continue;
+    }
+    if (piece.length > room) {
+      return {
+        text: `${said}${said ? '\n' : ''}${piece.slice(0, room)}`,
+        cut: true,
+      };
+    }
+    said = `${said}${said ? '\n' : ''}${piece}`;
+  }
+  return { text: said, cut: false };
 }
 
 /**
  * The open notebook as an application is passed it: its path, how many
  * cells, and its selected cell — the source first, then the outputs as
- * text, cut together at `limit` characters.
+ * text, cut together at `limit` characters, the outputs read only as far as
+ * the room the source leaves.
  *
  * @param notebook - The notebook: its path, its cell count, its selected cell.
  * @param limit - The most characters of source and outputs passed.
@@ -520,15 +866,34 @@ export function notebookContextOf(
     return { path: notebook.path, cells: notebook.cells, truncated: false };
   }
   const source = read.source.slice(0, limit);
-  const allOutputs = outputsText(read.outputs ?? []);
-  const outputs = allOutputs.slice(0, Math.max(0, limit - source.length));
+  const outputs = outputsText(
+    read.outputs ?? [],
+    Math.max(0, limit - source.length)
+  );
   return {
     path: notebook.path,
     cells: notebook.cells,
-    cell: { index: read.index, type: read.type, source, outputs },
-    truncated:
-      source.length < read.source.length || outputs.length < allOutputs.length,
+    cell: { index: read.index, type: read.type, source, outputs: outputs.text },
+    truncated: source.length < read.source.length || outputs.cut,
   };
+}
+
+/**
+ * A notebook model's outputs, one at a time, as nbformat writes each: read
+ * lazily by {@link outputsText}, which stops at its budget.
+ *
+ * @param outputs - The cell's output area model (`length`, `get(i).toJSON()`).
+ *
+ * @returns The outputs, in order.
+ */
+export function* outputsOfModel(
+  outputs:
+    | { readonly length: number; get(index: number): { toJSON(): unknown } }
+    | undefined
+): Generator<unknown> {
+  for (let index = 0; index < (outputs?.length ?? 0); index++) {
+    yield outputs!.get(index).toJSON();
+  }
 }
 
 /** A frontend tool, as `<Chat frontendTools>` takes it. */
@@ -705,7 +1070,8 @@ export function signsRequest(
   return prefixes.some(prefix => {
     try {
       return (
-        new URL(prefix).origin === target.origin && href.startsWith(prefix)
+        new URL(prefix).origin === target.origin &&
+        href.startsWith(new URL(prefix).href)
       );
     } catch {
       return false;
@@ -753,20 +1119,30 @@ export function lentHeaders(
 }
 
 /**
- * A cell as the notebook's model writes it (`cell.model.toJSON()`), read for
- * {@link notebookContextOf}.
+ * The selected cell as the notebook's model holds it, read for
+ * {@link notebookContextOf}: its source, and its outputs one at a time —
+ * never the whole cell serialized.
  *
  * @param index - Its index in the notebook.
- * @param json - The cell, as nbformat writes it.
+ * @param model - The cell's model: its type, its source, its outputs.
  *
  * @returns The cell read.
  */
-export function cellReadOf(index: number, json: unknown): NotebookCellRead {
-  const cell = record(json);
+export function cellReadOf(
+  index: number,
+  model: {
+    type: string;
+    sharedModel: { getSource(): string };
+    outputs?: {
+      readonly length: number;
+      get(index: number): { toJSON(): unknown };
+    };
+  }
+): NotebookCellRead {
   return {
     index,
-    type: text(cell.cell_type) || 'code',
-    source: multiline(cell.source),
-    ...(Array.isArray(cell.outputs) ? { outputs: cell.outputs } : {}),
+    type: model.type || 'code',
+    source: model.sharedModel.getSource(),
+    ...(model.outputs ? { outputs: outputsOfModel(model.outputs) } : {}),
   };
 }

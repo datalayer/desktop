@@ -247,6 +247,8 @@ contextBridge.exposeInMainWorld('datalayerClient', {
  */
 contextBridge.exposeInMainWorld('appChatAPI', {
   listDeployments: () => ipcRenderer.invoke('app-chat:list-deployments'),
+  userToken: (deploymentUid: string) =>
+    ipcRenderer.invoke('app-chat:user-token', deploymentUid),
 });
 
 /**

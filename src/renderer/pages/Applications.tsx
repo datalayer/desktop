@@ -18,16 +18,18 @@
  * @module renderer/pages/Applications
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionList, Box, Button, Heading, Text } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import {
   APP_CHAT_WORDS,
   type AppChatChoice,
-  type AppChatHandle,
   cellReadOf,
+  noneTalkableSentence,
   notebookContextOf,
   type NotebookContext,
+  pickedHandleOf,
+  talkableKeyOf,
 } from '../../shared/appChat';
 import type { NotebookData, User } from '../../shared/types';
 import AppChat from '../components/appChat/AppChat';
@@ -64,8 +66,15 @@ async function readOpenNotebook(
   return notebookContextOf({
     path: notebook.path || notebook.name,
     cells: widget.widgets.length,
+    // The selected cell's source and its outputs one at a time, never the
+    // whole cell serialized: the outputs stop at what is passed.
     ...(active
-      ? { cell: cellReadOf(widget.activeCellIndex, active.model.toJSON()) }
+      ? {
+          cell: cellReadOf(
+            widget.activeCellIndex,
+            active.model as unknown as Parameters<typeof cellReadOf>[1]
+          ),
+        }
       : {}),
   });
 }
@@ -88,25 +97,23 @@ const Applications: React.FC<ApplicationsProps> = ({
     spacerUrl: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [picked, setPicked] = useState<AppChatHandle | null>(null);
+  // The deployment picked, by uid: its handle is the newest listing's, whose
+  // runtime, agent or version may have changed since (`pickedHandleOf`).
+  const [pickedUid, setPickedUid] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setError(null);
     try {
       const listed = await window.appChatAPI.listDeployments();
       setChoices(listed.deployments);
-      setServices(listed.services);
-      setPicked(current =>
+      setServices(current =>
         current &&
-        listed.deployments.some(
-          choice => choice.kind === 'talk' && choice.handle.uid === current.uid
-        )
+        current.aiAgentsUrl === listed.services.aiAgentsUrl &&
+        current.spacerUrl === listed.services.spacerUrl
           ? current
-          : null
+          : listed.services
       );
+      setError(null);
     } catch (failure) {
-      setChoices([]);
-      setPicked(null);
       setError(failure instanceof Error ? failure.message : String(failure));
     }
   }, []);
@@ -116,17 +123,25 @@ const Applications: React.FC<ApplicationsProps> = ({
       void refresh();
     } else {
       setChoices(null);
-      setPicked(null);
+      setPickedUid(null);
+      setError(null);
     }
   }, [isAuthenticated, refresh]);
+
+  // The same deployments listed again change nothing: the chat open stays.
+  const talkableKey = talkableKeyOf(choices ?? []);
+  const picked = useMemo(
+    () => pickedHandleOf(choices ?? [], pickedUid),
+    // Made again only when what is talked to changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [talkableKey, pickedUid]
+  );
 
   const readNotebook = useCallback(
     async (): Promise<NotebookContext | undefined> =>
       frontNotebook ? readOpenNotebook(frontNotebook) : undefined,
     [frontNotebook]
   );
-
-  const talkable = (choices ?? []).filter(choice => choice.kind === 'talk');
 
   return (
     <Box sx={{ display: 'flex', height: '100%', minHeight: 0 }}>
@@ -164,9 +179,9 @@ const Applications: React.FC<ApplicationsProps> = ({
             {APP_CHAT_WORDS.listFailed}: {error}
           </Text>
         )}
-        {choices && !error && talkable.length === 0 && (
+        {choices && noneTalkableSentence(choices) && (
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1 }}>
-            {APP_CHAT_WORDS.none}
+            {noneTalkableSentence(choices)}
           </Text>
         )}
         <ActionList>
@@ -175,7 +190,7 @@ const Applications: React.FC<ApplicationsProps> = ({
               <ActionList.Item
                 key={choice.handle.uid}
                 active={picked?.uid === choice.handle.uid}
-                onSelect={() => setPicked(choice.handle)}
+                onSelect={() => setPickedUid(choice.handle.uid)}
               >
                 {choice.handle.name}
                 <ActionList.Description variant="block">
@@ -196,7 +211,9 @@ const Applications: React.FC<ApplicationsProps> = ({
       <Box sx={{ flex: 1, minWidth: 0, minHeight: 0 }}>
         {picked && services ? (
           <AppChat
-            key={picked.uid}
+            // A new conversation for each deployment picked, or when where
+            // it is kept changes; the same listing again keeps this one.
+            key={`${picked.uid} ${picked.version} ${picked.url} ${picked.agentId}`}
             handle={picked}
             services={services}
             user={user?.handle ? { handle: user.handle } : null}
