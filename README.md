@@ -50,6 +50,21 @@ Download the latest version for your operating system:
 6. **Create or Open** a notebook or document to start working
 7. **Create Runtimes** - Spin up cloud computing resources when needed for execution
 
+### Talk to your agent
+
+An application you built and deployed in the Datalayer Agent Studio answers in Datalayer Desktop, in the **Your applications** tab.
+
+1. Sign in to Datalayer.
+2. In the Studio, open the application's **Ship** tab and turn on **Always on**: Desktop talks to the runtime the deployment is kept on.
+3. Open the **Your applications** tab and pick the application. A deployment that cannot be talked to yet is listed with why, and cannot be picked.
+4. Talk to it. The conversation is a session of the deployment, through the same session API its hosted page uses, in your name.
+
+- **Approvals** - when one of its rules says _ask me first_, the request appears in the chat: approve or decline it there.
+- **What it did** - under the chat, each tool it called as a line, e.g. `Support Desk → odoo-accounting: odoo_accounting_aged_balance`.
+- **Your open notebook** - only when the application lets its host pass the page (`deployment.embedded.host.context: [page]` in its Appspec) and a rule lets `host_context` run: when its agent asks, it gets the notebook you last had in front (its path, its cell count and its selected cell, the source and the outputs as text, up to 20,000 characters). Nothing is read before it asks, and nothing when the application says otherwise.
+- **Signed users** - an application that takes only a user its host's server signed (`deployment.embedded.host.user: signed`) is not opened in Desktop: Desktop does not hold the deployment's secret, and the tab says so.
+- **Your token** - for the chat, the app's main process lends your Datalayer token only to the runtimes of the applications listed, to Tool Approvals and to the applications' Appspecs; the chat never asks for it.
+
 ## 📚 Documentation
 
 - **User Guide**: [datalayer.ai/docs](https://datalayer.ai/docs)

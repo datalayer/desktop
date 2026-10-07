@@ -17,6 +17,7 @@ import {
   FileIcon,
   XIcon,
   AgentIcon,
+  CommentDiscussionIcon,
   SpaceIcon,
 } from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
@@ -32,7 +33,7 @@ export interface NavigationTabsProps {
 
 /**
  * Container component for navigation tabs with horizontal scrolling.
- * Shows Spaces, Agents, Environments, and all open notebooks/documents.
+ * Shows Spaces, Agents, Your applications, Environments, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
@@ -76,6 +77,17 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
         icon={AgentIcon as unknown as React.ComponentType<{ size?: number }>}
         isActive={activeTabId === 'runtimes'}
         onClick={() => onTabChange('runtimes')}
+      />
+
+      <NavigationTab
+        label="Your applications"
+        icon={
+          CommentDiscussionIcon as unknown as React.ComponentType<{
+            size?: number;
+          }>
+        }
+        isActive={activeTabId === 'applications'}
+        onClick={() => onTabChange('applications')}
       />
 
       <NavigationTab

@@ -15,6 +15,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   lazy,
   Suspense,
 } from 'react';
@@ -42,6 +43,7 @@ const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
 const Runtimes = lazy(() => import('./pages/Runtimes'));
+const Applications = lazy(() => import('./pages/Applications'));
 
 /**
  * Main application component.
@@ -66,6 +68,15 @@ const App: React.FC = () => {
   const [openNotebooks, setOpenNotebooks] = useState<NotebookData[]>([]);
   const [openDocuments, setOpenDocuments] = useState<DocumentData[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('spaces');
+
+  // The notebook last in front: what an application's agent is given as
+  // the host's page, when its Appspec lets it (STUDIO A-20, D-10).
+  const frontNotebookId = useRef<string | null>(null);
+  if (activeTabId.startsWith('notebook-')) {
+    frontNotebookId.current = activeTabId.slice('notebook-'.length);
+  }
+  const frontNotebook =
+    openNotebooks.find(nb => nb.id === frontNotebookId.current) ?? null;
 
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   // const { configuration } = useCoreStore(); // Unused for now
@@ -402,6 +413,30 @@ const App: React.FC = () => {
             }
           >
             <Runtimes isAuthenticated={isAuthenticated} />
+          </Suspense>
+        </Box>
+
+        {/* Your applications: a deployed application's agent (STUDIO A-20) */}
+        <Box
+          sx={{
+            display: activeTabId === 'applications' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          <Suspense
+            fallback={
+              <LoadingSpinner
+                variant="inline"
+                message="Loading your applications..."
+              />
+            }
+          >
+            <Applications
+              isAuthenticated={isAuthenticated}
+              user={user}
+              frontNotebook={frontNotebook}
+            />
           </Suspense>
         </Box>
 

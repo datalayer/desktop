@@ -241,6 +241,15 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 });
 
 /**
+ * A deployed application's agent (STUDIO A-20): the person's deployments,
+ * listed by the main process. No token is handed over: the main process
+ * lends it to the requests of the runtimes listed.
+ */
+contextBridge.exposeInMainWorld('appChatAPI', {
+  listDeployments: () => ipcRenderer.invoke('app-chat:list-deployments'),
+});
+
+/**
  * Proxy API interface for HTTP and WebSocket communication.
  */
 export interface ProxyAPI {
