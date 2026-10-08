@@ -17,6 +17,7 @@ import {
   FileIcon,
   XIcon,
   AgentIcon,
+  CommentDiscussionIcon,
   SpaceIcon,
 } from '@primer/octicons-react';
 import NavigationTab from './NavigationTab';
@@ -25,6 +26,8 @@ export interface NavigationTabsProps {
   activeTabId: string;
   openNotebooks: Array<{ id: string; name: string; description?: string }>;
   openDocuments: Array<{ id: string; name: string; description?: string }>;
+  /** Whether the Your applications tab shows (`agentChatEnabled`, off by default). */
+  showApplications?: boolean;
   onTabChange: (tabId: string) => void;
   onNotebookClose: (notebookId: string) => void;
   onDocumentClose: (documentId: string) => void;
@@ -32,12 +35,13 @@ export interface NavigationTabsProps {
 
 /**
  * Container component for navigation tabs with horizontal scrolling.
- * Shows Spaces, Agents, Environments, and all open notebooks/documents.
+ * Shows Spaces, Agents, Your applications, Environments, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
   openNotebooks,
   openDocuments,
+  showApplications = false,
   onTabChange,
   onNotebookClose,
   onDocumentClose,
@@ -77,6 +81,19 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
         isActive={activeTabId === 'runtimes'}
         onClick={() => onTabChange('runtimes')}
       />
+
+      {showApplications && (
+        <NavigationTab
+          label="Your applications"
+          icon={
+            CommentDiscussionIcon as unknown as React.ComponentType<{
+              size?: number;
+            }>
+          }
+          isActive={activeTabId === 'applications'}
+          onClick={() => onTabChange('applications')}
+        />
+      )}
 
       <NavigationTab
         label="Environments"

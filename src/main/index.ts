@@ -27,6 +27,13 @@ import { Application } from './app/application';
 import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
 import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
+import {
+  appChatEnabled,
+  appChatUserToken,
+  forgetAppChats,
+  lendTokenToAppChats,
+  listAppChatDeployments,
+} from './services/app-chat';
 
 // Type definitions
 interface VersionInfo {
@@ -126,6 +133,8 @@ function registerIPCHandlers(): void {
   });
 
   ipcMain.handle('datalayer:logout', async () => {
+    // Nothing of an application's chat is signed once signed out (A-20).
+    forgetAppChats();
     try {
       await sdkBridge.call('logout');
     } catch {
@@ -377,6 +386,21 @@ function registerIPCHandlers(): void {
     return user; // Returns User directly, throws on error
   });
 
+  // A deployed application's agent (STUDIO A-20): the person's deployments,
+  // listed here with the token the main process holds; the runtimes they
+  // are kept on are the only ones the session lends it to.
+  // Off by default (`agentChatEnabled` in settings.json): the renderer
+  // shows the tab only when this says it is on.
+  ipcMain.handle('app-chat:enabled', async () => appChatEnabled());
+  ipcMain.handle('app-chat:list-deployments', async () =>
+    listAppChatDeployments()
+  );
+  // A deployment that takes only a signed user (D-21): signed here, with
+  // the token this process holds; only the user token goes back.
+  ipcMain.handle('app-chat:user-token', async (_event, deploymentUid: string) =>
+    appChatUserToken(deploymentUid)
+  );
+
   // Configuration handlers
   ipcMain.handle('datalayer:get-spacer-run-url', async () => {
     const config = sdkBridge.getConfig();
@@ -598,6 +622,9 @@ async function main(): Promise<void> {
 
     // Register all IPC handlers
     registerIPCHandlers();
+
+    // Lend the person's token to the chats of their applications only (A-20)
+    lendTokenToAppChats();
 
     // Set up application event handlers
     Application.setupEventHandlers();

@@ -255,6 +255,21 @@ declare global {
       ) => Promise<import('@datalayer/agent-runtimes/lib/models').LexicalJSON>;
       deleteLexical: (lexicalId: string) => Promise<void>;
     };
+
+    /**
+     * A deployed application's agent (STUDIO A-20): the person's
+     * deployments, listed by the main process, which lends the person's
+     * token to their runtimes' requests and to nothing else.
+     */
+    appChatAPI: {
+      /** Whether it is on (`agentChatEnabled` in settings.json; off by default). */
+      enabled: () => Promise<boolean>;
+      listDeployments: () => Promise<import('../appChat').AppChatDeployments>;
+      /** A user token for a deployment that takes only a signed user (D-21). */
+      userToken: (
+        deploymentUid: string
+      ) => Promise<import('../appChat').SignedUser>;
+    };
   }
 }
 
