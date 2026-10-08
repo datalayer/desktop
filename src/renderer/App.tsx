@@ -78,6 +78,24 @@ const App: React.FC = () => {
   const frontNotebook =
     openNotebooks.find(nb => nb.id === frontNotebookId.current) ?? null;
 
+  // Your applications (STUDIO A-20) is off unless the main process says
+  // `agentChatEnabled` is on: off, no tab and nothing mounted.
+  const [appChatOn, setAppChatOn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    window.appChatAPI
+      ?.enabled()
+      .then(on => {
+        if (live) {
+          setAppChatOn(on === true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   // const { configuration } = useCoreStore(); // Unused for now
 
@@ -416,29 +434,32 @@ const App: React.FC = () => {
           </Suspense>
         </Box>
 
-        {/* Your applications: a deployed application's agent (STUDIO A-20) */}
-        <Box
-          sx={{
-            display: activeTabId === 'applications' ? 'block' : 'none',
-            height: '100%',
-            overflow: 'hidden',
-          }}
-        >
-          <Suspense
-            fallback={
-              <LoadingSpinner
-                variant="inline"
-                message="Loading your applications..."
-              />
-            }
+        {/* Your applications: a deployed application's agent (STUDIO A-20),
+            mounted only when `agentChatEnabled` is on */}
+        {appChatOn && (
+          <Box
+            sx={{
+              display: activeTabId === 'applications' ? 'block' : 'none',
+              height: '100%',
+              overflow: 'hidden',
+            }}
           >
-            <Applications
-              isAuthenticated={isAuthenticated}
-              user={user}
-              frontNotebook={frontNotebook}
-            />
-          </Suspense>
-        </Box>
+            <Suspense
+              fallback={
+                <LoadingSpinner
+                  variant="inline"
+                  message="Loading your applications..."
+                />
+              }
+            >
+              <Applications
+                isAuthenticated={isAuthenticated}
+                user={user}
+                frontNotebook={frontNotebook}
+              />
+            </Suspense>
+          </Box>
+        )}
 
         {/* Environments view */}
         <Box
@@ -505,6 +526,7 @@ const App: React.FC = () => {
             activeTabId={activeTabId}
             openNotebooks={openNotebooks}
             openDocuments={openDocuments}
+            showApplications={appChatOn}
             isAuthenticated={isAuthenticated}
             user={user}
             onTabChange={setActiveTabId}

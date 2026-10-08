@@ -26,15 +26,23 @@
  * (`app-chat:user-token`, `fetchUserToken`) — and only the short user token
  * reaches the renderer, which sends it with each run.
  *
+ * It is all off by default (`agentChatEnabled` in Desktop's
+ * `settings.json`, read once at launch, `appChatEnabled`): off, nothing here
+ * lists, signs or lends anything, and the renderer shows no tab for it.
+ *
  * @module main/services/app-chat
  */
 
-import { session } from 'electron';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { app, session } from 'electron';
 import log from 'electron-log/main';
 import { DEFAULT_PLANE_URLS } from '@datalayer/core/lib/config/planes';
 import {
   type AppChatChoice,
   type AppChatDeployments,
+  appChatEnabledOf,
+  DESKTOP_SETTINGS_FILE,
   deploymentChoicesOf,
   deploymentsUrl,
   fetchUserToken,
@@ -53,6 +61,38 @@ let signedPrefixes: string[] = [];
 
 /** Whether the session's `webRequest` lends the token yet. */
 let lending = false;
+
+/** The setting, read once per launch. */
+let enabled: boolean | undefined;
+
+/** What is said when the chats of applications are off. */
+export const APP_CHAT_OFF =
+  'Talking to your applications is off: set "agentChatEnabled": true in Desktop\'s settings.json and restart Desktop.';
+
+/**
+ * Whether talking to a deployed application's agent is on: `agentChatEnabled`
+ * in `settings.json` in the app's user data folder, off when the file is
+ * missing or unreadable. Read once per launch.
+ *
+ * @returns Whether it is on.
+ */
+export function appChatEnabled(): boolean {
+  if (enabled === undefined) {
+    let settings: unknown;
+    try {
+      settings = JSON.parse(
+        readFileSync(
+          join(app.getPath('userData'), DESKTOP_SETTINGS_FILE),
+          'utf8'
+        )
+      );
+    } catch {
+      settings = undefined;
+    }
+    enabled = appChatEnabledOf(settings);
+  }
+  return enabled;
+}
 
 /**
  * The ai-agents and Spacer base URLs, from the client's configuration:
@@ -100,11 +140,15 @@ function httpsOrigin(url: string | undefined): string {
 /**
  * What the window's `connect-src` names for the chats of applications: the
  * Datalayer domains and the configured services' HTTPS origins (IAM, the
- * runtimes, Spacer, ai-agents) — validated, so nothing else is let in.
+ * runtimes, Spacer, ai-agents) — validated, so nothing else is let in; only
+ * the Datalayer domains while the chats are off.
  *
  * @returns The sources, without duplicates.
  */
 export function appChatConnectSources(): string[] {
+  if (!appChatEnabled()) {
+    return [...DATALAYER_CONNECT_SOURCES];
+  }
   const config = sdkBridge.getConfig();
   const services = servicesOf();
   const configured = [
@@ -182,7 +226,7 @@ function reachableChoices(choices: AppChatChoice[]): AppChatChoice[] {
  * session, and this is the app's only one.
  */
 export function lendTokenToAppChats(): void {
-  if (lending) {
+  if (lending || !appChatEnabled()) {
     return;
   }
   lending = true;
@@ -222,6 +266,10 @@ export function forgetAppChats(): void {
  * @throws When nobody is signed in or ai-agents refuses, with its sentence.
  */
 export async function listAppChatDeployments(): Promise<AppChatDeployments> {
+  if (!appChatEnabled()) {
+    signedPrefixes = [];
+    throw new Error(APP_CHAT_OFF);
+  }
   const services = servicesOf();
   const token = sdkBridge.getConfig().token;
   if (!sdkBridge.isAuthenticated() || !token) {
@@ -277,6 +325,9 @@ export async function listAppChatDeployments(): Promise<AppChatDeployments> {
 export async function appChatUserToken(
   deploymentUid: string
 ): Promise<SignedUser> {
+  if (!appChatEnabled()) {
+    throw new Error(APP_CHAT_OFF);
+  }
   const token = sdkBridge.getConfig().token;
   if (!sdkBridge.isAuthenticated() || !token) {
     throw new Error('Sign in to Datalayer to talk to your applications.');

@@ -262,6 +262,8 @@ declare global {
      * token to their runtimes' requests and to nothing else.
      */
     appChatAPI: {
+      /** Whether it is on (`agentChatEnabled` in settings.json; off by default). */
+      enabled: () => Promise<boolean>;
       listDeployments: () => Promise<import('../appChat').AppChatDeployments>;
       /** A user token for a deployment that takes only a signed user (D-21). */
       userToken: (

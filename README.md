@@ -52,7 +52,7 @@ Download the latest version for your operating system:
 
 ### Talk to your agent
 
-An application you built and deployed in the Datalayer Agent Studio answers in Datalayer Desktop, in the **Your applications** tab.
+An application you built and deployed in the Datalayer Agent Studio answers in Datalayer Desktop, in the **Your applications** tab. This is a preview, off by default: put `{ "agentChatEnabled": true }` in `settings.json` in Desktop's user data folder (`~/.config/Datalayer Desktop` on Linux, `~/Library/Application Support/Datalayer Desktop` on macOS, `%APPDATA%\Datalayer Desktop` on Windows) and restart Desktop. Off, there is no **Your applications** tab and Desktop asks Datalayer nothing about your applications.
 
 1. Sign in to Datalayer.
 2. In the Studio, open the application's **Ship** tab and turn on **Always on**: Desktop talks to the runtime the deployment is kept on.

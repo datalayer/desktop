@@ -28,6 +28,7 @@ import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
 import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
 import {
+  appChatEnabled,
   appChatUserToken,
   forgetAppChats,
   lendTokenToAppChats,
@@ -388,6 +389,9 @@ function registerIPCHandlers(): void {
   // A deployed application's agent (STUDIO A-20): the person's deployments,
   // listed here with the token the main process holds; the runtimes they
   // are kept on are the only ones the session lends it to.
+  // Off by default (`agentChatEnabled` in settings.json): the renderer
+  // shows the tab only when this says it is on.
+  ipcMain.handle('app-chat:enabled', async () => appChatEnabled());
   ipcMain.handle('app-chat:list-deployments', async () =>
     listAppChatDeployments()
   );

@@ -246,6 +246,7 @@ contextBridge.exposeInMainWorld('datalayerClient', {
  * lends it to the requests of the runtimes listed.
  */
 contextBridge.exposeInMainWorld('appChatAPI', {
+  enabled: () => ipcRenderer.invoke('app-chat:enabled'),
   listDeployments: () => ipcRenderer.invoke('app-chat:list-deployments'),
   userToken: (deploymentUid: string) =>
     ipcRenderer.invoke('app-chat:user-token', deploymentUid),

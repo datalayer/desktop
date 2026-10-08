@@ -265,6 +265,26 @@ const record = (value: unknown): Record<string, unknown> =>
     : {};
 
 /**
+ * Desktop's settings file, in the app's user data folder: `agentChatEnabled`
+ * there turns talking to a deployed application's agent on.
+ */
+export const DESKTOP_SETTINGS_FILE = 'settings.json';
+
+/**
+ * Whether talking to a deployed application's agent is on: off by default
+ * until it has had one pass against a deployment kept always on. Off, Desktop
+ * shows no Your applications tab, asks ai-agents nothing and lends the
+ * person's token to nothing.
+ *
+ * @param settings - Desktop's settings, as read from its file, or nothing.
+ *
+ * @returns True only when `agentChatEnabled` is exactly `true`.
+ */
+export function appChatEnabledOf(settings: unknown): boolean {
+  return record(settings).agentChatEnabled === true;
+}
+
+/**
  * Reads a value as a list of strings.
  *
  * @param value - Anything.
@@ -891,8 +911,11 @@ export function* outputsOfModel(
     | { readonly length: number; get(index: number): { toJSON(): unknown } }
     | undefined
 ): Generator<unknown> {
-  for (let index = 0; index < (outputs?.length ?? 0); index++) {
-    yield outputs!.get(index).toJSON();
+  if (!outputs) {
+    return;
+  }
+  for (let index = 0; index < outputs.length; index++) {
+    yield outputs.get(index).toJSON();
   }
 }
 

@@ -149,10 +149,13 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
   // A signed application (D-21): the person signed for it by ai-agents,
   // asked by the main process; the user token goes in each run's body.
   const userToken = useCallback(async (): Promise<string> => {
-    if (!signedUserFresh(signedUser.current, Date.now() / 1000)) {
-      signedUser.current = await window.appChatAPI.userToken(handle.uid);
+    const kept = signedUser.current;
+    if (kept && signedUserFresh(kept, Date.now() / 1000)) {
+      return kept.token;
     }
-    return signedUser.current!.token;
+    const signed = await window.appChatAPI.userToken(handle.uid);
+    signedUser.current = signed;
+    return signed.token;
   }, [handle.uid]);
 
   useEffect(() => {

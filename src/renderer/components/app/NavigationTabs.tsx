@@ -26,6 +26,8 @@ export interface NavigationTabsProps {
   activeTabId: string;
   openNotebooks: Array<{ id: string; name: string; description?: string }>;
   openDocuments: Array<{ id: string; name: string; description?: string }>;
+  /** Whether the Your applications tab shows (`agentChatEnabled`, off by default). */
+  showApplications?: boolean;
   onTabChange: (tabId: string) => void;
   onNotebookClose: (notebookId: string) => void;
   onDocumentClose: (documentId: string) => void;
@@ -39,6 +41,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
   openNotebooks,
   openDocuments,
+  showApplications = false,
   onTabChange,
   onNotebookClose,
   onDocumentClose,
@@ -79,16 +82,18 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
         onClick={() => onTabChange('runtimes')}
       />
 
-      <NavigationTab
-        label="Your applications"
-        icon={
-          CommentDiscussionIcon as unknown as React.ComponentType<{
-            size?: number;
-          }>
-        }
-        isActive={activeTabId === 'applications'}
-        onClick={() => onTabChange('applications')}
-      />
+      {showApplications && (
+        <NavigationTab
+          label="Your applications"
+          icon={
+            CommentDiscussionIcon as unknown as React.ComponentType<{
+              size?: number;
+            }>
+          }
+          isActive={activeTabId === 'applications'}
+          onClick={() => onTabChange('applications')}
+        />
+      )}
 
       <NavigationTab
         label="Environments"

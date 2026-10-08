@@ -133,7 +133,6 @@ const Applications: React.FC<ApplicationsProps> = ({
   const picked = useMemo(
     () => pickedHandleOf(choices ?? [], pickedUid),
     // Made again only when what is talked to changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [talkableKey, pickedUid]
   );
 
