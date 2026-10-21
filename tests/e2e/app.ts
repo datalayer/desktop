@@ -22,8 +22,15 @@ import {
   type ElectronApplication,
   type Page,
 } from '@playwright/test';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 import { startStubIam, type StubIam } from '../mocks/iam';
 
@@ -40,6 +47,12 @@ export interface LaunchedApp {
   iam: StubIam;
   /** The user data folder (the token is kept here). */
   userData: string;
+  /**
+   * The renderer's uncaught errors since launch: a page that throws on
+   * mount can draw nothing and still pass a test that looks for no text,
+   * so the journeys assert this stays empty.
+   */
+  pageErrors: string[];
   /** Quits the app and stops the stubs; `keepUserData` to relaunch on it. */
   close: (keepUserData?: boolean) => Promise<void>;
 }
@@ -101,9 +114,11 @@ export async function launchApp(
   const window = await mainWindowOf(app, iam.url);
   // What the renderer and the main process say when something breaks, in
   // the run's log: a blank window says nothing by itself.
-  window.on('pageerror', error =>
-    console.log(`[renderer pageerror] ${error.stack || error.message}`)
-  );
+  const pageErrors: string[] = [];
+  window.on('pageerror', error => {
+    pageErrors.push(error.stack || error.message);
+    console.log(`[renderer pageerror] ${error.stack || error.message}`);
+  });
   window.on('console', message => {
     if (message.type() === 'error') {
       console.log(`[renderer console.error] ${message.text()}`);
@@ -129,8 +144,10 @@ export async function launchApp(
     window,
     iam,
     userData,
+    pageErrors,
     close: async (keepUserData = false) => {
       await app.close().catch(() => undefined);
+      printMainLog(userData);
       if (!options.iam) {
         await iam.close();
       }
@@ -139,6 +156,27 @@ export async function launchApp(
       }
     },
   };
+}
+
+/**
+ * Prints the main process's own lines about the local runtime, the sessions
+ * and the sign-in from electron-log's file (its console transport is off
+ * outside development), so why a runtime did not start is in the run's log.
+ *
+ * @param userData - The app's user data folder.
+ */
+function printMainLog(userData: string): void {
+  const files = [
+    join(userData, 'logs', 'main.log'),
+    join(homedir(), '.config', 'Datalayer Desktop', 'logs', 'main.log'),
+  ];
+  for (const file of files.filter(path => existsSync(path))) {
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      if (/\[(LocalRuntime|Sessions|Approvals|SDK Bridge)\]/.test(line)) {
+        console.log(`[main.log] ${line}`);
+      }
+    }
+  }
 }
 
 /**

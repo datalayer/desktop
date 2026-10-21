@@ -80,6 +80,13 @@ test.beforeAll(async () => {
   await signInWithToken(launched);
 });
 
+// Nothing the renderer throws passes unseen: a page that crashes on mount
+// (Primer refusing a group heading, say) blanks the window without failing
+// a test that waits for text elsewhere.
+test.afterEach(() => {
+  expect(launched.pageErrors).toEqual([]);
+});
+
 test.afterAll(async () => {
   await launched.close();
 });
@@ -95,6 +102,10 @@ test('the Sessions page lists this machine’s sessions, and a row opens in the 
   });
   await expect(page.getByText('Add the changelog')).toBeVisible();
   await expect(page.getByText(/on this machine/).first()).toBeVisible();
+  // The page drew its groups — a place and its application, as headings.
+  await expect(
+    page.getByRole('heading', { name: /On this machine/ }).first()
+  ).toBeVisible();
   await page.getByText('Rename the helpers').click();
   // The conversation: the stub's two messages drawn by the chat.
   await expect(window.getByText('The stub answers.')).toBeVisible({
