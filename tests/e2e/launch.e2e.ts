@@ -29,11 +29,19 @@ test.afterAll(async () => {
   await launched.close();
 });
 
-test('opens on the Login page with a provider sign-in and the typed token', async () => {
+test('opens on the Login page with a provider sign-in, a handle and password, and the token under More options', async () => {
   const { window } = launched;
   await expect(loginHeading(window)).toBeVisible({ timeout: 60_000 });
   await expect(window.getByTestId('sign-in-github')).toBeVisible();
   await expect(window.getByTestId('sign-in-google')).toBeVisible();
+  await expect(window.getByRole('textbox', { name: /Handle/ })).toBeVisible();
+  await expect(window.getByRole('textbox', { name: /API Token/ })).toHaveCount(
+    0
+  );
+  await window.getByRole('button', { name: 'More options' }).click();
+  await window
+    .getByRole('button', { name: 'Sign in with an API token instead' })
+    .click();
   await expect(
     window.getByRole('textbox', { name: /API Token/ })
   ).toBeVisible();

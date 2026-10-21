@@ -242,6 +242,18 @@ export function tab(window: Page, label: string) {
 export async function signInWithToken(launched: LaunchedApp): Promise<void> {
   const { window, iam } = launched;
   await expect(loginHeading(window)).toBeVisible({ timeout: 60_000 });
+  // A handle and a password by default: the Run URL and the token are
+  // under More options, the token one way further.
+  const more = window.getByRole('button', { name: 'More options' });
+  if (await more.isVisible()) {
+    await more.click();
+  }
+  const tokenWay = window.getByRole('button', {
+    name: 'Sign in with an API token instead',
+  });
+  if (await tokenWay.isVisible()) {
+    await tokenWay.click();
+  }
   await window.getByRole('textbox', { name: /Run URL/ }).fill(iam.url);
   await window.getByRole('textbox', { name: /API Token/ }).fill(iam.token);
   await window.getByRole('button', { name: 'Connect' }).click();
