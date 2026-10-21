@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.1.1
+## 0.1.2
+
+- The appearance menu's overlay is no longer clipped by the header.
+- 0.1.1's build failed on the place filter's labels; they are plain text again.
+
+## 0.1.1 (not released: its build failed)
 
 - The appearance menu opens above the page (it opened beneath it).
 - The Sessions page's place filter reads *All · Datalayer · Local*, each on one line.

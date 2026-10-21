@@ -670,19 +670,13 @@ const Sessions: React.FC<SessionsProps> = ({
               }
             >
               <SegmentedControl.Button selected={filter.place === ''}>
-                <Box as="span" sx={{ whiteSpace: 'nowrap' }}>
-                  {SESSIONS_WORDS.anyPlace}
-                </Box>
+                {SESSIONS_WORDS.anyPlace}
               </SegmentedControl.Button>
               <SegmentedControl.Button selected={filter.place === 'datalayer'}>
-                <Box as="span" sx={{ whiteSpace: 'nowrap' }}>
-                  {SESSIONS_WORDS.onDatalayer}
-                </Box>
+                {SESSIONS_WORDS.onDatalayer}
               </SegmentedControl.Button>
               <SegmentedControl.Button selected={filter.place === 'local'}>
-                <Box as="span" sx={{ whiteSpace: 'nowrap' }}>
-                  {SESSIONS_WORDS.onThisMachine}
-                </Box>
+                {SESSIONS_WORDS.onThisMachine}
               </SegmentedControl.Button>
             </SegmentedControl>
             <Box sx={{ display: 'flex', gap: 2 }}>
