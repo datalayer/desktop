@@ -116,22 +116,9 @@ body {
   background: var(--datalayer-green-main);
 }
 
-/* Global Focus Styles - Using Datalayer Green for Tab Navigation */
-/* Remove ALL default browser/webkit focus styles */
-*,
-*:focus,
-*:focus-visible,
-*:focus-within {
-  outline: none !important;
-  outline-width: 0 !important;
-  outline-style: none !important;
-}
-
-*:focus-visible:not(.ActionList-item) {
-  outline: 2px solid var(--datalayer-green-accessible-dark) !important;
-  outline-offset: 2px !important;
-  border-radius: 4px;
-}
+/* Focus rings are Primer's own, as in the web app: no global outline override
+   (it drew a green border on every focused control, the segmented control's
+   selected button included). */
 
 /* Remove webkit/safari default blue outline */
 *::-webkit-focus-ring-color {
