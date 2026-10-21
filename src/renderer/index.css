@@ -149,17 +149,6 @@ body {
   ) !important;
 }
 
-/* Navigation tabs focus styles */
-button:focus-visible,
-a:focus-visible,
-[role='button']:focus-visible,
-[role='tab']:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--datalayer-green-accessible-dark) !important;
-  outline-offset: 2px !important;
-  border-radius: 4px;
-}
-
 /* Override ActionList focus completely - single green border only */
 .ActionList-item {
   position: relative !important;
