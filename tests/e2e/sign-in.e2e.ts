@@ -13,6 +13,7 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { startStubIam } from '../mocks/iam';
 import {
   launchApp,
   loginHeading,
@@ -82,8 +83,10 @@ test('a provider sign-in that fails says why on the Login page', async () => {
 });
 
 test('the typed token is the second way, and the token is kept across a relaunch', async () => {
-  const first = await launchApp();
-  const { userData, iam } = first;
+  // One stub IAM for both launches: a launch closes the IAM it started.
+  const iam = await startStubIam();
+  const first = await launchApp({ iam });
+  const { userData } = first;
   await signInWithToken(first);
   await first.close(true);
 

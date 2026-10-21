@@ -43,6 +43,23 @@ async function runtimeUrl(launched: LaunchedApp): Promise<string> {
   return String(url);
 }
 
+/**
+ * Opens the stub's first session in the chat, from its row: each journey
+ * stands on its own (a failed one restarts the app).
+ */
+async function openFirstSession(launched: LaunchedApp): Promise<void> {
+  const { window } = launched;
+  await tab(window, 'Sessions').click();
+  const row = window
+    .getByTestId('sessions')
+    .locator('[data-session-row="stub00000001"]');
+  await expect(row).toBeVisible({ timeout: 90_000 });
+  await row.click();
+  await expect(window.getByText('The stub answers.').first()).toBeVisible({
+    timeout: 60_000,
+  });
+}
+
 /** Clicks a menu's entry in the main process, as a person would. */
 async function clickMenu(
   launched: LaunchedApp,
@@ -140,6 +157,7 @@ test('the menu names the running runtime, and Sessions → Export… once a sess
 
 test('an approval raised on this machine is answered from the chat’s banner, and the runtime is told', async () => {
   const { window } = launched;
+  await openFirstSession(launched);
   const url = await runtimeUrl(launched);
   // The session in front is the stub's first; the stub raises its git push.
   const raised = await fetch(`${url}/stub/approvals`, {
@@ -151,11 +169,20 @@ test('an approval raised on this machine is answered from the chat’s banner, a
   const approval = (await raised.json()) as Row;
 
   // The main process's socket reads it; the chat in front shows it whole.
-  await expect(window.getByText('Run git push').first()).toBeVisible({
+  await expect(
+    window.getByText('Run git push').filter({ visible: true }).first()
+  ).toBeVisible({
     timeout: 30_000,
   });
-  await window.getByRole('button', { name: 'Review' }).first().click();
-  await window.getByRole('button', { name: 'Deny' }).click();
+  // The banner's own Review (another page may hold a hidden one).
+  await window
+    .getByRole('button', { name: 'Review' })
+    .filter({ visible: true })
+    .click();
+  await window
+    .getByRole('button', { name: 'Deny' })
+    .filter({ visible: true })
+    .click();
 
   // The decision went over the runtime's websocket, as the runtime took it.
   await expect
@@ -169,13 +196,16 @@ test('an approval raised on this machine is answered from the chat’s banner, a
       { timeout: 30_000 }
     )
     .toContainEqual({ approvalId: approval.id, approved: false });
-  await expect(window.getByText('Run git push')).toHaveCount(0, {
+  await expect(
+    window.getByText('Run git push').filter({ visible: true })
+  ).toHaveCount(0, {
     timeout: 30_000,
   });
 });
 
 test('the session in front is exported to a file, imported back and reopened from the list', async () => {
   const { window } = launched;
+  await openFirstSession(launched);
   const url = await runtimeUrl(launched);
   const file = join(
     mkdtempSync(join(tmpdir(), 'desktop-e2e-export-')),
