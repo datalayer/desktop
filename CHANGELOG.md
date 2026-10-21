@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- The profile menu opens on hover, as the appearance menu does; leaving it closes it.
+
 ## 0.1.2
 
 - The appearance menu's overlay is no longer clipped by the header.
