@@ -9,32 +9,32 @@
  * each with its state, agent, version, place and lineage; a row opens the
  * session in the Sessions tab's chat.
  *
- * @module renderer/components/studio/StudioActivity
+ * @module renderer/components/apps/AppsActivity
  */
 
 import React from 'react';
 import { ActionList, Box, Text } from '@primer/react';
-import { type ActivityRow, STUDIO_WORDS } from '../../pages/studioPage';
+import { type ActivityRow, APPS_WORDS } from '../../pages/appsPage';
 import OpenOnWeb from './OpenOnWeb';
 
-/** Props for {@link StudioActivity}. */
-export interface StudioActivityProps {
+/** Props for {@link AppsActivity}. */
+export interface AppsActivityProps {
   rows: ActivityRow[] | null;
   problem: string;
   onOpen: (uid: string) => void;
-  /** The web Studio's Activity of this application (runs, schedules, usage). */
+  /** The web Apps' Activity of this application (runs, schedules, usage). */
   webUrl: string;
 }
 
-const StudioActivity: React.FC<StudioActivityProps> = ({
+const AppsActivity: React.FC<AppsActivityProps> = ({
   rows,
   problem,
   onOpen,
   webUrl,
 }) => (
-  <Box sx={{ display: 'grid', gap: 2 }} data-testid="studio-activity">
+  <Box sx={{ display: 'grid', gap: 2 }} data-testid="apps-activity">
     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <OpenOnWeb url={webUrl} label={STUDIO_WORDS.openOnWeb} />
+      <OpenOnWeb url={webUrl} label={APPS_WORDS.openOnWeb} />
     </Box>
     {problem ? (
       <Text as="p" sx={{ color: 'danger.fg', fontSize: 1 }}>
@@ -43,11 +43,11 @@ const StudioActivity: React.FC<StudioActivityProps> = ({
     ) : null}
     {rows && rows.length === 0 && !problem ? (
       <Text as="p" sx={{ color: 'fg.muted', fontSize: 1 }}>
-        {STUDIO_WORDS.noSession}
+        {APPS_WORDS.noSession}
       </Text>
     ) : null}
     {rows && rows.length > 0 ? (
-      <ActionList aria-label={STUDIO_WORDS.sections.activity}>
+      <ActionList aria-label={APPS_WORDS.sections.activity}>
         {rows.map(row => (
           <ActionList.Item
             key={`${row.said}-${row.entry.row.uid}`}
@@ -61,7 +61,7 @@ const StudioActivity: React.FC<StudioActivityProps> = ({
             </ActionList.Description>
             <ActionList.TrailingVisual>
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                {STUDIO_WORDS.openSession}
+                {APPS_WORDS.openSession}
               </Text>
             </ActionList.TrailingVisual>
           </ActionList.Item>
@@ -71,4 +71,4 @@ const StudioActivity: React.FC<StudioActivityProps> = ({
   </Box>
 );
 
-export default StudioActivity;
+export default AppsActivity;

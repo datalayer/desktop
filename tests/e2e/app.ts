@@ -71,9 +71,9 @@ export interface LaunchOptions {
   rememberedFolders?: string[];
   /**
    * Spacer and ai-agents on the stub IAM too (`DATALAYER_SPACER_URL`,
-   * `DATALAYER_AI_AGENTS_URL`): the Studio's journeys read them there.
+   * `DATALAYER_AI_AGENTS_URL`): Apps' journeys read them there.
    */
-  studioServices?: boolean;
+  appsServices?: boolean;
 }
 
 /**
@@ -109,7 +109,7 @@ export async function launchApp(
       PATH: `${STUB_BIN}${delimiter}${process.env.PATH || ''}`,
       DATALAYER_IAM_URL: iam.url,
       DATALAYER_LANDING_URL: iam.url,
-      ...(options.studioServices
+      ...(options.appsServices
         ? { DATALAYER_SPACER_URL: iam.url, DATALAYER_AI_AGENTS_URL: iam.url }
         : {}),
       DATALAYER_DESKTOP_USER_DATA: userData,

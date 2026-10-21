@@ -29,7 +29,7 @@ const ways: DesktopSessionWays = {
   placeOf: () => undefined,
   askText: async () => undefined,
   reveal: async () => undefined,
-  openStudio: async () => undefined,
+  openApps: async () => undefined,
 };
 
 describe('the desktop Reactor (DK-01)', () => {
@@ -50,7 +50,7 @@ describe('the desktop Reactor (DK-01)', () => {
       'desktop-archive',
       'desktop-end',
       'desktop-reveal-in-finder',
-      'desktop-open-in-studio',
+      'desktop-open-in-apps',
     ]);
     reactor.stop();
   });

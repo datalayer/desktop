@@ -4,7 +4,7 @@
  */
 
 /**
- * A deployed application's agent, talked to in Desktop (STUDIO A-20).
+ * A deployed application's agent, talked to in Desktop (APPS A-20).
  *
  * The conversation is `@datalayer/agent-runtimes`' `<Chat>` over the
  * runtime's session API — an AG-UI run on

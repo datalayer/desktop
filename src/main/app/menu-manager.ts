@@ -7,13 +7,13 @@
  * The app menu (DESKTOP DK-04): it says what the app can do. *File → Work
  * in a folder…*, *New session on Datalayer…*, *Import a session…*, *Stop
  * the local runtime*; *Sessions → Resume last*, *Export…*, *Open in the
- * Studio*; *View → Sessions | Studio | Spaces | Agents | Environments*
+ * Apps*; *View → Sessions | Apps | Spaces | Agents | Environments*
  * and the developer tools; *Help → Datalayer docs*, *Report a problem*;
  * *Sign out*. The shortcuts are in the menu: the menu is the overlay.
  *
  * `menuTemplate` is pure: the entries from the state, each with its
  * `when` applied (signed out: no session on Datalayer and no sign-out; no
- * local runtime: no stop; no session in front: no export, no Studio for
+ * local runtime: no stop; no session in front: no export, no Apps for
  * it). Sessions comes first, then Edit, File, View (and Window on macOS),
  * Help; on macOS the app's own menu stays first, as the OS puts it. Signed
  * out, every menu but Help is disabled (see `signedOutTemplate`). `createMenu` and `refreshMenu` build Electron's menu from it; an
@@ -153,7 +153,7 @@ function sessionsMenu(state: MenuState): MenuEntry {
       accelerator: 'CmdOrCtrl+Shift+E',
     });
     if (state.signedIn) {
-      entries.push({ label: 'Open in the Studio', action: 'open-in-studio' });
+      entries.push({ label: 'Open in Apps', action: 'open-in-apps' });
     }
   }
   return { label: 'Sessions', submenu: entries };
@@ -162,7 +162,7 @@ function sessionsMenu(state: MenuState): MenuEntry {
 function viewMenu(state: MenuState): MenuEntry {
   const entries: MenuEntry[] = [
     { label: 'Sessions', action: 'show-sessions', accelerator: 'CmdOrCtrl+1' },
-    { label: 'Studio', action: 'show-studio', accelerator: 'CmdOrCtrl+2' },
+    { label: 'Apps', action: 'show-apps', accelerator: 'CmdOrCtrl+2' },
     { label: 'Spaces', action: 'show-spaces', accelerator: 'CmdOrCtrl+3' },
     { label: 'Agents', action: 'show-runtimes', accelerator: 'CmdOrCtrl+4' },
     {

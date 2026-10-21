@@ -4,10 +4,10 @@
  */
 
 /**
- * *Open on datalayer.ai* (DESKTOP DK-02): what the native Studio does not
- * offer, opened in the OS browser on the landing's Studio.
+ * *Open on datalayer.ai* (DESKTOP DK-02): what the native Apps does not
+ * offer, opened in the OS browser on the landing's Apps.
  *
- * @module renderer/components/studio/OpenOnWeb
+ * @module renderer/components/apps/OpenOnWeb
  */
 
 import React from 'react';
@@ -16,7 +16,7 @@ import { LinkExternalIcon } from '@primer/octicons-react';
 
 /** Props for {@link OpenOnWeb}. */
 export interface OpenOnWebProps {
-  /** The web Studio's page. */
+  /** The web Apps' page. */
   url: string;
   /** The button's words. */
   label: string;

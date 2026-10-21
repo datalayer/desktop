@@ -4,52 +4,51 @@
  */
 
 /**
- * The Studio, native — the main process's side (DESKTOP DK-02). The
- * *Studio* tab is the app's own React page; what it reads of Datalayer is
+ * Apps, native — the main process's side (DESKTOP DK-02). The
+ * *Apps* tab is the app's own React page; what it reads of Datalayer is
  * read here, with the token this process holds, and handed over IPC as the
  * Sessions page's lists are: the person's applications (Spacer), one
  * application's Appspec (its Spacer item), the person's deployments
  * (ai-agents), and a deployment paused or resumed for one exact version.
  * No renderer holds the token.
  *
- * The shapes and the routes are `shared/studio.ts`'s; `StudioDeps` takes
+ * The shapes and the routes are `shared/apps.ts`'s; `AppsDeps` takes
  * the token, the services and `fetch` so the tests run without Electron.
  *
- * @module main/services/studio
+ * @module main/services/apps
  */
 
 import { ipcMain } from 'electron';
 import log from 'electron-log/main';
 import {
   IPC,
-  readStudioAppUid,
-  readStudioStateChange,
+  readAppUid,
+  readDeploymentStateChange,
 } from '../../shared/types/ipc.types';
 import {
   deploymentUrl,
   landingOrigin,
-  type StudioAppDocument,
-  type StudioAppsListed,
-  type StudioDeployment,
-  studioAppDocumentOf,
-  studioAppUrl,
-  studioAppsOf,
-  studioAppsUrl,
-  studioDeploymentOf,
-  studioDeploymentsOf,
-  type StudioStateChange,
-} from '../../shared/studio';
+  type AppDocument,
+  type AppsListed,
+  type AppDeployment,
+  appDocumentOf,
+  spacerAppUrl,
+  listedAppsOf,
+  spacerAppsUrl,
+  appDeploymentOf,
+  appDeploymentsOf,
+  type DeploymentStateChange,
+} from '../../shared/apps';
 import { deploymentsUrl } from '../../shared/appChat';
 import { isDevelopment } from '../app/environment';
 import { servicesOf } from './app-chat';
 import { sdkBridge } from './datalayer-sdk-bridge';
 
 /** The sentence when nobody is signed in. */
-export const STUDIO_SIGNED_OUT =
-  'Sign in to Datalayer to see your applications.';
+export const APPS_SIGNED_OUT = 'Sign in to Datalayer to see your applications.';
 
-/** What the Studio's calls need of the world. */
-export interface StudioDeps {
+/** What Apps' calls need of the world. */
+export interface AppsDeps {
   /** The token, or null when nobody is signed in. */
   token: () => string | null;
   /** The Spacer and ai-agents base URLs. */
@@ -94,17 +93,17 @@ async function refusal(response: Response, what: string): Promise<string> {
 }
 
 /**
- * The Studio's four calls, over the given world.
+ * Apps' four calls, over the given world.
  *
  * @param deps - The token, the services, the landing, `fetch`.
  *
  * @returns The calls.
  */
-export function studioCalls(deps: StudioDeps) {
+export function appsCalls(deps: AppsDeps) {
   const signed = (): Record<string, string> => {
     const token = deps.token();
     if (!token) {
-      throw new Error(STUDIO_SIGNED_OUT);
+      throw new Error(APPS_SIGNED_OUT);
     }
     return { Authorization: `Bearer ${token}` };
   };
@@ -117,31 +116,31 @@ export function studioCalls(deps: StudioDeps) {
   };
   return {
     /** The person's applications, newest first, and the landing's origin. */
-    async apps(): Promise<StudioAppsListed> {
+    async list(): Promise<AppsListed> {
       const body = await read(
-        studioAppsUrl(deps.services().spacerUrl),
+        spacerAppsUrl(deps.services().spacerUrl),
         'Your applications could not be listed'
       );
-      return { apps: studioAppsOf(body), landing: deps.landing() };
+      return { apps: listedAppsOf(body), landing: deps.landing() };
     },
     /** One application's Appspec. */
-    async app(uid: string): Promise<StudioAppDocument> {
+    async app(uid: string): Promise<AppDocument> {
       const body = await read(
-        studioAppUrl(deps.services().spacerUrl, uid),
+        spacerAppUrl(deps.services().spacerUrl, uid),
         'The application could not be read'
       );
-      return studioAppDocumentOf(body, uid);
+      return appDocumentOf(body, uid);
     },
     /** The person's deployments. */
-    async deployments(): Promise<StudioDeployment[]> {
+    async deployments(): Promise<AppDeployment[]> {
       const body = await read(
         deploymentsUrl(deps.services().aiAgentsUrl),
         'Your deployments could not be listed'
       );
-      return studioDeploymentsOf(body);
+      return appDeploymentsOf(body);
     },
     /** A deployment paused or resumed, for one exact version. */
-    async setState(change: StudioStateChange): Promise<StudioDeployment> {
+    async setState(change: DeploymentStateChange): Promise<AppDeployment> {
       const response = await deps.fetch(
         deploymentUrl(deps.services().aiAgentsUrl, change.uid),
         {
@@ -161,7 +160,7 @@ export function studioCalls(deps: StudioDeps) {
         throw new Error(await refusal(response, what));
       }
       const body = (await response.json()) as Record<string, unknown>;
-      const changed = studioDeploymentOf(body.deployment);
+      const changed = appDeploymentOf(body.deployment);
       if (!changed) {
         throw new Error(`${what}: ai-agents answered no deployment.`);
       }
@@ -171,7 +170,7 @@ export function studioCalls(deps: StudioDeps) {
 }
 
 /** The app's calls: the SDK bridge's token, the configured services. */
-export const studio = studioCalls({
+export const apps = appsCalls({
   token: () =>
     sdkBridge.isAuthenticated() ? sdkBridge.getConfig().token || null : null,
   services: servicesOf,
@@ -179,29 +178,27 @@ export const studio = studioCalls({
   fetch: (...args) => fetch(...args),
 });
 
-/** Registers the `studio:*` handlers. */
-export function registerStudioIpc(): void {
+/** Registers the `apps:*` handlers. */
+export function registerAppsIpc(): void {
   const logged = <T>(what: string, call: () => Promise<T>): Promise<T> =>
     call().catch(error => {
-      log.warn(`[Studio] ${what}:`, {
+      log.warn(`[Apps] ${what}:`, {
         message: error instanceof Error ? error.message : String(error),
       });
       throw error;
     });
-  ipcMain.handle(IPC.studioApps, () =>
-    logged('applications', () => studio.apps())
-  );
-  ipcMain.handle(IPC.studioApp, (_event, argument: unknown) => {
-    const uid = readStudioAppUid(argument);
-    return logged(`application ${uid}`, () => studio.app(uid));
+  ipcMain.handle(IPC.appsList, () => logged('applications', () => apps.list()));
+  ipcMain.handle(IPC.appsApp, (_event, argument: unknown) => {
+    const uid = readAppUid(argument);
+    return logged(`application ${uid}`, () => apps.app(uid));
   });
-  ipcMain.handle(IPC.studioDeployments, () =>
-    logged('deployments', () => studio.deployments())
+  ipcMain.handle(IPC.appsDeployments, () =>
+    logged('deployments', () => apps.deployments())
   );
-  ipcMain.handle(IPC.studioDeploymentState, (_event, argument: unknown) => {
-    const change = readStudioStateChange(argument);
+  ipcMain.handle(IPC.appsDeploymentState, (_event, argument: unknown) => {
+    const change = readDeploymentStateChange(argument);
     return logged(`deployment ${change.uid} ${change.state}`, () =>
-      studio.setState(change)
+      apps.setState(change)
     );
   });
 }

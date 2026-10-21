@@ -253,7 +253,7 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 });
 
 /**
- * A deployed application's agent (STUDIO A-20): the person's deployments,
+ * A deployed application's agent (APPS A-20): the person's deployments,
  * listed by the main process. No token is handed over: the main process
  * lends it to the requests of the runtimes listed.
  */
@@ -317,12 +317,12 @@ const desktopAPI: DesktopAPI = {
   shell: {
     reveal: path => ipcRenderer.invoke(IPC.shellReveal, { path }),
   },
-  studio: {
-    apps: () => ipcRenderer.invoke(IPC.studioApps),
-    app: uid => ipcRenderer.invoke(IPC.studioApp, { uid }),
-    deployments: () => ipcRenderer.invoke(IPC.studioDeployments),
+  apps: {
+    list: () => ipcRenderer.invoke(IPC.appsList),
+    app: uid => ipcRenderer.invoke(IPC.appsApp, { uid }),
+    deployments: () => ipcRenderer.invoke(IPC.appsDeployments),
     setDeploymentState: change =>
-      ipcRenderer.invoke(IPC.studioDeploymentState, change),
+      ipcRenderer.invoke(IPC.appsDeploymentState, change),
   },
   attention: {
     front: uid => ipcRenderer.invoke(IPC.attentionFront, { uid }),

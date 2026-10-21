@@ -31,7 +31,7 @@ import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { MENU_ACTION_EVENT } from './pages/Sessions';
-import { OPEN_SESSION_EVENT, OPEN_STUDIO_EVENT } from './pages/studioEvents';
+import { OPEN_SESSION_EVENT, OPEN_APPS_EVENT } from './pages/appsEvents';
 import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
@@ -47,7 +47,7 @@ const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
 const Runtimes = lazy(() => import('./pages/Runtimes'));
 const Sessions = lazy(() => import('./pages/Sessions'));
-const Studio = lazy(() => import('./pages/Studio'));
+const Apps = lazy(() => import('./pages/Apps'));
 
 /**
  * Main application component.
@@ -75,7 +75,7 @@ const App: React.FC = () => {
   const [activeTabId, setActiveTabId] = useState<string>('sessions');
 
   // The notebook last in front: what an application's agent is given as
-  // the host's page, when its Appspec lets it (STUDIO A-20, D-10).
+  // the host's page, when its Appspec lets it (APPS A-20, D-10).
   const frontNotebookId = useRef<string | null>(null);
   if (activeTabId.startsWith('notebook-')) {
     frontNotebookId.current = activeTabId.slice('notebook-'.length);
@@ -212,15 +212,15 @@ const App: React.FC = () => {
     };
   }, [startAllPreloads]);
 
-  // *Open in the Studio* brings the Studio to the front; a session of
+  // *Open in Apps* brings Apps to the front; a session of
   // its Activity, the Sessions page (DESKTOP DK-02).
   useEffect(() => {
-    const toStudio = () => setActiveTabId('studio');
+    const toApps = () => setActiveTabId('apps');
     const toSessions = () => setActiveTabId('sessions');
-    window.addEventListener(OPEN_STUDIO_EVENT, toStudio);
+    window.addEventListener(OPEN_APPS_EVENT, toApps);
     window.addEventListener(OPEN_SESSION_EVENT, toSessions);
     return () => {
-      window.removeEventListener(OPEN_STUDIO_EVENT, toStudio);
+      window.removeEventListener(OPEN_APPS_EVENT, toApps);
       window.removeEventListener(OPEN_SESSION_EVENT, toSessions);
     };
   }, []);
@@ -233,8 +233,8 @@ const App: React.FC = () => {
       case 'show-sessions':
         setActiveTabId('sessions');
         break;
-      case 'show-studio':
-        setActiveTabId('studio');
+      case 'show-apps':
+        setActiveTabId('apps');
         break;
       case 'show-spaces':
         setActiveTabId('sessions');
@@ -418,24 +418,21 @@ const App: React.FC = () => {
           </Box>
         ))}
 
-        {/* The Studio, native (DESKTOP DK-02): the person's applications,
+        {/* Apps, native (DESKTOP DK-02): the person's applications,
             Build, Try, Activity and Deployments */}
         <Box
           sx={{
-            display: activeTabId === 'studio' ? 'block' : 'none',
+            display: activeTabId === 'apps' ? 'block' : 'none',
             height: '100%',
             overflow: 'hidden',
           }}
         >
           <Suspense
             fallback={
-              <LoadingSpinner
-                variant="inline"
-                message="Loading the Studio..."
-              />
+              <LoadingSpinner variant="inline" message="Loading Apps..." />
             }
           >
-            <Studio isAuthenticated={isAuthenticated} user={user} />
+            <Apps isAuthenticated={isAuthenticated} user={user} />
           </Suspense>
         </Box>
 

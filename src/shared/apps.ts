@@ -4,8 +4,8 @@
  */
 
 /**
- * The Studio, native (DESKTOP DK-02): what the main process reads for the
- * *Studio* tab and hands the renderer — the person's applications (their
+ * Apps, native (DESKTOP DK-02): what the main process reads for the
+ * *Apps* tab and hands the renderer — the person's applications (their
  * Spacer items of type `app`), one application's Appspec (its item's
  * `loop.app.item/v1` model), the person's deployments at ai-agents — and
  * the one change the tab makes, a deployment paused or resumed for one
@@ -16,14 +16,14 @@
  * `GET /api/spacer/v1/lexicals/{uid}`, ai-agents'
  * `GET /api/ai-agents/v1/apps/deployments` and
  * `PATCH /api/ai-agents/v1/apps/deployments/{uid}`. What the tab does not
- * offer is opened on the web (`studioWebUrl`): the landing origin is
+ * offer is opened on the web (`appsWebUrl`): the landing origin is
  * `DATALAYER_LANDING_URL` when it is a web origin, else the development
  * server in development, else `https://datalayer.ai`.
  *
  * Pure: no Electron, no React, no network. Read by the main process
- * (`main/services/studio.ts`) and the renderer (`pages/studioPage.ts`).
+ * (`main/services/apps.ts`) and the renderer (`pages/appsPage.ts`).
  *
- * @module shared/studio
+ * @module shared/apps
  */
 
 import {
@@ -87,12 +87,12 @@ export function landingOrigin(
   );
 }
 
-/** The web Studio's tabs an application is opened on. */
-export type StudioWebTab =
+/** The web Apps' tabs an application is opened on. */
+export type AppsWebTab =
   'build' | 'try' | 'validate' | 'ship' | 'activity' | 'settings';
 
 /**
- * The web Studio's page: its Home, or an application on one of its tabs.
+ * The web Apps' page: its Home, or an application on one of its tabs.
  *
  * @param origin - The landing's origin.
  * @param appUid - The application, or none for the Home.
@@ -100,10 +100,10 @@ export type StudioWebTab =
  *
  * @returns The URL.
  */
-export function studioWebUrl(
+export function appsWebUrl(
   origin: string,
   appUid?: string,
-  tab?: StudioWebTab
+  tab?: AppsWebTab
 ): string {
   const at = base(origin);
   if (!appUid) {
@@ -116,7 +116,7 @@ export function studioWebUrl(
 // --- the applications -------------------------------------------------------
 
 /** One of the person's applications, as Spacer lists it. */
-export interface StudioApp {
+export interface ListedApp {
   uid: string;
   name: string;
   description: string;
@@ -125,12 +125,12 @@ export interface StudioApp {
 }
 
 /** Where Spacer lists the person's applications. */
-export function studioAppsUrl(spacerUrl: string): string {
+export function spacerAppsUrl(spacerUrl: string): string {
   return `${base(spacerUrl)}/api/spacer/v1/spaces/items/types/app`;
 }
 
 /** Where Spacer answers one application's item. */
-export function studioAppUrl(spacerUrl: string, uid: string): string {
+export function spacerAppUrl(spacerUrl: string, uid: string): string {
   return `${base(spacerUrl)}/api/spacer/v1/lexicals/${encodeURIComponent(uid)}`;
 }
 
@@ -142,7 +142,7 @@ export function studioAppUrl(spacerUrl: string, uid: string): string {
  *
  * @returns The application.
  */
-export function studioAppOf(raw: unknown): StudioApp | undefined {
+export function listedAppOf(raw: unknown): ListedApp | undefined {
   const item = record(raw);
   const uid = text(item.uid) || text(item.id);
   if (!uid) {
@@ -165,19 +165,19 @@ export function studioAppOf(raw: unknown): StudioApp | undefined {
  *
  * @throws When the answer lists no items.
  */
-export function studioAppsOf(body: unknown): StudioApp[] {
+export function listedAppsOf(body: unknown): ListedApp[] {
   const items = record(body).items;
   if (!Array.isArray(items)) {
     throw new Error('Spacer answered no list of applications.');
   }
   return items
-    .map(studioAppOf)
-    .filter((app): app is StudioApp => app !== undefined)
+    .map(listedAppOf)
+    .filter((app): app is ListedApp => app !== undefined)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 /** One application read: its Appspec, as its item holds it. */
-export interface StudioAppDocument {
+export interface AppDocument {
   uid: string;
   name: string;
   description: string;
@@ -203,10 +203,7 @@ export const NO_APPSPEC =
  *
  * @throws When the item is not an application.
  */
-export function studioAppDocumentOf(
-  body: unknown,
-  uid: string
-): StudioAppDocument {
+export function appDocumentOf(body: unknown, uid: string): AppDocument {
   const document = record(record(body).document);
   if (text(document.type_s) && text(document.type_s) !== 'app') {
     throw new Error(`${uid} is not an application.`);
@@ -237,7 +234,7 @@ export function studioAppDocumentOf(
 // --- the deployments ------------------------------------------------------
 
 /** A deployment as the tab lists it. */
-export interface StudioDeployment {
+export interface AppDeployment {
   uid: string;
   appUid: string;
   appName: string;
@@ -261,7 +258,7 @@ export interface StudioDeployment {
  *
  * @returns The deployment.
  */
-export function studioDeploymentOf(raw: unknown): StudioDeployment | undefined {
+export function appDeploymentOf(raw: unknown): AppDeployment | undefined {
   const deployment = record(raw);
   const uid = text(deployment.uid);
   if (!uid) {
@@ -293,18 +290,18 @@ export function studioDeploymentOf(raw: unknown): StudioDeployment | undefined {
  *
  * @throws When the answer lists no deployments.
  */
-export function studioDeploymentsOf(body: unknown): StudioDeployment[] {
+export function appDeploymentsOf(body: unknown): AppDeployment[] {
   const listed = record(body).deployments;
   if (!Array.isArray(listed)) {
     throw new Error('ai-agents answered no list of deployments.');
   }
   return listed
-    .map(studioDeploymentOf)
-    .filter((one): one is StudioDeployment => one !== undefined);
+    .map(appDeploymentOf)
+    .filter((one): one is AppDeployment => one !== undefined);
 }
 
 /** A deployment paused or resumed, for one exact version. */
-export interface StudioStateChange {
+export interface DeploymentStateChange {
   uid: string;
   version: number;
   state: DeploymentState;
@@ -321,8 +318,8 @@ export interface StudioStateChange {
  * @throws When the deployment does not say its version.
  */
 export function toggledStateOf(
-  deployment: Pick<StudioDeployment, 'uid' | 'version' | 'state'>
-): StudioStateChange {
+  deployment: Pick<AppDeployment, 'uid' | 'version' | 'state'>
+): DeploymentStateChange {
   const state: DeploymentState =
     deployment.state === 'live' ? 'paused' : 'live';
   return {
@@ -336,9 +333,9 @@ export function deploymentUrl(aiAgentsUrl: string, uid: string): string {
   return `${base(aiAgentsUrl)}/api/ai-agents/v1/apps/deployments/${encodeURIComponent(uid)}`;
 }
 
-/** What the main process answers for the applications: them, and where the web Studio is. */
-export interface StudioAppsListed {
-  apps: StudioApp[];
+/** What the main process answers for the applications: them, and where Apps on the web is. */
+export interface AppsListed {
+  apps: ListedApp[];
   /** The landing's origin, for what the tab opens on the web. */
   landing: string;
 }

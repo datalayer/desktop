@@ -4,10 +4,10 @@
  */
 
 /**
- * The Studio's shapes (DESKTOP DK-02): the applications as Spacer lists
+ * Apps' shapes (DESKTOP DK-02): the applications as Spacer lists
  * them, one application's Appspec from its item, the deployments as
  * ai-agents answers them, the one change offered, the landing's origin and
- * the web Studio's pages.
+ * the web Apps' pages.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -16,14 +16,14 @@ import {
   NO_APPSPEC,
   deploymentUrl,
   landingOrigin,
-  studioAppDocumentOf,
-  studioAppUrl,
-  studioAppsOf,
-  studioAppsUrl,
-  studioDeploymentsOf,
-  studioWebUrl,
+  appDocumentOf,
+  spacerAppUrl,
+  listedAppsOf,
+  spacerAppsUrl,
+  appDeploymentsOf,
+  appsWebUrl,
   toggledStateOf,
-} from '../studio';
+} from '../apps';
 
 const SPEC = {
   schema: 'loop.app/v1',
@@ -33,7 +33,7 @@ const SPEC = {
   agent: 'accountant',
 };
 
-describe('the landing and the web Studio', () => {
+describe('the landing and Apps on the web', () => {
   it('takes DATALAYER_LANDING_URL when it is a web origin, else the landing or the dev server', () => {
     expect(landingOrigin({}, false)).toBe(LANDING_ORIGINS.production);
     expect(landingOrigin({}, true)).toBe(LANDING_ORIGINS.development);
@@ -46,19 +46,19 @@ describe('the landing and the web Studio', () => {
   });
 
   it('opens the Home or an application on a tab', () => {
-    expect(studioWebUrl('https://datalayer.ai/')).toBe(
+    expect(appsWebUrl('https://datalayer.ai/')).toBe(
       'https://datalayer.ai/studio'
     );
-    expect(studioWebUrl('https://datalayer.ai', 'a b', 'ship')).toBe(
+    expect(appsWebUrl('https://datalayer.ai', 'a b', 'ship')).toBe(
       'https://datalayer.ai/studio/apps/a%20b?tab=ship'
     );
   });
 
   it('names the routes', () => {
-    expect(studioAppsUrl('https://s.io/')).toBe(
+    expect(spacerAppsUrl('https://s.io/')).toBe(
       'https://s.io/api/spacer/v1/spaces/items/types/app'
     );
-    expect(studioAppUrl('https://s.io', 'u1')).toBe(
+    expect(spacerAppUrl('https://s.io', 'u1')).toBe(
       'https://s.io/api/spacer/v1/lexicals/u1'
     );
     expect(deploymentUrl('https://a.io', 'd1')).toBe(
@@ -69,7 +69,7 @@ describe('the landing and the web Studio', () => {
 
 describe('the applications', () => {
   it('lists them newest first, an item without a uid left out', () => {
-    const apps = studioAppsOf({
+    const apps = listedAppsOf({
       items: [
         { uid: 'old', name_t: 'Old', last_update_ts_dt: '2026-01-01' },
         {
@@ -91,11 +91,11 @@ describe('the applications', () => {
   });
 
   it('refuses an answer with no list', () => {
-    expect(() => studioAppsOf({})).toThrow(/no list of applications/);
+    expect(() => listedAppsOf({})).toThrow(/no list of applications/);
   });
 
   it('reads an application’s Appspec from its item, or says why there is none', () => {
-    const read = studioAppDocumentOf(
+    const read = appDocumentOf(
       {
         document: {
           type_s: 'app',
@@ -118,7 +118,7 @@ describe('the applications', () => {
     });
     expect(read.spec).toEqual(SPEC);
 
-    const none = studioAppDocumentOf(
+    const none = appDocumentOf(
       { document: { type_s: 'app', name_t: 'Draft', model_s: '{}' } },
       'u2'
     );
@@ -128,14 +128,14 @@ describe('the applications', () => {
       problem: NO_APPSPEC,
     });
     expect(() =>
-      studioAppDocumentOf({ document: { type_s: 'notebook' } }, 'u3')
+      appDocumentOf({ document: { type_s: 'notebook' } }, 'u3')
     ).toThrow(/not an application/);
   });
 });
 
 describe('the deployments', () => {
   it('reads them as ai-agents answers', () => {
-    const [one] = studioDeploymentsOf({
+    const [one] = appDeploymentsOf({
       deployments: [
         {
           uid: 'd1',
@@ -164,7 +164,7 @@ describe('the deployments', () => {
       keptWhy: '',
       updatedAt: '',
     });
-    expect(() => studioDeploymentsOf({})).toThrow(/no list of deployments/);
+    expect(() => appDeploymentsOf({})).toThrow(/no list of deployments/);
   });
 
   it('pauses a live one and resumes a paused one, for its version', () => {

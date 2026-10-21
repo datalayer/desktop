@@ -6,7 +6,7 @@
 // @vitest-environment node
 
 /**
- * The Studio's calls in the main process (DESKTOP DK-02): each signed with
+ * Apps' calls in the main process (DESKTOP DK-02): each signed with
  * the token this process holds, none made signed out, the routes asked,
  * the change sent for one exact version, a refusal said with the
  * service's detail.
@@ -26,7 +26,7 @@ vi.mock('../app-chat', () => ({
 }));
 vi.mock('../../app/environment', () => ({ isDevelopment: () => false }));
 
-import { STUDIO_SIGNED_OUT, studioCalls } from '../studio';
+import { APPS_SIGNED_OUT, appsCalls } from '../apps';
 
 const SERVICES = {
   aiAgentsUrl: 'https://agents.example',
@@ -45,7 +45,7 @@ function world(answers: Array<{ status: number; body: unknown }>) {
   });
   return {
     asked,
-    calls: studioCalls({
+    calls: appsCalls({
       token: () => 'tok',
       services: () => SERVICES,
       landing: () => 'https://datalayer.ai',
@@ -54,12 +54,12 @@ function world(answers: Array<{ status: number; body: unknown }>) {
   };
 }
 
-describe('studioCalls', () => {
-  it('lists the applications with the token, and says where the web Studio is', async () => {
+describe('appsCalls', () => {
+  it('lists the applications with the token, and says where Apps on the web is', async () => {
     const { asked, calls } = world([
       { status: 200, body: { items: [{ uid: 'u1', name_t: 'Desk' }] } },
     ]);
-    const listed = await calls.apps();
+    const listed = await calls.list();
     expect(listed.landing).toBe('https://datalayer.ai');
     expect(listed.apps.map(app => app.uid)).toEqual(['u1']);
     expect(asked[0].url).toBe(
@@ -72,13 +72,13 @@ describe('studioCalls', () => {
 
   it('asks nothing signed out', async () => {
     const fetch = vi.fn();
-    const calls = studioCalls({
+    const calls = appsCalls({
       token: () => null,
       services: () => SERVICES,
       landing: () => '',
       fetch,
     });
-    await expect(calls.deployments()).rejects.toThrow(STUDIO_SIGNED_OUT);
+    await expect(calls.deployments()).rejects.toThrow(APPS_SIGNED_OUT);
     expect(fetch).not.toHaveBeenCalled();
   });
 

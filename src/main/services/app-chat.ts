@@ -4,7 +4,7 @@
  */
 
 /**
- * A deployed application's agent, the main process's side (STUDIO A-20).
+ * A deployed application's agent, the main process's side (APPS A-20).
  *
  * The main process lists the person's deployments at ai-agents
  * (`GET /api/ai-agents/v1/apps/deployments`, on the runtimes plane) with the

@@ -9,44 +9,44 @@
  * the tab makes — pause a live one, resume a paused one, for the version it
  * runs (ai-agents' `PATCH /apps/deployments/{uid}`, through the main
  * process). Shipping a version, rolling back, access and reset are the web
- * Studio's Ship tab.
+ * Apps' Ship tab.
  *
- * @module renderer/components/studio/StudioDeployments
+ * @module renderer/components/apps/AppsDeployments
  */
 
 import React from 'react';
 import { Box, Button, Text } from '@primer/react';
-import { type DeploymentRow, STUDIO_WORDS } from '../../pages/studioPage';
+import { type DeploymentRow, APPS_WORDS } from '../../pages/appsPage';
 import OpenOnWeb from './OpenOnWeb';
 
-/** Props for {@link StudioDeployments}. */
-export interface StudioDeploymentsProps {
+/** Props for {@link AppsDeployments}. */
+export interface AppsDeploymentsProps {
   rows: DeploymentRow[];
   /** The deployment whose change is in flight. */
   changing: string | null;
   onChange: (row: DeploymentRow) => void;
-  /** The web Studio's Ship tab of this application. */
+  /** The web Apps' Ship tab of this application. */
   webUrl: string;
 }
 
-const StudioDeployments: React.FC<StudioDeploymentsProps> = ({
+const AppsDeployments: React.FC<AppsDeploymentsProps> = ({
   rows,
   changing,
   onChange,
   webUrl,
 }) => (
-  <Box sx={{ display: 'grid', gap: 2 }} data-testid="studio-deployments">
+  <Box sx={{ display: 'grid', gap: 2 }} data-testid="apps-deployments">
     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <OpenOnWeb url={webUrl} label={STUDIO_WORDS.openOnWeb} />
+      <OpenOnWeb url={webUrl} label={APPS_WORDS.openOnWeb} />
     </Box>
     {rows.length === 0 ? (
       <Text as="p" sx={{ color: 'fg.muted', fontSize: 1 }}>
-        {STUDIO_WORDS.noDeployment}
+        {APPS_WORDS.noDeployment}
       </Text>
     ) : (
       <Box
         as="ul"
-        aria-label={STUDIO_WORDS.sections.deployments}
+        aria-label={APPS_WORDS.sections.deployments}
         sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 2 }}
       >
         {rows.map(row => (
@@ -78,9 +78,7 @@ const StudioDeployments: React.FC<StudioDeploymentsProps> = ({
                 disabled={changing !== null}
                 onClick={() => onChange(row)}
               >
-                {row.action === 'pause'
-                  ? STUDIO_WORDS.pause
-                  : STUDIO_WORDS.resume}
+                {row.action === 'pause' ? APPS_WORDS.pause : APPS_WORDS.resume}
               </Button>
             ) : null}
           </Box>
@@ -90,4 +88,4 @@ const StudioDeployments: React.FC<StudioDeploymentsProps> = ({
   </Box>
 );
 
-export default StudioDeployments;
+export default AppsDeployments;

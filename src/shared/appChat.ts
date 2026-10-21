@@ -4,13 +4,13 @@
  */
 
 /**
- * Talking to a deployed application's agent from Datalayer Desktop (STUDIO A-20).
+ * Talking to a deployed application's agent from Datalayer Desktop (APPS A-20).
  *
  * The person signed in to Datalayer picks one of their deployments under
  * *Your applications* and talks to it as its hosted page does: over the
  * runtime's session API, an AG-UI run on
  * `<runtime>/api/v1/apps/agents/<agent>/ag-ui/` whose thread is the session
- * (LOOP R-04, STUDIO R-02), on the runtime the deployment is kept on
+ * (LOOP R-04, APPS R-02), on the runtime the deployment is kept on
  * (`kept.url`, `kept.agent_id`, R-33), with the person's own token — which
  * the main process lends to those requests only (`lentHeaders`), the view
  * never asking for it. Its approvals (R-05) are the Tool Approvals of
@@ -402,7 +402,7 @@ export function noneTalkableSentence(
     return '';
   }
   return choices.length === 0
-    ? "You have no deployed applications: ship one from the Studio's Ship tab to talk to it here."
+    ? 'You have no deployed applications: ship one from its Ship tab in Apps to talk to it here.'
     : 'None of your applications can be talked to here now: each one says why — paused, not kept always on, or its runtime not running.';
 }
 
@@ -476,7 +476,7 @@ export function appHostOf(body: unknown): AppHost {
   }
   if (stored.format !== APP_ITEM_FORMAT || !record(stored.spec).schema) {
     throw new Error(
-      'The application holds no Appspec that can be read: open it in the Studio and save it.'
+      'The application holds no Appspec that can be read: open it in Apps and save it.'
     );
   }
   const spec = record(stored.spec);

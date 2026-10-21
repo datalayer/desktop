@@ -4,7 +4,7 @@
  */
 
 /**
- * The Studio page's pure parts (DESKTOP DK-02): the applications listed
+ * The Apps page's pure parts (DESKTOP DK-02): the applications listed
  * with what their deployments say, an application's Build (its Appspec's
  * facts and its YAML, written by agent-runtimes' `writeAppspecYaml`), Try
  * (the kept deployment the chat opens on, or why there is none), Activity
@@ -12,7 +12,7 @@
  * Deployments (each one's state and the one change offered), with the
  * words the page says.
  *
- * @module renderer/pages/studioPage
+ * @module renderer/pages/appsPage
  */
 
 import { parseAppspec } from '@datalayer/agent-runtimes/lib/apps/apps/appspec';
@@ -28,18 +28,14 @@ import {
   type SessionEntry,
 } from '@datalayer/agent-runtimes/lib/portable/sessionList';
 import type { AppChatChoice, AppChatHandle } from '../../shared/appChat';
-import type {
-  StudioApp,
-  StudioAppDocument,
-  StudioDeployment,
-} from '../../shared/studio';
+import type { ListedApp, AppDocument, AppDeployment } from '../../shared/apps';
 
-import type { StudioSection } from './studioEvents';
+import type { AppsSection } from './appsEvents';
 
-export { STUDIO_SECTIONS, type StudioSection } from './studioEvents';
+export { APPS_SECTIONS, type AppsSection } from './appsEvents';
 
 /** The words the page says, in one place. */
-export const STUDIO_WORDS = {
+export const APPS_WORDS = {
   title: 'Your applications',
   refresh: 'Refresh',
   signedOut: 'Sign in to Datalayer to see your applications.',
@@ -55,10 +51,10 @@ export const STUDIO_WORDS = {
     try: 'Try',
     activity: 'Activity',
     deployments: 'Deployments',
-  } satisfies Record<StudioSection, string>,
+  } satisfies Record<AppsSection, string>,
   readingApp: 'Reading the application…',
   buildReadOnly:
-    'Read here; edit, validate and ship it on datalayer.ai, where the Studio’s editors are.',
+    'Read here; edit, validate and ship it on datalayer.ai, where the editors of Apps are.',
   yamlTitle: 'Its Appspec',
   noSession: 'No session of this application yet.',
   openSession: 'Open in Sessions',
@@ -74,8 +70,8 @@ export const STUDIO_WORDS = {
 } as const;
 
 /** An application as the list draws it. */
-export interface StudioAppRow {
-  app: StudioApp;
+export interface AppRow {
+  app: ListedApp;
   /** What its deployments say: *Live · version 3*, *Paused*, *Not deployed*. */
   said: string;
 }
@@ -87,9 +83,7 @@ export interface StudioAppRow {
  *
  * @returns The line.
  */
-export function deploymentsSaid(
-  deployments: readonly StudioDeployment[]
-): string {
+export function deploymentsSaid(deployments: readonly AppDeployment[]): string {
   if (deployments.length === 0) {
     return 'Not deployed';
   }
@@ -115,9 +109,9 @@ export function deploymentsSaid(
  * @returns Its deployments, in ai-agents' order.
  */
 export function deploymentsOf(
-  deployments: readonly StudioDeployment[],
+  deployments: readonly AppDeployment[],
   appUid: string
-): StudioDeployment[] {
+): AppDeployment[] {
   return deployments.filter(one => one.appUid === appUid);
 }
 
@@ -130,9 +124,9 @@ export function deploymentsOf(
  * @returns The rows, in the applications' order.
  */
 export function appRowsOf(
-  apps: readonly StudioApp[],
-  deployments: readonly StudioDeployment[] | null
-): StudioAppRow[] {
+  apps: readonly ListedApp[],
+  deployments: readonly AppDeployment[] | null
+): AppRow[] {
   return apps.map(app => ({
     app,
     said: deployments
@@ -163,7 +157,7 @@ const listed = (values: readonly string[]): string =>
  *
  * @returns The view.
  */
-export function buildViewOf(document: StudioAppDocument): BuildView {
+export function buildViewOf(document: AppDocument): BuildView {
   if (!document.spec) {
     return { kind: 'none', sentence: document.problem };
   }
@@ -219,7 +213,7 @@ export function tryDecisionOf(
   if (talk) {
     return { kind: 'talk', handle: talk.handle };
   }
-  return { kind: 'closed', sentence: STUDIO_WORDS.notTalkable };
+  return { kind: 'closed', sentence: APPS_WORDS.notTalkable };
 }
 
 /**
@@ -233,7 +227,7 @@ export function tryDecisionOf(
  */
 export function closedSentencesOf(
   choices: readonly AppChatChoice[],
-  deployments: readonly StudioDeployment[]
+  deployments: readonly AppDeployment[]
 ): string[] {
   const uids = new Set(deployments.map(one => one.uid));
   return choices.flatMap(choice =>
@@ -297,7 +291,7 @@ export function activityRowsOf(
 
 /** A deployment as Deployments lists it. */
 export interface DeploymentRow {
-  deployment: StudioDeployment;
+  deployment: AppDeployment;
   title: string;
   said: string;
   /** The change offered: pause a live one, resume a paused one; none without a version. */
@@ -313,7 +307,7 @@ export interface DeploymentRow {
  * @returns The rows.
  */
 export function deploymentRowsOf(
-  deployments: readonly StudioDeployment[]
+  deployments: readonly AppDeployment[]
 ): DeploymentRow[] {
   return deployments.map(deployment => {
     const kept = deployment.alwaysOn

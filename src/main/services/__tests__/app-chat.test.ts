@@ -4,7 +4,7 @@
  */
 
 /**
- * The deployments a session on Datalayer picks from (STUDIO A-20, DESKTOP
+ * The deployments a session on Datalayer picks from (APPS A-20, DESKTOP
  * DK-08): the main process lists them with the token it holds, one not
  * kept always on closed with why, and lends the token to the chats'
  * prefixes once. The `agentChatEnabled` flag of 0.0.5 is gone (O-1).

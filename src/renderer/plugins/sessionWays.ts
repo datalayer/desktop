@@ -5,8 +5,8 @@
 
 /**
  * The ways the app's session entries do their work: the Finder through
- * the main process (`window.desktopAPI`), the Studio tab brought to the
- * front on the application (`requestStudioOpen`), the place of a
+ * the main process (`window.desktopAPI`), the Apps tab brought to the
+ * front on the application (`requestAppsOpen`), the place of a
  * session and a text asked through the Sessions page, which installs them
  * while it is mounted. The Reactor is registered before any page mounts,
  * so the entries reach the page through here rather than holding it.
@@ -15,7 +15,7 @@
  */
 
 import type { DesktopSessionWays } from './desktopSessionActions';
-import { requestStudioOpen } from '../pages/studioEvents';
+import { requestAppsOpen } from '../pages/appsEvents';
 
 /** What the Sessions page lends: the places it knows, a text asked. */
 export type PageSessionWays = Pick<DesktopSessionWays, 'placeOf' | 'askText'>;
@@ -41,7 +41,7 @@ export const desktopWays: DesktopSessionWays = {
     return page.askText(title, value);
   },
   reveal: path => window.desktopAPI.shell.reveal(path),
-  openStudio: async appUid => {
-    requestStudioOpen({ appUid, section: 'activity' });
+  openApps: async appUid => {
+    requestAppsOpen({ appUid, section: 'activity' });
   },
 };

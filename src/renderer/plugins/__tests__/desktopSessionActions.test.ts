@@ -46,7 +46,7 @@ function ways(place?: SessionPlace, typed?: string) {
     placeOf: () => place,
     askText: vi.fn(async () => typed),
     reveal: vi.fn(async () => undefined),
-    openStudio: vi.fn(async () => undefined),
+    openApps: vi.fn(async () => undefined),
   };
   return w;
 }
@@ -69,7 +69,7 @@ const entries = (w: DesktopSessionWays) =>
   desktopSessionActions(w).map(value => ({ value }));
 
 describe('which entries apply', () => {
-  it('offers rename, archive, end, reveal and the Studio for an open local session of an application', () => {
+  it('offers rename, archive, end, reveal and Apps for an open local session of an application', () => {
     expect(
       sessionActionsFor(entries(ways(LOCAL)), facts()).map(e => e.id)
     ).toEqual([
@@ -77,11 +77,11 @@ describe('which entries apply', () => {
       'desktop-archive',
       'desktop-end',
       'desktop-reveal-in-finder',
-      'desktop-open-in-studio',
+      'desktop-open-in-apps',
     ]);
   });
 
-  it('keeps the Finder for this machine, the Studio for an application', () => {
+  it('keeps the Finder for this machine, Apps for an application', () => {
     expect(
       sessionActionsFor(entries(ways({ kind: 'datalayer' })), facts()).map(
         e => e.id
@@ -90,7 +90,7 @@ describe('which entries apply', () => {
       'desktop-rename',
       'desktop-archive',
       'desktop-end',
-      'desktop-open-in-studio',
+      'desktop-open-in-apps',
     ]);
     expect(
       sessionActionsFor(entries(ways(LOCAL)), facts({ app_uid: '' })).map(
@@ -118,7 +118,7 @@ describe('which entries apply', () => {
     ).toEqual([
       'desktop-archive',
       'desktop-reveal-in-finder',
-      'desktop-open-in-studio',
+      'desktop-open-in-apps',
     ]);
     expect(
       sessionActionsFor(entries(ways(LOCAL)), facts({ archived: true })).map(
@@ -162,14 +162,14 @@ describe('what each does', () => {
     ]);
   });
 
-  it('reveals the folder of a local session, and opens the application’s Activity in the Studio', async () => {
+  it('reveals the folder of a local session, and opens the application’s Activity in Apps', async () => {
     const w = ways(LOCAL);
     const { ctx, said } = context();
-    const [, , , reveal, studio] = desktopSessionActions(w);
+    const [, , , reveal, apps] = desktopSessionActions(w);
     await reveal.run(facts(), ctx);
-    await studio.run(facts(), ctx);
+    await apps.run(facts(), ctx);
     expect(w.reveal).toHaveBeenCalledWith('/w/app');
-    expect(w.openStudio).toHaveBeenCalledWith('app-1');
+    expect(w.openApps).toHaveBeenCalledWith('app-1');
     expect(said).toEqual([
       '/w/app is shown in the Finder.',
       'Fix the tests is listed on Activity, with every session of the application.',

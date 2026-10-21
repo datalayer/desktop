@@ -34,7 +34,7 @@ export interface NavigationTabsProps {
 
 /**
  * Container component for navigation tabs with horizontal scrolling.
- * Shows Sessions, Studio, Spaces, Agents, Environments, and all open notebooks/documents.
+ * Shows Sessions, Apps, Spaces, Agents, Environments, and all open notebooks/documents.
  */
 const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTabId,
@@ -77,12 +77,12 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({
         onClick={() => onTabChange('sessions')}
       />
 
-      {/* The Studio, embedded (DESKTOP DK-02) */}
+      {/* Apps, embedded (DESKTOP DK-02) */}
       <NavigationTab
-        label="Studio"
+        label="Apps"
         icon={BrowserIcon as unknown as React.ComponentType<{ size?: number }>}
-        isActive={activeTabId === 'studio'}
-        onClick={() => onTabChange('studio')}
+        isActive={activeTabId === 'apps'}
+        onClick={() => onTabChange('apps')}
       />
 
       <NavigationTab

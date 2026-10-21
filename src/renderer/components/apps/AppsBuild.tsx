@@ -7,33 +7,33 @@
  * An application's Build, native (DESKTOP DK-02): its Appspec read from
  * its Spacer item — the facts, the problems agent-runtimes' reader found,
  * the YAML its writer gives — read-only; editing, validating and shipping
- * are the web Studio's, opened on datalayer.ai.
+ * are the web Apps', opened on datalayer.ai.
  *
- * @module renderer/components/studio/StudioBuild
+ * @module renderer/components/apps/AppsBuild
  */
 
 import React from 'react';
 import { Box, Flash, Heading, Text } from '@primer/react';
-import type { StudioAppDocument } from '../../../shared/studio';
-import { buildViewOf, STUDIO_WORDS } from '../../pages/studioPage';
+import type { AppDocument } from '../../../shared/apps';
+import { buildViewOf, APPS_WORDS } from '../../pages/appsPage';
 import OpenOnWeb from './OpenOnWeb';
 
-/** Props for {@link StudioBuild}. */
-export interface StudioBuildProps {
-  document: StudioAppDocument;
-  /** The web Studio's Build of this application. */
+/** Props for {@link AppsBuild}. */
+export interface AppsBuildProps {
+  document: AppDocument;
+  /** The web Apps' Build of this application. */
   webUrl: string;
 }
 
-const StudioBuild: React.FC<StudioBuildProps> = ({ document, webUrl }) => {
+const AppsBuild: React.FC<AppsBuildProps> = ({ document, webUrl }) => {
   const view = buildViewOf(document);
   return (
-    <Box sx={{ display: 'grid', gap: 3 }} data-testid="studio-build">
+    <Box sx={{ display: 'grid', gap: 3 }} data-testid="apps-build">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Text sx={{ flex: 1, color: 'fg.muted', fontSize: 1 }}>
-          {STUDIO_WORDS.buildReadOnly}
+          {APPS_WORDS.buildReadOnly}
         </Text>
-        <OpenOnWeb url={webUrl} label={STUDIO_WORDS.openOnWeb} />
+        <OpenOnWeb url={webUrl} label={APPS_WORDS.openOnWeb} />
       </Box>
       {view.kind === 'none' ? (
         <Flash variant="warning">{view.sentence}</Flash>
@@ -71,7 +71,7 @@ const StudioBuild: React.FC<StudioBuildProps> = ({ document, webUrl }) => {
           ) : null}
           <Box>
             <Heading as="h3" sx={{ fontSize: 1, mb: 1 }}>
-              {STUDIO_WORDS.yamlTitle}
+              {APPS_WORDS.yamlTitle}
             </Heading>
             <Box
               as="pre"
@@ -97,4 +97,4 @@ const StudioBuild: React.FC<StudioBuildProps> = ({ document, webUrl }) => {
   );
 };
 
-export default StudioBuild;
+export default AppsBuild;

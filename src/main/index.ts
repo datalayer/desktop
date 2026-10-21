@@ -53,7 +53,7 @@ import {
   signIn,
 } from './services/sign-in';
 import { closeSignInWindow, openSignInWindow } from './services/sign-in-window';
-import { registerStudioIpc } from './services/studio';
+import { registerAppsIpc } from './services/apps';
 
 // Type definitions
 interface VersionInfo {
@@ -206,8 +206,8 @@ function registerIPCHandlers(): void {
     return { ok: false, sentence: started.sentence };
   });
 
-  // The Studio's reads and its one change (DK-02): the main process's token.
-  registerStudioIpc();
+  // Apps' reads and its one change (DK-02): the main process's token.
+  registerAppsIpc();
 
   // The menu's entries follow what the renderer shows (DK-04).
   ipcMain.handle(
@@ -504,7 +504,7 @@ function registerIPCHandlers(): void {
     return user; // Returns User directly, throws on error
   });
 
-  // A deployed application's agent (STUDIO A-20): the person's deployments,
+  // A deployed application's agent (APPS A-20): the person's deployments,
   // listed here with the token the main process holds; the runtimes they
   // are kept on are the only ones the session lends it to.
   ipcMain.handle('app-chat:list-deployments', async () =>

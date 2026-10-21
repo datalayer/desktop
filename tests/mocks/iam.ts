@@ -6,7 +6,7 @@
 /**
  * A stub IAM and landing for the suite (DESKTOP DK-15, DK-03): one HTTP
  * server on loopback that answers what sign-in asks of IAM and what the
- * Studio tab reads of Spacer and ai-agents, so no test needs a Datalayer
+ * Apps tab reads of Spacer and ai-agents, so no test needs a Datalayer
  * account. The app is pointed at it with `DATALAYER_IAM_URL` and
  * `DATALAYER_LANDING_URL`.
  *
@@ -19,7 +19,7 @@
  * - `GET /stub/provider?state=`: the provider's page, which sends the
  *   browser on to the callback as IAM does — `window.location.replace(
  *   '<callback>?_xsrf=<nonce>&user=…&token=…')`;
- * - the Studio's routes, for a launch that points `DATALAYER_SPACER_URL`
+ * - Apps' routes, for a launch that points `DATALAYER_SPACER_URL`
  *   and `DATALAYER_AI_AGENTS_URL` here: Spacer's applications
  *   (`/api/spacer/v1/spaces/items/types/app`, one application `app-1`) and
  *   its item (`/api/spacer/v1/lexicals/app-1`, with its Appspec);

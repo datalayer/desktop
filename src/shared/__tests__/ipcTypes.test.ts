@@ -24,8 +24,8 @@ import {
   readPlace,
   readRevealPath,
   readSave,
-  readStudioAppUid,
-  readStudioStateChange,
+  readAppUid,
+  readDeploymentStateChange,
 } from '../types/ipc.types';
 
 describe('the folders', () => {
@@ -182,7 +182,7 @@ describe('the decisions', () => {
   });
 });
 
-describe('the dialogs, the shell, the Studio, the front', () => {
+describe('the dialogs, the shell, Apps, the front', () => {
   it('saves under a file name, never a path', () => {
     expect(readSave({ name: 'e67a.session.jsonl', text: '{}' })).toEqual({
       name: 'e67a.session.jsonl',
@@ -210,26 +210,24 @@ describe('the dialogs, the shell, the Studio, the front', () => {
     expect(() => readRevealPath({ path: 'project' })).toThrow(/absolute path/);
   });
 
-  it('reads an application of the Studio by uid, never a path', () => {
-    expect(readStudioAppUid({ uid: 'app-1' })).toBe('app-1');
-    expect(() => readStudioAppUid({ uid: '../x' })).toThrow(
-      /an application's uid/
-    );
-    expect(() => readStudioAppUid({})).toThrow(/uid/);
+  it('reads an application of Apps by uid, never a path', () => {
+    expect(readAppUid({ uid: 'app-1' })).toBe('app-1');
+    expect(() => readAppUid({ uid: '../x' })).toThrow(/an application's uid/);
+    expect(() => readAppUid({})).toThrow(/uid/);
   });
 
   it('changes one exact version of a deployment, live or paused', () => {
     expect(
-      readStudioStateChange({ uid: 'dep-1', version: 3, state: 'paused' })
+      readDeploymentStateChange({ uid: 'dep-1', version: 3, state: 'paused' })
     ).toEqual({ uid: 'dep-1', version: 3, state: 'paused' });
     expect(() =>
-      readStudioStateChange({ uid: 'dep-1', version: 0, state: 'live' })
+      readDeploymentStateChange({ uid: 'dep-1', version: 0, state: 'live' })
     ).toThrow(/one exact version/);
     expect(() =>
-      readStudioStateChange({ uid: 'dep-1', version: 2, state: 'gone' })
+      readDeploymentStateChange({ uid: 'dep-1', version: 2, state: 'gone' })
     ).toThrow(/live or paused/);
     expect(() =>
-      readStudioStateChange({ uid: 'a/b', version: 2, state: 'live' })
+      readDeploymentStateChange({ uid: 'a/b', version: 2, state: 'live' })
     ).toThrow(/a deployment's uid/);
   });
 

@@ -4,11 +4,11 @@
  */
 
 /**
- * The Studio page's view model (DESKTOP DK-02): the applications with what
+ * The Apps page's view model (DESKTOP DK-02): the applications with what
  * their deployments say, Build from the Appspec (agent-runtimes' reader and
  * writer), Try's deployment or why not, Activity's rows from the Sessions
  * list with their lineage, Deployments' rows and the change offered; and
- * *Open in the Studio* kept until the page takes it.
+ * *Open in Apps* kept until the page takes it.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -19,10 +19,7 @@ import {
   type SessionPlace,
 } from '@datalayer/agent-runtimes/lib/portable/sessionList';
 import type { AppChatChoice } from '../../../shared/appChat';
-import {
-  studioDeploymentsOf,
-  type StudioAppDocument,
-} from '../../../shared/studio';
+import { appDeploymentsOf, type AppDocument } from '../../../shared/apps';
 import {
   activityRowsOf,
   appRowsOf,
@@ -30,16 +27,12 @@ import {
   closedSentencesOf,
   deploymentRowsOf,
   deploymentsSaid,
-  STUDIO_WORDS,
+  APPS_WORDS,
   tryDecisionOf,
-} from '../studioPage';
-import {
-  OPEN_STUDIO_EVENT,
-  requestStudioOpen,
-  takeStudioOpen,
-} from '../studioEvents';
+} from '../appsPage';
+import { OPEN_APPS_EVENT, requestAppsOpen, takeAppsOpen } from '../appsEvents';
 
-const DEPLOYMENTS = studioDeploymentsOf({
+const DEPLOYMENTS = appDeploymentsOf({
   deployments: [
     {
       uid: 'd1',
@@ -94,7 +87,7 @@ describe('the applications listed', () => {
 
 describe('Build', () => {
   it('lists the Appspec’s facts and writes its YAML, which reads back', () => {
-    const document: StudioAppDocument = {
+    const document: AppDocument = {
       uid: 'u1',
       name: 'Desk',
       description: '',
@@ -164,7 +157,7 @@ describe('Try', () => {
   it('says why not, with its own deployments’ sentences only', () => {
     expect(tryDecisionOf('u2', choices)).toEqual({
       kind: 'closed',
-      sentence: STUDIO_WORDS.notTalkable,
+      sentence: APPS_WORDS.notTalkable,
     });
     expect(
       closedSentencesOf(
@@ -224,22 +217,22 @@ describe('Deployments', () => {
 
   it('offers nothing for a deployment that says no version', () => {
     const [row] = deploymentRowsOf(
-      studioDeploymentsOf({ deployments: [{ uid: 'x', state: 'live' }] })
+      appDeploymentsOf({ deployments: [{ uid: 'x', state: 'live' }] })
     );
     expect(row.action).toBeNull();
   });
 });
 
-describe('Open in the Studio', () => {
+describe('Open in Apps', () => {
   it('is said to the app and kept until the page takes it, once', () => {
     const heard: unknown[] = [];
     const listener = (event: Event) =>
       heard.push((event as CustomEvent).detail);
-    window.addEventListener(OPEN_STUDIO_EVENT, listener);
-    requestStudioOpen({ appUid: 'u1', section: 'activity' });
-    window.removeEventListener(OPEN_STUDIO_EVENT, listener);
+    window.addEventListener(OPEN_APPS_EVENT, listener);
+    requestAppsOpen({ appUid: 'u1', section: 'activity' });
+    window.removeEventListener(OPEN_APPS_EVENT, listener);
     expect(heard).toEqual([{ appUid: 'u1', section: 'activity' }]);
-    expect(takeStudioOpen()).toEqual({ appUid: 'u1', section: 'activity' });
-    expect(takeStudioOpen()).toBeNull();
+    expect(takeAppsOpen()).toEqual({ appUid: 'u1', section: 'activity' });
+    expect(takeAppsOpen()).toBeNull();
   });
 });

@@ -8,13 +8,13 @@
  * `loop.session.action` point, beside the chat's own entries (*Switch
  * agent…*, *Clone from here*, *Export*, *Import…*, *Resume*): *Rename…*,
  * *Archive* and *End* on the session API, *Reveal in Finder* for a session
- * on this machine (its folder, shown by the OS) and *Open in the Studio*
- * for a session of an application (its Activity, in the Studio tab).
+ * on this machine (its folder, shown by the OS) and *Open in Apps*
+ * for a session of an application (its Activity, in the Apps tab).
  * The same entries are drawn in the chat's `⋯` menu and in the list's row
  * menu, from the one registry; nothing of the menu is copied here.
  *
  * Each entry does its work through the ways the page lends it (a text
- * asked, the OS's Finder, the Studio tab) and says what it did; a refusal
+ * asked, the OS's Finder, the Apps tab) and says what it did; a refusal
  * of the runtime is thrown as the runtime said it, and the menu shows it
  * whole.
  *
@@ -42,7 +42,7 @@ export const DESKTOP_SESSION_ACTION_WORDS = {
     `Ended ${uid}: it cannot be resumed; its record stays.`,
   reveal: 'Reveal in Finder',
   revealed: (folder: string): string => `${folder} is shown in the Finder.`,
-  openStudio: 'Open in the Studio',
+  openApps: 'Open in Apps',
   opened: (title: string): string =>
     `${title || 'This conversation'} is listed on Activity, with every session of the application.`,
 } as const;
@@ -55,8 +55,8 @@ export interface DesktopSessionWays {
   askText: (title: string, value: string) => Promise<string | undefined>;
   /** Show a folder in the OS's file browser (`shell:reveal`). */
   reveal: (path: string) => Promise<void>;
-  /** Bring the Studio tab to the front on an application's Activity. */
-  openStudio: (appUid: string) => Promise<void>;
+  /** Bring the Apps tab to the front on an application's Activity. */
+  openApps: (appUid: string) => Promise<void>;
 }
 
 /** An entry's order among the chat's five (10 to 40) and the landing's (90). */
@@ -65,7 +65,7 @@ const ORDER = {
   archive: 60,
   end: 70,
   reveal: 80,
-  openStudio: 90,
+  openApps: 90,
 } as const;
 
 const notEnded = (session: SessionFacts): boolean => session.state !== 'ended';
@@ -139,17 +139,17 @@ export function revealInFinderAction(
   };
 }
 
-/** *Open in the Studio*: the application's Activity, in the Studio tab. */
-export function openInStudioAction(
-  ways: Pick<DesktopSessionWays, 'openStudio'>
+/** *Open in Apps*: the application's Activity, in the Apps tab. */
+export function openInAppsAction(
+  ways: Pick<DesktopSessionWays, 'openApps'>
 ): SessionActionContribution {
   return {
-    id: 'desktop-open-in-studio',
-    label: DESKTOP_SESSION_ACTION_WORDS.openStudio,
-    order: ORDER.openStudio,
+    id: 'desktop-open-in-apps',
+    label: DESKTOP_SESSION_ACTION_WORDS.openApps,
+    order: ORDER.openApps,
     when: session => Boolean(session.appUid),
     run: async (session, context) => {
-      await ways.openStudio(session.appUid);
+      await ways.openApps(session.appUid);
       context.say(DESKTOP_SESSION_ACTION_WORDS.opened(session.title));
     },
   };
@@ -164,6 +164,6 @@ export function desktopSessionActions(
     ARCHIVE_ACTION,
     END_ACTION,
     revealInFinderAction(ways),
-    openInStudioAction(ways),
+    openInAppsAction(ways),
   ];
 }

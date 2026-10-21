@@ -12,7 +12,7 @@
  * `local-runtime:changed`, `sessions:changed`, `approvals:changed` and
  * `attention:focus` sent to the window; the runtime of the last folder
  * worked in started at launch (O-7); every runtime stopped when the app
- * quits. The `studio:*` channels are the Studio's (`studio.ts`).
+ * quits. The `apps:*` channels are Apps' (`apps.ts`).
  *
  * @module main/services/sessions-ipc
  */

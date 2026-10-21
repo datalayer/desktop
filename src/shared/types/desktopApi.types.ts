@@ -29,10 +29,10 @@ import type {
   PendingApproval,
   RememberedFolders,
   SessionsListed,
-  StudioAppDocument,
-  StudioAppsListed,
-  StudioDeployment,
-  StudioStateChange,
+  AppDocument,
+  AppsListed,
+  AppDeployment,
+  DeploymentStateChange,
 } from './ipc.types';
 
 /** A subscription's removal. */
@@ -87,17 +87,17 @@ export interface DesktopAPI {
     /** `shell:reveal {path}`: the file or folder shown in the OS's file browser. */
     reveal: (path: string) => Promise<void>;
   };
-  studio: {
-    /** `studio:apps`: the person's applications, newest first, and the landing's origin. */
-    apps: () => Promise<StudioAppsListed>;
-    /** `studio:app {uid}`: one application's Appspec, or why it has none. */
-    app: (uid: string) => Promise<StudioAppDocument>;
-    /** `studio:deployments`: the person's deployments at ai-agents. */
-    deployments: () => Promise<StudioDeployment[]>;
-    /** `studio:deployment-state`: a deployment paused or resumed, for one exact version. */
+  apps: {
+    /** `apps:list`: the person's applications, newest first, and the landing's origin. */
+    list: () => Promise<AppsListed>;
+    /** `apps:app {uid}`: one application's Appspec, or why it has none. */
+    app: (uid: string) => Promise<AppDocument>;
+    /** `apps:deployments`: the person's deployments at ai-agents. */
+    deployments: () => Promise<AppDeployment[]>;
+    /** `apps:deployment-state`: a deployment paused or resumed, for one exact version. */
     setDeploymentState: (
-      change: StudioStateChange
-    ) => Promise<StudioDeployment>;
+      change: DeploymentStateChange
+    ) => Promise<AppDeployment>;
   };
   attention: {
     /** `attention:front {uid}`: the session the chat shows now, or null — never notified. */

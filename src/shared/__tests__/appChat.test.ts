@@ -4,7 +4,7 @@
  */
 
 /**
- * A deployed application's agent in Desktop (STUDIO A-20): the picker's
+ * A deployed application's agent in Desktop (APPS A-20): the picker's
  * choices from ai-agents' deployments, the session API's address, the
  * Appspec's host terms (D-10, D-21), `host_context`, the transcript's lines
  * (A-06), the approvals (R-05) and what the main process lends the person's
@@ -182,7 +182,7 @@ describe("the Appspec's host terms", () => {
 
   it('refuses an item that holds no Appspec', () => {
     expect(() => appHostOf({ document: { model_s: '{}' } })).toThrow(
-      'The application holds no Appspec that can be read: open it in the Studio and save it.'
+      'The application holds no Appspec that can be read: open it in Apps and save it.'
     );
     expect(() => appHostOf({})).toThrow();
   });
@@ -580,7 +580,7 @@ describe('the review of 2026-10-07: live only, the version said, a signed user s
 
   it('says why none can be talked to, whatever the reason', () => {
     expect(noneTalkableSentence([])).toBe(
-      "You have no deployed applications: ship one from the Studio's Ship tab to talk to it here."
+      'You have no deployed applications: ship one from its Ship tab in Apps to talk to it here.'
     );
     const closed = deploymentChoicesOf({
       deployments: [

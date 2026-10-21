@@ -94,7 +94,7 @@ import {
 } from '../components/sessions/approvalsBanner';
 import { WORK_IN_FOLDER_WORDS } from '../components/sessions/workInFolder';
 import { setPageSessionWays } from '../plugins/sessionWays';
-import { OPEN_SESSION_EVENT } from './studioEvents';
+import { OPEN_SESSION_EVENT } from './appsEvents';
 import {
   acceptedExtensionsOf,
   type ChatTarget,
@@ -316,7 +316,7 @@ const Sessions: React.FC<SessionsProps> = ({
   // A notification or the tray clicked: that session in front (DK-14).
   useEffect(() => window.desktopAPI.attention.onFocus(openByUid), [openByUid]);
 
-  // A session of the Studio's Activity: that session in front (DK-02).
+  // A session of Apps' Activity: that session in front (DK-02).
   useEffect(() => {
     const listener = (event: Event) => {
       const uid = (event as CustomEvent<string>).detail;
@@ -530,8 +530,8 @@ const Sessions: React.FC<SessionsProps> = ({
         case 'export-session':
           void runEntry('export');
           break;
-        case 'open-in-studio':
-          void runEntry('desktop-open-in-studio');
+        case 'open-in-apps':
+          void runEntry('desktop-open-in-apps');
           break;
         case 'resume-last-session': {
           const first = listed?.places

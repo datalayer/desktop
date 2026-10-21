@@ -4,28 +4,28 @@
 
 # ☰ 🖥️ Datalayer Desktop
 
-A desktop that supports chat sessions: the sessions you opened on Datalayer and on this machine in one list, each one resumed, swapped to another agent, cloned, exported and imported; a new one started with an application of yours on Datalayer, or with a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, its approvals answered in the app and said by your OS. Your applications are in the Studio tab: their Appspec, their chat, their sessions and their deployments. Notebooks and documents on cloud runtimes stay as they were.
+A desktop that supports chat sessions: the sessions you opened on Datalayer and on this machine in one list, each one resumed, swapped to another agent, cloned, exported and imported; a new one started with an application of yours on Datalayer, or with a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, its approvals answered in the app and said by your OS. Your applications are in the Apps tab: their Appspec, their chat, their sessions and their deployments. Notebooks and documents on cloud runtimes stay as they were.
 
 ## ✨ What it does
 
 ### Sessions
 
-- **One list, two places.** Your sessions on Datalayer (the ones the Studio's Activity lists) and the sessions on this machine, marked, grouped by place and application, filtered by place, application, state and title, fifty at a time (*Show more*). Each row says its state and turn, its agent, its turns, where it comes from (cloned, imported) and where it runs — *on this machine · <folder>*.
-- **One chat.** A session of either place opens in the app's own chat, with the thread's `⋯` menu: *Resume*, *Switch agent…*, *Clone from here*, *Export*, *Import…*, and the app's own *Rename…*, *Archive*, *End*, *Reveal in Finder* and *Open in the Studio*. The same entries are on each row's `⋯` on the list, so a session is renamed, exported or cloned without opening it. A refusal of the runtime — a turn still running, an agent it lacks — is shown as the runtime said it.
+- **One list, two places.** Your sessions on Datalayer (the ones Apps' Activity lists) and the sessions on this machine, marked, grouped by place and application, filtered by place, application, state and title, fifty at a time (*Show more*). Each row says its state and turn, its agent, its turns, where it comes from (cloned, imported) and where it runs — *on this machine · <folder>*.
+- **One chat.** A session of either place opens in the app's own chat, with the thread's `⋯` menu: *Resume*, *Switch agent…*, *Clone from here*, *Export*, *Import…*, and the app's own *Rename…*, *Archive*, *End*, *Reveal in Finder* and *Open in Apps*. The same entries are on each row's `⋯` on the list, so a session is renamed, exported or cloned without opening it. A refusal of the runtime — a turn still running, an agent it lacks — is shown as the runtime said it.
 - **A coding agent in your folder.** *File → Work in a folder…* picks a folder, a coding agent and an application; the agent runs in that folder, behind the Shield, with your folder's own `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` or `.goosehints` kept.
 - **Waiting for you.** When a rule says *ask me first*, the request appears whole in the chat — a write's diff, a command — and is approved or declined there. With another window in front, your OS shows a notification naming the application and the action's class (never its arguments), the dock badge counts the sessions waiting, the tray lists them.
 - **Nothing syncs silently.** A session moves between the places by *Export* (a `<uid>.session.jsonl` file where you choose) and *Import…* (the place asked each time).
 
-### The Studio
+### Apps
 
-The **Studio** tab is the app's own page, not a web page: your applications, newest first, each with what its deployments say. Pick one:
+The **Apps** tab is the app's own page, not a web page: your applications, newest first, each with what its deployments say. Pick one:
 
 - **Build** shows its Appspec — its kind, agent, model, skills, connections and rules, and the Appspec itself as YAML — read-only.
 - **Try** opens its chat on the runtime a deployment of it is kept on (turn on *Always on* in its Ship tab), with its approvals answered in the chat; or says why it cannot be talked to here.
 - **Activity** lists its sessions, on Datalayer and on this machine, with where each comes from (cloned, imported); a row opens the session on the Sessions page.
 - **Deployments** lists each deployment's state, version and runtime, with *Pause* and *Resume* for the version it runs.
 
-Editing an application, Validate, Ship, the Preview of a draft and usage are on datalayer.ai: each section has *Open on datalayer.ai*, and *New application on datalayer.ai* is above the list. *Open in the Studio* on a session opens its application's Activity here.
+Editing an application, Validate, Ship, the Preview of a draft and usage are on datalayer.ai: each section has *Open on datalayer.ai*, and *New application on datalayer.ai* is above the list. *Open in Apps* on a session opens its application's Activity here.
 
 ### Notebooks, documents, runtimes
 
@@ -73,7 +73,7 @@ For the agent itself (Claude Code, Codex), the app checks what the agent needs �
 3. **Sign in** - *Sign in with GitHub* or *Sign in with Google* opens Datalayer's sign-in in a small window of the app, closed once you are signed in. A token typed with its Run URL (*or with a token*, under the buttons) is the second way, for a self-hosted Datalayer or a machine without the browser flow. Your token is held by the app's main process only and kept in your OS keychain; no page of the app ever receives it.
 4. **Sessions** - the app opens on your sessions: the ones on Datalayer, and *No session on this machine yet — File → Work in a folder…* until you open a folder.
 5. **Work in a folder** - *File → Work in a folder…*, pick a folder, Claude Code and the blank harness application: the session's first line says your folder's instructions file is kept. Ask for an edit: the diff appears in the chat and the file changes in your folder. When a rule asks you first, decide in the chat.
-6. **A session on Datalayer** - *File → New session on Datalayer…* lists your applications kept always on (turn on *Always on* in the application's Ship tab in the Studio); pick one and talk to it in the same chat. A session listed *on Datalayer* opens on the kept runtime of its application; one whose application is not kept always on says so.
+6. **A session on Datalayer** - *File → New session on Datalayer…* lists your applications kept always on (turn on *Always on* in the application's Ship tab in Apps); pick one and talk to it in the same chat. A session listed *on Datalayer* opens on the kept runtime of its application; one whose application is not kept always on says so.
 7. **Come back** - quit and reopen: the local session is listed *paused* with its folder and resumes on it. `loop sessions list` in a terminal and VS Code's Sessions view show the same sessions; a session started in VS Code appears here as *open in VS Code or a terminal* until VS Code pauses it.
 
 ### Where things live
@@ -84,7 +84,7 @@ For the agent itself (Claude Code, Codex), the app checks what the agent needs �
 
 ### The menu
 
-*File*: Work in a folder…, New session on Datalayer…, Import a session…, Stop the local runtime. *Sessions*: Resume last, Export…, Open in the Studio. *View*: Sessions, Studio, Spaces, Agents, Environments, the developer tools. *Help*: Datalayer docs, Report a problem. *Sign out* is in the app menu on macOS and under *File* elsewhere. The shortcuts are in the menu.
+*File*: Work in a folder…, New session on Datalayer…, Import a session…, Stop the local runtime. *Sessions*: Resume last, Export…, Open in Apps. *View*: Sessions, Apps, Spaces, Agents, Environments, the developer tools. *Help*: Datalayer docs, Report a problem. *Sign out* is in the app menu on macOS and under *File* elsewhere. The shortcuts are in the menu.
 
 ## 🧑‍💻 Running from source
 
@@ -96,7 +96,7 @@ npm install
 npm start                            # development mode, hot reload, DevTools
 ```
 
-`DATALAYER_IAM_URL` points the app at another Datalayer; `DATALAYER_LANDING_URL` at another site for what the Studio tab opens on the web (the development server, `http://localhost:3063`, is used in development by default).
+`DATALAYER_IAM_URL` points the app at another Datalayer; `DATALAYER_LANDING_URL` at another site for what the Apps tab opens on the web (the development server, `http://localhost:3063`, is used in development by default).
 
 ### Tests
 
@@ -106,7 +106,7 @@ npm run build         # the app's bundle (not an installer)
 npm run test:e2e      # Playwright: the app launched from its build with a stub `loop` and a stub sign-in
 ```
 
-The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/loop` stands in for `loop`, `tests/mocks/iam.ts` for Datalayer's sign-in and the Studio's services. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
+The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/loop` stands in for `loop`, `tests/mocks/iam.ts` for Datalayer's sign-in and Apps' services. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
 
 ### The pass before 0.1.0
 

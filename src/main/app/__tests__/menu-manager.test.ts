@@ -9,7 +9,7 @@
  * The menu (DESKTOP DK-04): the template built from one pure function,
  * asserted entry by entry with the `when` of each — signed out: no
  * session on Datalayer and no sign-out; no local runtime: no stop; no
- * session in front: no export and no Open in the Studio; the developer
+ * session in front: no export and no Open in Apps; the developer
  * tools only when allowed; macOS and the others; Sessions first, then
  * Edit; signed out, every menu but Help disabled — and the wiring: an
  * entry's action sent to the renderer as `menu-action`, the menu rebuilt
@@ -119,7 +119,7 @@ describe('menuTemplate', () => {
     expect(labels(menu(template, 'Sessions'))).toEqual(['Resume last']);
     expect(labels(menu(template, 'View'))).toEqual([
       'Sessions',
-      'Studio',
+      'Apps',
       'Spaces',
       'Agents',
       'Environments',
@@ -145,14 +145,14 @@ describe('menuTemplate', () => {
       'work-in-folder',
       'import-session',
       'show-sessions',
-      'show-studio',
+      'show-apps',
       'show-spaces',
       'show-runtimes',
       'show-environments',
     ]);
   });
 
-  it('signed in: a session on Datalayer and sign out; a runtime running: its stop; a session in front: export and Open in the Studio', () => {
+  it('signed in: a session on Datalayer and sign out; a runtime running: its stop; a session in front: export and Open in Apps', () => {
     const template = menuTemplate({
       ...base,
       signedIn: true,
@@ -172,14 +172,14 @@ describe('menuTemplate', () => {
     expect(labels(menu(template, 'Sessions'))).toEqual([
       'Resume last',
       'Export…',
-      'Open in the Studio',
+      'Open in Apps',
     ]);
     expect(actionsOf(template)).toContain('new-datalayer-session');
     expect(actionsOf(template)).toContain('stop-local-runtime');
     expect(actionsOf(template)).toContain('sign-out');
   });
 
-  it('a session in front while signed out: export, but no Studio for it', () => {
+  it('a session in front while signed out: export, but no Apps for it', () => {
     const template = menuTemplate({ ...base, sessionInFront: true });
     expect(labels(menu(template, 'Sessions'))).toEqual([
       'Resume last',
@@ -308,9 +308,7 @@ describe('menuTemplate', () => {
     expect(view.find(e => e.label === 'Sessions')?.accelerator).toBe(
       'CmdOrCtrl+1'
     );
-    expect(view.find(e => e.label === 'Studio')?.accelerator).toBe(
-      'CmdOrCtrl+2'
-    );
+    expect(view.find(e => e.label === 'Apps')?.accelerator).toBe('CmdOrCtrl+2');
   });
 });
 

@@ -5,7 +5,7 @@
 
 /**
  * The app launches (DESKTOP DK-15): the window opens on the Login page
- * with the two ways to sign in, no web page is embedded (the Studio is the
+ * with the two ways to sign in, no web page is embedded (Apps is the
  * app's own page), the menu says what the app can do while signed out, and
  * no renderer can ask for the token.
  */
@@ -67,7 +67,7 @@ test('the menu, signed out: no session on Datalayer, no sign-out, no stop', asyn
   expect(menu.Sessions).toEqual(['Resume last']);
   expect(menu.View.slice(0, 5)).toEqual([
     'Sessions',
-    'Studio',
+    'Apps',
     'Spaces',
     'Agents',
     'Environments',

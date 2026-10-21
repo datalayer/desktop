@@ -4,21 +4,21 @@
  */
 
 /**
- * The Studio, native (DESKTOP DK-02): the app's own React page, as the
+ * Apps, native (DESKTOP DK-02): the app's own React page, as the
  * Sessions page is — no web page embedded. On the left the person's
- * applications (Spacer's, through the main process's `studio:apps`), each
+ * applications (Spacer's, through the main process's `apps:list`), each
  * with what its deployments say; on the right the one picked, on four
  * sections: **Build** (its Appspec read, read-only), **Try** (its chat on
  * the runtime a deployment keeps, `AppChat`), **Activity** (its sessions
  * from the Sessions page's list, with their lineage; a row opens it in
  * Sessions) and **Deployments** (each one's state; pause and resume for
- * the version it runs). What only the web Studio has — editing, Validate,
+ * the version it runs). What only Apps on the web has — editing, Validate,
  * Ship, the Preview of a draft, usage — is opened on datalayer.ai.
  *
- * *Open in the Studio* (a session's menu, the app menu) brings this page
+ * *Open in Apps* (a session's menu, the app menu) brings this page
  * to the front on the session's application, on Activity.
  *
- * @module renderer/pages/Studio
+ * @module renderer/pages/Apps
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -37,18 +37,18 @@ import {
 } from '@datalayer/agent-runtimes/lib/portable/sessionList';
 import type { AppChatChoice } from '../../shared/appChat';
 import {
-  studioWebUrl,
+  appsWebUrl,
   toggledStateOf,
-  type StudioAppDocument,
-  type StudioAppsListed,
-  type StudioDeployment,
-} from '../../shared/studio';
+  type AppDocument,
+  type AppsListed,
+  type AppDeployment,
+} from '../../shared/apps';
 import type { User } from '../../shared/types';
-import OpenOnWeb from '../components/studio/OpenOnWeb';
-import StudioActivity from '../components/studio/StudioActivity';
-import StudioBuild from '../components/studio/StudioBuild';
-import StudioDeployments from '../components/studio/StudioDeployments';
-import StudioTry from '../components/studio/StudioTry';
+import OpenOnWeb from '../components/apps/OpenOnWeb';
+import AppsActivity from '../components/apps/AppsActivity';
+import AppsBuild from '../components/apps/AppsBuild';
+import AppsDeployments from '../components/apps/AppsDeployments';
+import AppsTry from '../components/apps/AppsTry';
 import {
   activityRowsOf,
   appRowsOf,
@@ -56,19 +56,19 @@ import {
   deploymentRowsOf,
   deploymentsOf,
   type DeploymentRow,
-  STUDIO_WORDS,
-} from './studioPage';
+  APPS_WORDS,
+} from './appsPage';
 import {
-  OPEN_STUDIO_EVENT,
+  OPEN_APPS_EVENT,
   requestSessionOpen,
-  STUDIO_SECTIONS,
-  type StudioOpenRequest,
-  type StudioSection,
-  takeStudioOpen,
-} from './studioEvents';
+  APPS_SECTIONS,
+  type AppsOpenRequest,
+  type AppsSection,
+  takeAppsOpen,
+} from './appsEvents';
 
-/** Props for {@link Studio}. */
-export interface StudioProps {
+/** Props for {@link Apps}. */
+export interface AppsProps {
   isAuthenticated: boolean;
   user: User | null;
 }
@@ -76,7 +76,7 @@ export interface StudioProps {
 const message = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-/** The web Studio's tab for each section. */
+/** The web Apps' tab for each section. */
 const WEB_TAB = {
   build: 'build',
   try: 'try',
@@ -84,20 +84,18 @@ const WEB_TAB = {
   deployments: 'ship',
 } as const;
 
-const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
-  const [listed, setListed] = useState<StudioAppsListed | null>(null);
+const Apps: React.FC<AppsProps> = ({ isAuthenticated, user }) => {
+  const [listed, setListed] = useState<AppsListed | null>(null);
   const [listProblem, setListProblem] = useState('');
-  const [deployments, setDeployments] = useState<StudioDeployment[] | null>(
-    null
-  );
+  const [deployments, setDeployments] = useState<AppDeployment[] | null>(null);
   const [choices, setChoices] = useState<AppChatChoice[] | null>(null);
   const [services, setServices] = useState<{
     aiAgentsUrl: string;
     spacerUrl: string;
   } | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
-  const [section, setSection] = useState<StudioSection>('build');
-  const [document, setDocument] = useState<StudioAppDocument | null>(null);
+  const [section, setSection] = useState<AppsSection>('build');
+  const [document, setDocument] = useState<AppDocument | null>(null);
   const [documentProblem, setDocumentProblem] = useState('');
   const [places, setPlaces] = useState<PlaceGroup[] | null>(null);
   const [activityProblem, setActivityProblem] = useState('');
@@ -110,8 +108,8 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
     }
     setListProblem('');
     const [apps, listedDeployments, talkable] = await Promise.allSettled([
-      window.desktopAPI.studio.apps(),
-      window.desktopAPI.studio.deployments(),
+      window.desktopAPI.apps.list(),
+      window.desktopAPI.apps.deployments(),
       window.appChatAPI.listDeployments(),
     ]);
     if (apps.status === 'fulfilled') {
@@ -144,19 +142,19 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
     void refresh();
   }, [isAuthenticated, refresh]);
 
-  // *Open in the Studio*: the application on a section, asked before or
+  // *Open in Apps*: the application on a section, asked before or
   // while the page is mounted.
   useEffect(() => {
-    const open = (request: StudioOpenRequest | null) => {
+    const open = (request: AppsOpenRequest | null) => {
       if (request) {
         setPicked(request.appUid);
         setSection(request.section);
       }
     };
-    open(takeStudioOpen());
-    const listener = () => open(takeStudioOpen());
-    window.addEventListener(OPEN_STUDIO_EVENT, listener);
-    return () => window.removeEventListener(OPEN_STUDIO_EVENT, listener);
+    open(takeAppsOpen());
+    const listener = () => open(takeAppsOpen());
+    window.addEventListener(OPEN_APPS_EVENT, listener);
+    return () => window.removeEventListener(OPEN_APPS_EVENT, listener);
   }, []);
 
   // The application picked, read.
@@ -167,7 +165,7 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
       return;
     }
     let alive = true;
-    window.desktopAPI.studio
+    window.desktopAPI.apps
       .app(picked)
       .then(read => alive && setDocument(read))
       .catch(error => alive && setDocumentProblem(message(error)));
@@ -211,14 +209,14 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
     [places, picked]
   );
   const landing = listed?.landing ?? '';
-  const webUrl = (of: StudioSection) =>
-    picked ? studioWebUrl(landing, picked, WEB_TAB[of]) : '';
+  const webUrl = (of: AppsSection) =>
+    picked ? appsWebUrl(landing, picked, WEB_TAB[of]) : '';
 
   const change = useCallback(async (row: DeploymentRow) => {
     setChanging(row.deployment.uid);
     setSaid('');
     try {
-      const changed = await window.desktopAPI.studio.setDeploymentState(
+      const changed = await window.desktopAPI.apps.setDeploymentState(
         toggledStateOf(row.deployment)
       );
       setDeployments(current =>
@@ -226,8 +224,8 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
       );
       setSaid(
         changed.state === 'paused'
-          ? STUDIO_WORDS.paused(changed.appName, changed.version)
-          : STUDIO_WORDS.resumed(changed.appName, changed.version)
+          ? APPS_WORDS.paused(changed.appName, changed.version)
+          : APPS_WORDS.resumed(changed.appName, changed.version)
       );
       const talkable = await window.appChatAPI.listDeployments();
       setChoices(talkable.deployments);
@@ -241,7 +239,7 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
   return (
     <Box
       sx={{ display: 'flex', height: '100%', minHeight: 0 }}
-      data-testid="studio-page"
+      data-testid="apps-page"
     >
       <Box
         sx={{
@@ -257,11 +255,11 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
         <Box sx={{ p: 3, pb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Heading as="h2" sx={{ fontSize: 2, m: 0, flex: 1 }}>
-              {STUDIO_WORDS.title}
+              {APPS_WORDS.title}
             </Heading>
             <IconButton
               icon={SyncIcon}
-              aria-label={STUDIO_WORDS.refresh}
+              aria-label={APPS_WORDS.refresh}
               size="small"
               variant="invisible"
               disabled={!isAuthenticated}
@@ -271,8 +269,8 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
           {landing ? (
             <Box sx={{ mt: 2 }}>
               <OpenOnWeb
-                url={studioWebUrl(landing)}
-                label={STUDIO_WORDS.newOnWeb}
+                url={appsWebUrl(landing)}
+                label={APPS_WORDS.newOnWeb}
               />
             </Box>
           ) : null}
@@ -280,7 +278,7 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
         <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {!isAuthenticated ? (
             <Text as="p" sx={{ px: 3, color: 'fg.muted', fontSize: 1 }}>
-              {STUDIO_WORDS.signedOut}
+              {APPS_WORDS.signedOut}
             </Text>
           ) : listProblem ? (
             <Text as="p" sx={{ px: 3, color: 'danger.fg', fontSize: 1 }}>
@@ -288,17 +286,14 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
             </Text>
           ) : !listed ? (
             <Text as="p" sx={{ px: 3, color: 'fg.muted', fontSize: 1 }}>
-              {STUDIO_WORDS.loading}
+              {APPS_WORDS.loading}
             </Text>
           ) : rows.length === 0 ? (
             <Text as="p" sx={{ px: 3, color: 'fg.muted', fontSize: 1 }}>
-              {STUDIO_WORDS.none}
+              {APPS_WORDS.none}
             </Text>
           ) : (
-            <ActionList
-              aria-label={STUDIO_WORDS.title}
-              selectionVariant="single"
-            >
+            <ActionList aria-label={APPS_WORDS.title} selectionVariant="single">
               {rows.map(row => (
                 <ActionList.Item
                   key={row.app.uid}
@@ -341,10 +336,10 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
           >
             <Box sx={{ maxWidth: 520 }}>
               <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
-                {STUDIO_WORDS.pickOne}
+                {APPS_WORDS.pickOne}
               </Heading>
               <Text as="p" sx={{ color: 'fg.muted' }}>
-                {STUDIO_WORDS.pickOneSaid}
+                {APPS_WORDS.pickOneSaid}
               </Text>
             </Box>
           </Box>
@@ -369,11 +364,11 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
               <SegmentedControl
                 aria-label="Section"
                 sx={{ mt: 2 }}
-                onChange={index => setSection(STUDIO_SECTIONS[index])}
+                onChange={index => setSection(APPS_SECTIONS[index])}
               >
-                {STUDIO_SECTIONS.map(one => (
+                {APPS_SECTIONS.map(one => (
                   <SegmentedControl.Button key={one} selected={section === one}>
-                    {STUDIO_WORDS.sections[one]}
+                    {APPS_WORDS.sections[one]}
                   </SegmentedControl.Button>
                 ))}
               </SegmentedControl>
@@ -393,15 +388,15 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
                     {documentProblem}
                   </Text>
                 ) : document ? (
-                  <StudioBuild document={document} webUrl={webUrl('build')} />
+                  <AppsBuild document={document} webUrl={webUrl('build')} />
                 ) : (
                   <Text as="p" sx={{ color: 'fg.muted' }}>
-                    {STUDIO_WORDS.readingApp}
+                    {APPS_WORDS.readingApp}
                   </Text>
                 )
               ) : null}
               {section === 'try' ? (
-                <StudioTry
+                <AppsTry
                   appUid={picked}
                   choices={choices}
                   closed={closedSentencesOf(choices ?? [], own)}
@@ -411,7 +406,7 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
                 />
               ) : null}
               {section === 'activity' ? (
-                <StudioActivity
+                <AppsActivity
                   rows={activity}
                   problem={activityProblem}
                   onOpen={requestSessionOpen}
@@ -419,7 +414,7 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
                 />
               ) : null}
               {section === 'deployments' ? (
-                <StudioDeployments
+                <AppsDeployments
                   rows={deploymentRowsOf(own)}
                   changing={changing}
                   onChange={row => void change(row)}
@@ -434,4 +429,4 @@ const Studio: React.FC<StudioProps> = ({ isAuthenticated, user }) => {
   );
 };
 
-export default Studio;
+export default Apps;

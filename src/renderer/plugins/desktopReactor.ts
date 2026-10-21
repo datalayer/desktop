@@ -52,7 +52,7 @@ export function desktopSessionsPlugin(
     name: DESKTOP_SESSIONS_PLUGIN_NAME,
     displayName: 'Sessions in Datalayer Desktop',
     description:
-      'What a session’s menu offers: resume, switch agent, clone, export, import; rename, archive, end; the folder revealed, the Studio opened.',
+      'What a session’s menu offers: resume, switch agent, clone, export, import; rename, archive, end; the folder revealed, Apps opened.',
     octicon: 'comment-discussion',
     emoji: '\u{1F4AC}',
     contributes: entries.map(entry =>

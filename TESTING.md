@@ -35,7 +35,7 @@ npm run test:ui
 NODE_OPTIONS=--max-old-space-size=2048 npx vitest run --project unit src/main/services/__tests__/sign-in.test.ts
 ```
 
-A main-process test runs under Node, not the DOM: put `// @vitest-environment node` after the licence header (see `src/main/services/__tests__/studio-view.test.ts`).
+A main-process test runs under Node, not the DOM: put `// @vitest-environment node` after the licence header (see `src/main/services/__tests__/apps.test.ts`).
 
 ### E2E (Playwright, Electron)
 

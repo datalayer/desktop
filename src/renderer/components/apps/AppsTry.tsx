@@ -11,9 +11,9 @@
  * deployed version's Appspec deciding), with its approvals decided
  * through the main process. A deployment that cannot be talked to says
  * why; the Preview of a draft (a runtime launched for the editor's
- * version) is the web Studio's.
+ * version) is the web Apps'.
  *
- * @module renderer/components/studio/StudioTry
+ * @module renderer/components/apps/AppsTry
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,11 +22,11 @@ import type { AppChatChoice, NotebookContext } from '../../../shared/appChat';
 import type { PendingApproval } from '../../../shared/types/ipc.types';
 import AppChat from '../appChat/AppChat';
 import { approvalsForChat, decisionSaid } from '../sessions/approvalsBanner';
-import { STUDIO_WORDS, tryDecisionOf } from '../../pages/studioPage';
+import { APPS_WORDS, tryDecisionOf } from '../../pages/appsPage';
 import OpenOnWeb from './OpenOnWeb';
 
-/** Props for {@link StudioTry}. */
-export interface StudioTryProps {
+/** Props for {@link AppsTry}. */
+export interface AppsTryProps {
   appUid: string;
   /** What `app-chat:list-deployments` answered, or null before. */
   choices: AppChatChoice[] | null;
@@ -34,13 +34,13 @@ export interface StudioTryProps {
   closed: string[];
   services: { aiAgentsUrl: string; spacerUrl: string } | null;
   user: { handle: string } | null;
-  /** The web Studio's Try of this application (the Preview of a draft). */
+  /** The web Apps' Try of this application (the Preview of a draft). */
   webUrl: string;
 }
 
 const noNotebook = async (): Promise<NotebookContext | undefined> => undefined;
 
-const StudioTry: React.FC<StudioTryProps> = ({
+const AppsTry: React.FC<AppsTryProps> = ({
   appUid,
   choices,
   closed,
@@ -92,18 +92,18 @@ const StudioTry: React.FC<StudioTryProps> = ({
   if (!decision) {
     return (
       <Text as="p" sx={{ color: 'fg.muted', fontSize: 1 }}>
-        {STUDIO_WORDS.readingApp}
+        {APPS_WORDS.readingApp}
       </Text>
     );
   }
   if (decision.kind === 'closed' || !services) {
     return (
-      <Box sx={{ display: 'grid', gap: 2 }} data-testid="studio-try">
+      <Box sx={{ display: 'grid', gap: 2 }} data-testid="apps-try">
         <Flash variant="warning">
           <Text as="p" sx={{ m: 0 }}>
             {decision.kind === 'closed'
               ? decision.sentence
-              : STUDIO_WORDS.notTalkable}
+              : APPS_WORDS.notTalkable}
           </Text>
           {closed.map(sentence => (
             <Text as="p" key={sentence} sx={{ m: 0, mt: 1, fontSize: 1 }}>
@@ -112,7 +112,7 @@ const StudioTry: React.FC<StudioTryProps> = ({
           ))}
         </Flash>
         <Box>
-          <OpenOnWeb url={webUrl} label={STUDIO_WORDS.tryOnWeb} />
+          <OpenOnWeb url={webUrl} label={APPS_WORDS.tryOnWeb} />
         </Box>
       </Box>
     );
@@ -120,7 +120,7 @@ const StudioTry: React.FC<StudioTryProps> = ({
   return (
     <Box
       sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}
-      data-testid="studio-try"
+      data-testid="apps-try"
     >
       {said ? (
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{said}</Text>
@@ -140,4 +140,4 @@ const StudioTry: React.FC<StudioTryProps> = ({
   );
 };
 
-export default StudioTry;
+export default AppsTry;

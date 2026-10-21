@@ -32,7 +32,7 @@ export function setupContentSecurityPolicy(): void {
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
               "img-src 'self' data: https: blob:; " +
               // The Datalayer domains and the configured services' validated
-              // origins: what the chats of applications reach (STUDIO A-20);
+              // origins: what the chats of applications reach (APPS A-20);
               // and, on loopback, each running local runtime's http and ws
               // origin and nothing else (DESKTOP DK-05).
               `connect-src 'self' ${[...appChatConnectSources(), ...localRuntimes.connectSources()].join(' ')}; ` +
