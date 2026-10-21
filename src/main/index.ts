@@ -18,7 +18,16 @@ setupConsoleOverrides();
 
 // Core Electron imports
 import { app, ipcMain, shell } from 'electron';
-import { getMainWindow } from './app/window-manager';
+import { getMainWindow, setSignInCallbackHandler } from './app/window-manager';
+import { refreshMenu } from './app/menu-manager';
+
+// The app's name, unpackaged as packaged (the menu's About, the user data
+// folder); the suite runs the app with a user data folder of its own
+// (DK-15) — both set before anything reads them.
+app.setName('Datalayer Desktop');
+if (process.env.DATALAYER_DESKTOP_USER_DATA) {
+  app.setPath('userData', process.env.DATALAYER_DESKTOP_USER_DATA);
+}
 
 // Application components
 import { Application } from './app/application';
@@ -28,7 +37,6 @@ import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
 import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
 import {
-  appChatEnabled,
   appChatUserToken,
   forgetAppChats,
   lendTokenToAppChats,
@@ -38,6 +46,17 @@ import {
   registerSessionsIpc,
   startSessionsServices,
 } from './services/sessions-ipc';
+import { SIGN_IN_CALLBACK, signIn } from './services/sign-in';
+import {
+  clearStudioSession,
+  hideStudioView,
+  loadInStudioView,
+  openInStudio,
+  showStudioView,
+  studioPath,
+  studioViewOrigin,
+} from './services/studio-view';
+import type { StudioBounds } from '../shared/types/shell.types';
 
 // Type definitions
 interface VersionInfo {
@@ -113,7 +132,92 @@ function registerIPCHandlers(): void {
         hasUser: !!authState.user,
       });
     }
+    refreshMenu({ signedIn: authState.isAuthenticated });
   }
+
+  /**
+   * The sign-in callback the Studio view caught (DK-03): the token kept
+   * through the SDK bridge once the state matches, the person signed in,
+   * the view sent on to the Studio's Home; otherwise the sentence goes to
+   * the Login page and the view is hidden.
+   * @param url - The `datalayer://auth…` URL
+   */
+  async function signInCallbackReceived(url: string): Promise<void> {
+    const outcome = await signIn.callback(url, {
+      keep: async token => {
+        await sdkBridge.call('login', token);
+      },
+    });
+    hideStudioView();
+    if (!outcome.ok) {
+      log.warn(`[Sign-in] ${outcome.sentence}`);
+      getMainWindow()?.webContents.send('sign-in:failed', outcome.sentence);
+      return;
+    }
+    const user = await sdkBridge.call('whoami');
+    const config = sdkBridge.getConfig();
+    log.info(`[Sign-in] Signed in with ${outcome.provider}`);
+    broadcastAuthState({
+      isAuthenticated: true,
+      user,
+      token: config.token || null,
+      runUrl: config.iamUrl || '',
+    });
+    openInStudio(studioPath({ kind: 'home' }));
+  }
+  setSignInCallbackHandler(url => {
+    signInCallbackReceived(url).catch(error => {
+      log.error('[Sign-in] The callback failed:', error);
+    });
+  });
+
+  // Sign in with a provider, in the Studio view (DK-03): IAM's page shown
+  // over the whole window until the callback comes back.
+  ipcMain.handle('sign-in:start', async (_, { provider }) => {
+    const { getOAuth2AuthzUrl } =
+      await import('@datalayer/core/lib/api/iam/oauth2');
+    const iamUrl = sdkBridge.getConfig().iamUrl || '';
+    const started = await signIn.start(provider, {
+      authorizationUrl: (chosen, callbackUri, nonce) =>
+        getOAuth2AuthzUrl(chosen, callbackUri, nonce, iamUrl),
+      load: url => {
+        const mainWindow = getMainWindow();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const [width, height] = mainWindow.getContentSize();
+          loadInStudioView(url);
+          showStudioView({ x: 0, y: 0, width, height });
+        }
+      },
+    });
+    if (started.ok) {
+      log.info(
+        `[Sign-in] ${provider} opened in the Studio view, callback ${SIGN_IN_CALLBACK}`
+      );
+      return { ok: true };
+    }
+    log.warn(`[Sign-in] ${started.sentence}`);
+    return { ok: false, sentence: started.sentence };
+  });
+
+  // The Studio view (DK-02): shown where the renderer's Studio tab is,
+  // hidden when the tab is away, sent to a path of the Studio.
+  ipcMain.handle('studio:show', async (_, bounds: StudioBounds) => {
+    showStudioView(bounds);
+  });
+  ipcMain.handle('studio:hide', async () => {
+    hideStudioView();
+  });
+  ipcMain.handle('studio:open', async (_, { path }: { path: string }) => {
+    openInStudio(path);
+  });
+
+  // The menu's entries follow what the renderer shows (DK-04).
+  ipcMain.handle(
+    'menu:state',
+    async (_, state: { sessionInFront?: boolean }) => {
+      refreshMenu({ sessionInFront: Boolean(state?.sessionInFront) });
+    }
+  );
 
   // Authentication handlers - using SDK bridge
   ipcMain.handle('datalayer:login', async (_, { token }) => {
@@ -139,10 +243,21 @@ function registerIPCHandlers(): void {
   ipcMain.handle('datalayer:logout', async () => {
     // Nothing of an application's chat is signed once signed out (A-20).
     forgetAppChats();
+    // The Studio view forgets IAM's cookie with the token (DK-03).
+    signIn.cancel();
+    hideStudioView();
     try {
       await sdkBridge.call('logout');
     } catch {
       // Don't fail logout - silently ignore errors
+    }
+    try {
+      await clearStudioSession();
+    } catch (error) {
+      log.warn(
+        `[Sign-in] The Studio view's partition (${studioViewOrigin()}) was not cleared:`,
+        error
+      );
     }
 
     // Broadcast logged out state
@@ -162,20 +277,6 @@ function registerIPCHandlers(): void {
   ipcMain.handle('datalayer:get-auth-state', async () => {
     // Use the SDK bridge's getAuthState which checks stored tokens
     return sdkBridge.getAuthState();
-  });
-
-  // Legacy credentials method (for backward compatibility)
-  ipcMain.handle('datalayer:get-credentials', async () => {
-    try {
-      const config = sdkBridge.getConfig();
-      return {
-        runUrl: config.iamUrl,
-        token: config.token,
-        isAuthenticated: !!config.token,
-      };
-    } catch {
-      return { runUrl: '', token: '', isAuthenticated: false };
-    }
   });
 
   // Environment and runtime handlers - using SDK bridge
@@ -393,9 +494,6 @@ function registerIPCHandlers(): void {
   // A deployed application's agent (STUDIO A-20): the person's deployments,
   // listed here with the token the main process holds; the runtimes they
   // are kept on are the only ones the session lends it to.
-  // Off by default (`agentChatEnabled` in settings.json): the renderer
-  // shows the tab only when this says it is on.
-  ipcMain.handle('app-chat:enabled', async () => appChatEnabled());
   ipcMain.handle('app-chat:list-deployments', async () =>
     listAppChatDeployments()
   );

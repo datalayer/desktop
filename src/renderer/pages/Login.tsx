@@ -17,6 +17,7 @@ import iconImage from '../assets/icon.png';
 import Header from '../components/auth/Header';
 import ErrorMessage from '../components/common/ErrorMessage';
 import Form from '../components/auth/Form';
+import ProviderButtons from '../components/auth/ProviderButtons';
 import Footer from '../components/auth/Footer';
 import Version from '../components/auth/Version';
 import { LoginFormData, LoginState } from '../../shared/types';
@@ -102,6 +103,11 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
     }
   }, [formData, authService, onUserDataFetched]);
 
+  // A sign-in with a provider ended in a sentence (DK-03).
+  const handleSignInFailed = useCallback((sentence: string) => {
+    setState(prev => ({ ...prev, loading: false, error: sentence }));
+  }, []);
+
   const handleKeyPress = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === 'Enter' && !state.loading) {
@@ -137,6 +143,11 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
         <Header iconSrc={iconImage} />
 
         <ErrorMessage error={state.error} />
+
+        <ProviderButtons
+          onFailed={handleSignInFailed}
+          disabled={state.loading}
+        />
 
         <Form
           formData={formData}

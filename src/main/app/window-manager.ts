@@ -18,6 +18,7 @@ import {
 } from './environment';
 import { setupContentSecurityPolicy } from './security-manager';
 import { WINDOW_CONFIG } from '../config/constants';
+import { createStudioView } from '../services/studio-view';
 
 /**
  * The main application window instance.
@@ -25,11 +26,25 @@ import { WINDOW_CONFIG } from '../config/constants';
 let mainWindow: BrowserWindow | null = null;
 
 /**
+ * Where the sign-in callback the Studio view catches goes (DK-03); set by
+ * the main process before the window is created.
+ */
+let onSignInCallback: (url: string) => void = () => undefined;
+
+/**
  * Get the main window instance.
  * @returns The main window or null if closed
  */
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
+}
+
+/**
+ * Sets where the Studio view's sign-in callback goes.
+ * @param handler - Takes the `datalayer://auth…` URL.
+ */
+export function setSignInCallbackHandler(handler: (url: string) => void): void {
+  onSignInCallback = handler;
 }
 
 /**
@@ -92,6 +107,10 @@ export function createWindow(): void {
 
   // Set up security features
   setupWindowSecurity();
+
+  // The Studio, embedded in the window (DK-02), hidden until its tab or a
+  // sign-in shows it
+  createStudioView(mainWindow, url => onSignInCallback(url));
 }
 
 /**

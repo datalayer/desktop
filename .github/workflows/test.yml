@@ -34,3 +34,38 @@ jobs:
         run: |
           echo "Running unit tests..."
           npm run test:unit
+
+  e2e-tests:
+    # The app launched from its build with the stub loop and the stub IAM
+    # (DESKTOP DK-15): no Datalayer account, no Python, no installer built.
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Install a display and Electron's libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2t64
+
+      - name: Build the app
+        run: npm run build
+
+      - name: Run the e2e suite
+        run: xvfb-run -a --server-args="-screen 0 1600x1000x24" npm run test:e2e
+
+      - name: Keep the traces of a failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: test-results/
+          retention-days: 7

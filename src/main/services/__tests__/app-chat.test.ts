@@ -4,13 +4,13 @@
  */
 
 /**
- * `agentChatEnabled` (STUDIO A-20): off by default, and off the main process
- * lists no deployment, asks ai-agents nothing, signs no user and lends the
- * person's token to nothing; on, it lists the deployments, one not kept
- * always on closed with why.
+ * The deployments a session on Datalayer picks from (STUDIO A-20, DESKTOP
+ * DK-08): the main process lists them with the token it holds, one not
+ * kept always on closed with why, and lends the token to the chats'
+ * prefixes once. The `agentChatEnabled` flag of 0.0.5 is gone (O-1).
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -58,7 +58,7 @@ const load = async () => {
   return import('../app-chat');
 };
 
-describe('agentChatEnabled', () => {
+describe('the deployments listed', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -86,44 +86,9 @@ describe('agentChatEnabled', () => {
     rmSync(electron.userData, { recursive: true, force: true });
   });
 
-  it('is off without a settings file', async () => {
-    const chat = await load();
-    expect(chat.appChatEnabled()).toBe(false);
-  });
-
-  it('is off when the settings file says anything but true', async () => {
-    writeFileSync(
-      join(electron.userData, 'settings.json'),
-      JSON.stringify({ agentChatEnabled: 'true' })
-    );
-    expect((await load()).appChatEnabled()).toBe(false);
-    writeFileSync(join(electron.userData, 'settings.json'), '{not json');
-    expect((await load()).appChatEnabled()).toBe(false);
-  });
-
-  it('off, lists nothing, signs no one and lends the token to nothing', async () => {
-    const chat = await load();
-    await expect(chat.listAppChatDeployments()).rejects.toThrow(
-      chat.APP_CHAT_OFF
-    );
-    await expect(chat.appChatUserToken('dep-1')).rejects.toThrow(
-      chat.APP_CHAT_OFF
-    );
-    chat.lendTokenToAppChats();
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(electron.onBeforeSendHeaders).not.toHaveBeenCalled();
-    expect(chat.appChatConnectSources()).toEqual([
-      ...chat.DATALAYER_CONNECT_SOURCES,
-    ]);
-  });
-
   it('on, lists the deployments; one not kept always on is closed, saying why', async () => {
-    writeFileSync(
-      join(electron.userData, 'settings.json'),
-      JSON.stringify({ agentChatEnabled: true })
-    );
     const chat = await load();
-    expect(chat.appChatEnabled()).toBe(true);
+    chat.lendTokenToAppChats();
     chat.lendTokenToAppChats();
     expect(electron.onBeforeSendHeaders).toHaveBeenCalledTimes(1);
 

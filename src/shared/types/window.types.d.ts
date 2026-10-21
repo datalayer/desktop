@@ -271,11 +271,9 @@ declare global {
      * token to their runtimes' requests and to nothing else.
      */
     /** The sessions contract (DESKTOP §7): `shared/types/ipc.types.ts`. */
-    desktopAPI: import('./ipc.types').DesktopAPI;
+    desktopAPI: import('./desktopApi.types').DesktopAPI;
 
     appChatAPI: {
-      /** Whether it is on (`agentChatEnabled` in settings.json; off by default). */
-      enabled: () => Promise<boolean>;
       listDeployments: () => Promise<import('../appChat').AppChatDeployments>;
       /** A user token for a deployment that takes only a signed user (D-21). */
       userToken: (

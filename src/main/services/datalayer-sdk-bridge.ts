@@ -44,7 +44,16 @@ export class DatalayerSDKBridge {
   constructor() {
     // Don't access app or any Electron APIs here - module may not be fully loaded yet
 
+    // The services, from the environment when set (`DATALAYER_IAM_URL`,
+    // `DATALAYER_RUNTIMES_URL`, `DATALAYER_SPACER_URL`; the suite points
+    // them at a stub IAM), else the SDK's defaults.
     this.sdk = new DatalayerClient({
+      iamUrl:
+        process.env.DATALAYER_IAM_URL ||
+        process.env.DATALAYER_RUN_URL ||
+        undefined,
+      runtimesUrl: process.env.DATALAYER_RUNTIMES_URL || undefined,
+      spacerUrl: process.env.DATALAYER_SPACER_URL || undefined,
       handlers: {
         beforeCall: (method: string, args: unknown[]) => {
           log.debug(`[SDK] → ${method}`, { argsCount: args.length });

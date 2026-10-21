@@ -25,8 +25,6 @@ export interface AppHeaderProps {
   activeTabId: string;
   openNotebooks: Array<{ id: string; name: string; description?: string }>;
   openDocuments: Array<{ id: string; name: string; description?: string }>;
-  /** Whether the Your applications tab shows (`agentChatEnabled`, off by default). */
-  showApplications?: boolean;
   isAuthenticated: boolean;
   user: User | null;
   onTabChange: (tabId: string) => void;
@@ -42,7 +40,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   activeTabId,
   openNotebooks,
   openDocuments,
-  showApplications = false,
   isAuthenticated,
   user,
   onTabChange,
@@ -79,7 +76,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         activeTabId={activeTabId}
         openNotebooks={openNotebooks}
         openDocuments={openDocuments}
-        showApplications={showApplications}
         onTabChange={onTabChange}
         onNotebookClose={onNotebookClose}
         onDocumentClose={onDocumentClose}
