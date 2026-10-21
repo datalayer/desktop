@@ -109,6 +109,15 @@ export async function launchApp(
       console.log(`[renderer console.error] ${message.text()}`);
     }
   });
+  // The local runtime's and the sessions' own lines (electron-log, stdout):
+  // why a runtime did not start is said there only.
+  app.process().stdout?.on('data', chunk => {
+    for (const line of String(chunk).split('\n')) {
+      if (/\[(LocalRuntime|Sessions|Approvals|SDK Bridge)\]/.test(line)) {
+        console.log(`[main] ${line.trimEnd()}`);
+      }
+    }
+  });
   app.process().stderr?.on('data', chunk => {
     const text = String(chunk);
     if (/error/i.test(text)) {
