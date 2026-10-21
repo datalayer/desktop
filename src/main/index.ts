@@ -18,7 +18,7 @@ setupConsoleOverrides();
 
 // Core Electron imports
 import { app, ipcMain, shell } from 'electron';
-import { getMainWindow, setSignInCallbackHandler } from './app/window-manager';
+import { getMainWindow } from './app/window-manager';
 import { refreshMenu } from './app/menu-manager';
 import { exchangePasswordForToken } from './services/password-login';
 
@@ -47,17 +47,13 @@ import {
   registerSessionsIpc,
   startSessionsServices,
 } from './services/sessions-ipc';
-import { SIGN_IN_CALLBACK, signIn } from './services/sign-in';
 import {
-  clearStudioSession,
-  hideStudioView,
-  loadInStudioView,
-  openInStudio,
-  showStudioView,
-  studioPath,
-  studioViewOrigin,
-} from './services/studio-view';
-import type { StudioBounds } from '../shared/types/shell.types';
+  SIGN_IN_CALLBACK,
+  SIGN_IN_SENTENCES,
+  signIn,
+} from './services/sign-in';
+import { closeSignInWindow, openSignInWindow } from './services/sign-in-window';
+import { registerStudioIpc } from './services/studio';
 
 // Type definitions
 interface VersionInfo {
@@ -137,10 +133,9 @@ function registerIPCHandlers(): void {
   }
 
   /**
-   * The sign-in callback the Studio view caught (DK-03): the token kept
-   * through the SDK bridge once the state matches, the person signed in,
-   * the view sent on to the Studio's Home; otherwise the sentence goes to
-   * the Login page and the view is hidden.
+   * The sign-in callback the sign-in window caught (DK-03): the token kept
+   * through the SDK bridge once the state matches, the person signed in;
+   * otherwise the sentence goes to the Login page.
    * @param url - The `datalayer://auth…` URL
    */
   async function signInCallbackReceived(url: string): Promise<void> {
@@ -149,7 +144,6 @@ function registerIPCHandlers(): void {
         await sdkBridge.call('login', token);
       },
     });
-    hideStudioView();
     if (!outcome.ok) {
       log.warn(`[Sign-in] ${outcome.sentence}`);
       getMainWindow()?.webContents.send('sign-in:failed', outcome.sentence);
@@ -164,16 +158,10 @@ function registerIPCHandlers(): void {
       token: config.token || null,
       runUrl: config.iamUrl || '',
     });
-    openInStudio(studioPath({ kind: 'home' }));
   }
-  setSignInCallbackHandler(url => {
-    signInCallbackReceived(url).catch(error => {
-      log.error('[Sign-in] The callback failed:', error);
-    });
-  });
 
-  // Sign in with a provider, in the Studio view (DK-03): IAM's page shown
-  // over the whole window until the callback comes back.
+  // Sign in with a provider (DK-03): IAM's page in a small window of its
+  // own over the main window, closed once the callback comes back.
   ipcMain.handle('sign-in:start', async (_, { provider }) => {
     const { getOAuth2AuthzUrl } =
       await import('@datalayer/core/lib/api/iam/oauth2');
@@ -182,17 +170,35 @@ function registerIPCHandlers(): void {
       authorizationUrl: (chosen, callbackUri, nonce) =>
         getOAuth2AuthzUrl(chosen, callbackUri, nonce, iamUrl),
       load: url => {
-        const mainWindow = getMainWindow();
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          const [width, height] = mainWindow.getContentSize();
-          loadInStudioView(url);
-          showStudioView({ x: 0, y: 0, width, height });
-        }
+        openSignInWindow(url, getMainWindow(), {
+          onCallback: callback => {
+            signInCallbackReceived(callback).catch(error => {
+              log.error('[Sign-in] The callback failed:', error);
+              getMainWindow()?.webContents.send(
+                'sign-in:failed',
+                SIGN_IN_SENTENCES.refused(
+                  error instanceof Error ? error.message : String(error)
+                )
+              );
+            });
+          },
+          onClosed: () => {
+            if (!signIn.inFlight) {
+              return;
+            }
+            signIn.cancel();
+            log.info('[Sign-in] The sign-in window was closed');
+            getMainWindow()?.webContents.send(
+              'sign-in:failed',
+              SIGN_IN_SENTENCES.windowClosed
+            );
+          },
+        });
       },
     });
     if (started.ok) {
       log.info(
-        `[Sign-in] ${provider} opened in the Studio view, callback ${SIGN_IN_CALLBACK}`
+        `[Sign-in] ${provider} opened in the sign-in window, callback ${SIGN_IN_CALLBACK}`
       );
       return { ok: true };
     }
@@ -200,17 +206,8 @@ function registerIPCHandlers(): void {
     return { ok: false, sentence: started.sentence };
   });
 
-  // The Studio view (DK-02): shown where the renderer's Studio tab is,
-  // hidden when the tab is away, sent to a path of the Studio.
-  ipcMain.handle('studio:show', async (_, bounds: StudioBounds) => {
-    showStudioView(bounds);
-  });
-  ipcMain.handle('studio:hide', async () => {
-    hideStudioView();
-  });
-  ipcMain.handle('studio:open', async (_, { path }: { path: string }) => {
-    openInStudio(path);
-  });
+  // The Studio's reads and its one change (DK-02): the main process's token.
+  registerStudioIpc();
 
   // The menu's entries follow what the renderer shows (DK-04).
   ipcMain.handle(
@@ -268,23 +265,14 @@ function registerIPCHandlers(): void {
   ipcMain.handle('datalayer:logout', async () => {
     // Nothing of an application's chat is signed once signed out (A-20).
     forgetAppChats();
-    // The Studio view forgets IAM's cookie with the token (DK-03).
+    // A sign-in in progress ends with the token (DK-03).
     signIn.cancel();
-    hideStudioView();
+    closeSignInWindow();
     try {
       await sdkBridge.call('logout');
     } catch {
       // Don't fail logout - silently ignore errors
     }
-    try {
-      await clearStudioSession();
-    } catch (error) {
-      log.warn(
-        `[Sign-in] The Studio view's partition (${studioViewOrigin()}) was not cleared:`,
-        error
-      );
-    }
-
     // Broadcast logged out state
     const authState = {
       isAuthenticated: false,

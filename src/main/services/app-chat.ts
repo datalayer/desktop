@@ -65,7 +65,7 @@ let lending = false;
  *
  * @returns The two base URLs.
  */
-function servicesOf(): { aiAgentsUrl: string; spacerUrl: string } {
+export function servicesOf(): { aiAgentsUrl: string; spacerUrl: string } {
   const config = sdkBridge.getConfig();
   return {
     aiAgentsUrl:

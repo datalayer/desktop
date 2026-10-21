@@ -10,7 +10,7 @@
  * never guesses what the other side meant).
  *
  * Sessions (DESKTOP §7, the day-one contract): `local-runtime:*`,
- * `sessions:*`, `approvals:*`, `dialog:*`, `shell:reveal`, `studio:open`,
+ * `sessions:*`, `approvals:*`, `dialog:*`, `shell:reveal`, `studio:*`,
  * `attention:*`. The pure logic of the rows and the merge is not here but
  * in agent-runtimes `portable/` (decision D-13); these are the shapes that
  * travel.
@@ -38,6 +38,14 @@ import type {
   SessionFilter,
   SessionPlace,
 } from '@datalayer/agent-runtimes/lib/portable/sessionList';
+import type { StudioStateChange } from '../studio';
+export type {
+  StudioApp,
+  StudioAppDocument,
+  StudioAppsListed,
+  StudioDeployment,
+  StudioStateChange,
+} from '../studio';
 
 /**
  * Authentication state shared between main and renderer processes.
@@ -97,8 +105,14 @@ export const IPC = {
   dialogOpenFile: 'dialog:open-file',
   /** `{path}` → void: the file or folder shown in Finder, Explorer or the file manager. */
   shellReveal: 'shell:reveal',
-  /** `{path}` → void: the embedded Studio navigated to a path of the landing (DK-02). */
-  studioOpen: 'studio:open',
+  /** → {@link StudioAppsListed}: the person's applications and the landing's origin (DK-02). */
+  studioApps: 'studio:apps',
+  /** `{uid}` → {@link StudioAppDocument}: one application's Appspec. */
+  studioApp: 'studio:app',
+  /** → {@link StudioDeployment}[]: the person's deployments at ai-agents. */
+  studioDeployments: 'studio:deployments',
+  /** {@link StudioStateChange} → {@link StudioDeployment}: a deployment paused or resumed, for one version. */
+  studioDeploymentState: 'studio:deployment-state',
   /** `{uid}` renderer → main (invoke, answers nothing): the session the chat shows now, or null — it is never notified (DK-14). */
   attentionFront: 'attention:front',
   /** Event main → renderer {@link AttentionFocus}: a notification or the tray was clicked; the renderer opens that session, or the approval's. */
@@ -419,15 +433,44 @@ export function readRevealPath(value: unknown): string {
   return path;
 }
 
-/** `studio:open {path}`: a path of the landing, never another origin. */
-export function readStudioPath(value: unknown): string {
-  const path = text(record(value, IPC.studioOpen), 'path', IPC.studioOpen);
-  if (!path.startsWith('/') || path.startsWith('//')) {
+/** `studio:app {uid}`: an application's uid. */
+export function readStudioAppUid(value: unknown): string {
+  const uid = text(record(value, IPC.studioApp), 'uid', IPC.studioApp);
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
     throw new Error(
-      `${IPC.studioOpen} takes a path of the Studio such as /studio/apps/<uid>, not ${JSON.stringify(path)}.`
+      `${IPC.studioApp} takes an application's uid, not ${JSON.stringify(uid)}.`
     );
   }
-  return path;
+  return uid;
+}
+
+/** `studio:deployment-state {uid, version, state}`: one exact version, live or paused. */
+export function readStudioStateChange(value: unknown): StudioStateChange {
+  const channel = IPC.studioDeploymentState;
+  const given = record(value, channel);
+  const uid = text(given, 'uid', channel);
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
+    throw new Error(
+      `${channel} takes a deployment's uid, not ${JSON.stringify(uid)}.`
+    );
+  }
+  const version = given.version;
+  if (
+    typeof version !== 'number' ||
+    !Number.isInteger(version) ||
+    version < 1
+  ) {
+    throw new Error(
+      `${channel} changes one exact version, not ${JSON.stringify(version)}.`
+    );
+  }
+  const state = given.state;
+  if (state !== 'live' && state !== 'paused') {
+    throw new Error(
+      `${channel} sets a state of live or paused, not ${JSON.stringify(state)}.`
+    );
+  }
+  return { uid, version, state };
 }
 
 /** `attention:front {uid}`: the session in front, or null for none. */

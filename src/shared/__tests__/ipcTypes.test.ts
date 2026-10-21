@@ -24,7 +24,8 @@ import {
   readPlace,
   readRevealPath,
   readSave,
-  readStudioPath,
+  readStudioAppUid,
+  readStudioStateChange,
 } from '../types/ipc.types';
 
 describe('the folders', () => {
@@ -209,16 +210,27 @@ describe('the dialogs, the shell, the Studio, the front', () => {
     expect(() => readRevealPath({ path: 'project' })).toThrow(/absolute path/);
   });
 
-  it('opens a path of the Studio, never another origin', () => {
-    expect(readStudioPath({ path: '/studio/apps/u1?tab=activity' })).toBe(
-      '/studio/apps/u1?tab=activity'
+  it('reads an application of the Studio by uid, never a path', () => {
+    expect(readStudioAppUid({ uid: 'app-1' })).toBe('app-1');
+    expect(() => readStudioAppUid({ uid: '../x' })).toThrow(
+      /an application's uid/
     );
+    expect(() => readStudioAppUid({})).toThrow(/uid/);
+  });
+
+  it('changes one exact version of a deployment, live or paused', () => {
+    expect(
+      readStudioStateChange({ uid: 'dep-1', version: 3, state: 'paused' })
+    ).toEqual({ uid: 'dep-1', version: 3, state: 'paused' });
     expect(() =>
-      readStudioPath({ path: 'https://evil.example/studio' })
-    ).toThrow(/a path of the Studio/);
-    expect(() => readStudioPath({ path: '//evil.example' })).toThrow(
-      /a path of the Studio/
-    );
+      readStudioStateChange({ uid: 'dep-1', version: 0, state: 'live' })
+    ).toThrow(/one exact version/);
+    expect(() =>
+      readStudioStateChange({ uid: 'dep-1', version: 2, state: 'gone' })
+    ).toThrow(/live or paused/);
+    expect(() =>
+      readStudioStateChange({ uid: 'a/b', version: 2, state: 'live' })
+    ).toThrow(/a deployment's uid/);
   });
 
   it('reads the session in front, or none', () => {

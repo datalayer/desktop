@@ -94,6 +94,7 @@ import {
 } from '../components/sessions/approvalsBanner';
 import { WORK_IN_FOLDER_WORDS } from '../components/sessions/workInFolder';
 import { setPageSessionWays } from '../plugins/sessionWays';
+import { OPEN_SESSION_EVENT } from './studioEvents';
 import {
   acceptedExtensionsOf,
   type ChatTarget,
@@ -314,6 +315,18 @@ const Sessions: React.FC<SessionsProps> = ({
 
   // A notification or the tray clicked: that session in front (DK-14).
   useEffect(() => window.desktopAPI.attention.onFocus(openByUid), [openByUid]);
+
+  // A session of the Studio's Activity: that session in front (DK-02).
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const uid = (event as CustomEvent<string>).detail;
+      if (typeof uid === 'string' && uid) {
+        openByUid(uid);
+      }
+    };
+    window.addEventListener(OPEN_SESSION_EVENT, listener);
+    return () => window.removeEventListener(OPEN_SESSION_EVENT, listener);
+  }, [openByUid]);
 
   // The session in front, said to the menu and to the main process.
   useEffect(() => {

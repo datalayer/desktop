@@ -147,7 +147,7 @@ export const SURFACE = 'Desktop';
 const HOST_NAME = /^[a-z][a-z0-9_]{0,62}$/;
 
 /** The format of an application's Spacer item (`loop.app.item/v1`). */
-const APP_ITEM_FORMAT = 'loop.app.item/v1';
+export const APP_ITEM_FORMAT = 'loop.app.item/v1';
 
 /** The four behaviours a rule may say. */
 const BEHAVIOURS = ['do_it', 'if_asked', 'ask_first', 'leave_to_me'];

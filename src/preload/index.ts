@@ -27,8 +27,6 @@ import type {
   MenuRendererState,
   SignInAPI,
   SignInProvider,
-  StudioAPI,
-  StudioBounds,
 } from '../shared/types/shell.types';
 import { IPC, type PendingApproval } from '../shared/types/ipc.types';
 import type { DesktopAPI } from '../shared/types/desktopApi.types';
@@ -320,7 +318,11 @@ const desktopAPI: DesktopAPI = {
     reveal: path => ipcRenderer.invoke(IPC.shellReveal, { path }),
   },
   studio: {
-    open: path => ipcRenderer.invoke(IPC.studioOpen, { path }),
+    apps: () => ipcRenderer.invoke(IPC.studioApps),
+    app: uid => ipcRenderer.invoke(IPC.studioApp, { uid }),
+    deployments: () => ipcRenderer.invoke(IPC.studioDeployments),
+    setDeploymentState: change =>
+      ipcRenderer.invoke(IPC.studioDeploymentState, change),
   },
   attention: {
     front: uid => ipcRenderer.invoke(IPC.attentionFront, { uid }),
@@ -337,8 +339,8 @@ const desktopAPI: DesktopAPI = {
 contextBridge.exposeInMainWorld('desktopAPI', desktopAPI);
 
 /**
- * Sign-in in the Studio view (DESKTOP DK-03): the main process opens IAM's
- * provider page there and keeps the token; the renderer never sees it.
+ * Sign-in (DESKTOP DK-03): the main process opens IAM's provider page in
+ * a sign-in window of its own and keeps the token; the renderer never sees it.
  */
 const signInAPI: SignInAPI = {
   start: (provider: SignInProvider) =>
@@ -353,17 +355,6 @@ const signInAPI: SignInAPI = {
   },
 };
 contextBridge.exposeInMainWorld('signInAPI', signInAPI);
-
-/**
- * The Studio, embedded (DESKTOP DK-02): shown where the renderer says,
- * hidden with its page kept, sent to a path of the Studio.
- */
-const studioAPI: StudioAPI = {
-  show: (bounds: StudioBounds) => ipcRenderer.invoke('studio:show', bounds),
-  hide: () => ipcRenderer.invoke('studio:hide'),
-  open: (path: string) => ipcRenderer.invoke('studio:open', { path }),
-};
-contextBridge.exposeInMainWorld('studioAPI', studioAPI);
 
 /**
  * The menu (DESKTOP DK-04): what the renderer shows, so the entries enable.

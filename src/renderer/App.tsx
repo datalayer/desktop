@@ -30,8 +30,8 @@ import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
 import LoadingSpinner from './components/common/LoadingSpinner';
-import StudioPane from './components/studio/StudioPane';
 import { MENU_ACTION_EVENT } from './pages/Sessions';
+import { OPEN_SESSION_EVENT, OPEN_STUDIO_EVENT } from './pages/studioEvents';
 import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
@@ -47,6 +47,7 @@ const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
 const Runtimes = lazy(() => import('./pages/Runtimes'));
 const Sessions = lazy(() => import('./pages/Sessions'));
+const Studio = lazy(() => import('./pages/Studio'));
 
 /**
  * Main application component.
@@ -210,6 +211,19 @@ const App: React.FC = () => {
       }
     };
   }, [startAllPreloads]);
+
+  // *Open in the Studio* brings the Studio to the front; a session of
+  // its Activity, the Sessions page (DESKTOP DK-02).
+  useEffect(() => {
+    const toStudio = () => setActiveTabId('studio');
+    const toSessions = () => setActiveTabId('sessions');
+    window.addEventListener(OPEN_STUDIO_EVENT, toStudio);
+    window.addEventListener(OPEN_SESSION_EVENT, toSessions);
+    return () => {
+      window.removeEventListener(OPEN_STUDIO_EVENT, toStudio);
+      window.removeEventListener(OPEN_SESSION_EVENT, toSessions);
+    };
+  }, []);
 
   // What the menu's entries do (DESKTOP DK-04): the views switched, sign
   // out; the sessions' entries are the Sessions page's (DK-07, DK-10).
@@ -404,20 +418,26 @@ const App: React.FC = () => {
           </Box>
         ))}
 
-        {/* The Studio, embedded (DESKTOP DK-02): the main process's view,
-            shown over this pane while the tab is in front */}
-        {activeTabId === 'studio' && (
-          <Box
-            sx={{
-              display: 'flex',
-              flex: 1,
-              minHeight: 0,
-              height: '100%',
-            }}
+        {/* The Studio, native (DESKTOP DK-02): the person's applications,
+            Build, Try, Activity and Deployments */}
+        <Box
+          sx={{
+            display: activeTabId === 'studio' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          <Suspense
+            fallback={
+              <LoadingSpinner
+                variant="inline"
+                message="Loading the Studio..."
+              />
+            }
           >
-            <StudioPane />
-          </Box>
-        )}
+            <Studio isAuthenticated={isAuthenticated} user={user} />
+          </Suspense>
+        </Box>
 
         {/* Library view */}
         <Box

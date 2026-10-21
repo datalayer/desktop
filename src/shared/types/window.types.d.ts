@@ -87,11 +87,8 @@ declare global {
       removeAuthStateListener: () => void;
     };
 
-    /** Sign-in in the Studio view (DESKTOP DK-03). */
+    /** The provider sign-in, in a window of its own (DESKTOP DK-03). */
     signInAPI: import('./shell.types').SignInAPI;
-
-    /** The Studio, embedded (DESKTOP DK-02). */
-    studioAPI: import('./shell.types').StudioAPI;
 
     /** The menu's state from the renderer (DESKTOP DK-04). */
     menuAPI: import('./shell.types').MenuAPI;

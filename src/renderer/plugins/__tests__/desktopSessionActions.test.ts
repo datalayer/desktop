@@ -22,7 +22,6 @@ import {
   DESKTOP_SESSION_ACTION_WORDS,
   desktopSessionActions,
   type DesktopSessionWays,
-  studioActivityPath,
 } from '../desktopSessionActions';
 
 const LOCAL: SessionPlace = {
@@ -170,10 +169,7 @@ describe('what each does', () => {
     await reveal.run(facts(), ctx);
     await studio.run(facts(), ctx);
     expect(w.reveal).toHaveBeenCalledWith('/w/app');
-    expect(w.openStudio).toHaveBeenCalledWith(
-      '/studio/apps/app-1?tab=activity'
-    );
-    expect(studioActivityPath('a b')).toBe('/studio/apps/a%20b?tab=activity');
+    expect(w.openStudio).toHaveBeenCalledWith('app-1');
     expect(said).toEqual([
       '/w/app is shown in the Finder.',
       'Fix the tests is listed on Activity, with every session of the application.',

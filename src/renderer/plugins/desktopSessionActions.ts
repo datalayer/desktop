@@ -9,12 +9,12 @@
  * agent…*, *Clone from here*, *Export*, *Import…*, *Resume*): *Rename…*,
  * *Archive* and *End* on the session API, *Reveal in Finder* for a session
  * on this machine (its folder, shown by the OS) and *Open in the Studio*
- * for a session of an application (its Activity, in the embedded Studio).
+ * for a session of an application (its Activity, in the Studio tab).
  * The same entries are drawn in the chat's `⋯` menu and in the list's row
  * menu, from the one registry; nothing of the menu is copied here.
  *
  * Each entry does its work through the ways the page lends it (a text
- * asked, the OS's Finder, the Studio view) and says what it did; a refusal
+ * asked, the OS's Finder, the Studio tab) and says what it did; a refusal
  * of the runtime is thrown as the runtime said it, and the menu shows it
  * whole.
  *
@@ -47,11 +47,6 @@ export const DESKTOP_SESSION_ACTION_WORDS = {
     `${title || 'This conversation'} is listed on Activity, with every session of the application.`,
 } as const;
 
-/** Where the Studio lists an application's sessions: its Activity tab. */
-export function studioActivityPath(appUid: string): string {
-  return `/studio/apps/${encodeURIComponent(appUid)}?tab=activity`;
-}
-
 /** The ways the page lends the entries. */
 export interface DesktopSessionWays {
   /** The place of a session the page lists or opened; `undefined` for one it does not know. */
@@ -60,8 +55,8 @@ export interface DesktopSessionWays {
   askText: (title: string, value: string) => Promise<string | undefined>;
   /** Show a folder in the OS's file browser (`shell:reveal`). */
   reveal: (path: string) => Promise<void>;
-  /** Open a page of the Studio in the embedded view (`studio:open`). */
-  openStudio: (path: string) => Promise<void>;
+  /** Bring the Studio tab to the front on an application's Activity. */
+  openStudio: (appUid: string) => Promise<void>;
 }
 
 /** An entry's order among the chat's five (10 to 40) and the landing's (90). */
@@ -144,7 +139,7 @@ export function revealInFinderAction(
   };
 }
 
-/** *Open in the Studio*: the application's Activity, in the embedded Studio. */
+/** *Open in the Studio*: the application's Activity, in the Studio tab. */
 export function openInStudioAction(
   ways: Pick<DesktopSessionWays, 'openStudio'>
 ): SessionActionContribution {
@@ -154,7 +149,7 @@ export function openInStudioAction(
     order: ORDER.openStudio,
     when: session => Boolean(session.appUid),
     run: async (session, context) => {
-      await ways.openStudio(studioActivityPath(session.appUid));
+      await ways.openStudio(session.appUid);
       context.say(DESKTOP_SESSION_ACTION_WORDS.opened(session.title));
     },
   };
