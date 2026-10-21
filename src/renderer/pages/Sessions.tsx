@@ -8,7 +8,9 @@
  * after sign-in: the person's sessions on Datalayer and on this machine in
  * one list on the left (the main process's `sessions:list`, merged and
  * grouped by place then application, filtered, paged), the chat on the
- * right, one session in front. *Work in a folder…* starts a coding agent
+ * right, one session in front — with none in front, the home pane: the
+ * two ways to start one, front and centre, and the five most recent
+ * sessions to pick up again. *Work in a folder…* starts a coding agent
  * in a folder of theirs on a local runtime; *New session on Datalayer…*
  * opens one on an application kept always on; a row opens its session in
  * the chat, a paused one resumed on the folder's runtime started if need
@@ -100,6 +102,7 @@ import {
   localPlaceOf,
   openDecision,
   PAGE_SIZE,
+  recentEntries,
   SESSIONS_WORDS,
 } from './sessionsPage';
 
@@ -580,6 +583,12 @@ const Sessions: React.FC<SessionsProps> = ({
     [listed, shown]
   );
 
+  // The home pane's sessions to pick up again, when none is in front.
+  const recent = useMemo(
+    () => (listed ? recentEntries(listed.places) : []),
+    [listed]
+  );
+
   return (
     <Box
       sx={{ display: 'flex', height: '100%', minHeight: 0 }}
@@ -809,15 +818,84 @@ const Sessions: React.FC<SessionsProps> = ({
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
                 p: 3,
+                overflow: 'auto',
               }}
+              data-testid="sessions-home"
             >
-              <Text sx={{ color: 'fg.muted' }}>
-                {SESSIONS_WORDS.pickASession}
-              </Text>
+              <Box sx={{ width: '100%', maxWidth: 560 }}>
+                <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+                  {SESSIONS_WORDS.homeTitle}
+                </Heading>
+                <Text as="p" sx={{ color: 'fg.muted', mt: 0, mb: 3 }}>
+                  {SESSIONS_WORDS.homeSays}
+                </Text>
+                <ActionList
+                  showDividers
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'border.default',
+                    borderRadius: 2,
+                  }}
+                >
+                  <ActionList.Item onSelect={() => setWorkInFolder(true)}>
+                    <ActionList.LeadingVisual>
+                      <FileDirectoryIcon />
+                    </ActionList.LeadingVisual>
+                    {SESSIONS_WORDS.workInFolder}
+                    <ActionList.Description variant="block">
+                      {SESSIONS_WORDS.homeWorkInFolder}
+                    </ActionList.Description>
+                  </ActionList.Item>
+                  <ActionList.Item
+                    disabled={!isAuthenticated}
+                    onSelect={() => setPickDeployment(true)}
+                  >
+                    <ActionList.LeadingVisual>
+                      <PlusIcon />
+                    </ActionList.LeadingVisual>
+                    {SESSIONS_WORDS.newOnDatalayer}
+                    <ActionList.Description variant="block">
+                      {isAuthenticated
+                        ? SESSIONS_WORDS.homeOnDatalayer
+                        : SESSIONS_WORDS.signedOut}
+                    </ActionList.Description>
+                  </ActionList.Item>
+                </ActionList>
+                {recent.length > 0 ? (
+                  <>
+                    <Heading as="h3" sx={{ fontSize: 1, mt: 4, mb: 1 }}>
+                      {SESSIONS_WORDS.recentTitle}
+                    </Heading>
+                    <ActionList aria-label={SESSIONS_WORDS.recentTitle}>
+                      {recent.map(entry => (
+                        <ActionList.Item
+                          key={`recent-${placeLabel(entry.place)}-${entry.row.uid}`}
+                          onSelect={() => void openEntry(entry)}
+                          data-recent-session={entry.row.uid}
+                        >
+                          {rowLabel(entry.row)}
+                          <ActionList.Description variant="block">
+                            {placeLabel(entry.place)} ·{' '}
+                            {entryDescription(entry)}
+                          </ActionList.Description>
+                        </ActionList.Item>
+                      ))}
+                    </ActionList>
+                  </>
+                ) : (
+                  <Text
+                    as="p"
+                    sx={{ color: 'fg.muted', fontSize: 0, mt: 3, mb: 0 }}
+                  >
+                    {SESSIONS_WORDS.pickASession}
+                  </Text>
+                )}
+              </Box>
             </Box>
           )}
         </Box>

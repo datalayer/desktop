@@ -29,6 +29,8 @@ import {
   localPlaceOf,
   openDecision,
   PAGE_SIZE,
+  RECENT_SIZE,
+  recentEntries,
   SESSIONS_WORDS,
 } from '../sessionsPage';
 
@@ -106,6 +108,73 @@ describe('the list paged', () => {
     );
     expect(entriesByUid(places).get('a')?.place).toEqual(DATALAYER);
     expect(entriesByUid(places).has('zzz')).toBe(false);
+  });
+});
+
+describe('the home pane, when no session is in front', () => {
+  it('offers the newest sessions of both places, neither ended nor archived', () => {
+    const places = mergePlaces([
+      {
+        place: DATALAYER,
+        sessions: [
+          listed({ uid: 'd-old', started_at: '2026-10-01T09:00:00Z' }),
+          listed({
+            uid: 'd-ended',
+            state: 'ended',
+            started_at: '2026-10-21T09:00:00Z',
+          }),
+        ],
+      },
+      {
+        place: LOCAL,
+        sessions: [
+          listed(
+            { uid: 'l-new', started_at: '2026-10-20T09:00:00Z' },
+            '/home/me/work/app'
+          ),
+          listed(
+            {
+              uid: 'l-archived',
+              archived: true,
+              started_at: '2026-10-21T10:00:00Z',
+            },
+            '/home/me/work/app'
+          ),
+          listed(
+            {
+              uid: 'l-mid',
+              state: 'paused',
+              started_at: '2026-10-10T09:00:00Z',
+            },
+            '/home/me/work/app'
+          ),
+        ],
+      },
+    ]);
+    expect(recentEntries(places).map(entry => entry.row.uid)).toEqual([
+      'l-new',
+      'l-mid',
+      'd-old',
+    ]);
+    expect(recentEntries(places)[0].place).toEqual(LOCAL);
+    expect(recentEntries(places, 1).map(entry => entry.row.uid)).toEqual([
+      'l-new',
+    ]);
+    expect(recentEntries([])).toEqual([]);
+  });
+
+  it('offers five at most', () => {
+    const many = Array.from({ length: RECENT_SIZE + 3 }, (_, i) =>
+      listed(
+        { uid: `r-${i}`, started_at: `2026-10-${10 + i}T09:00:00Z` },
+        '/home/me/work/app'
+      )
+    );
+    const recent = recentEntries(
+      mergePlaces([{ place: LOCAL, sessions: many }])
+    );
+    expect(recent).toHaveLength(RECENT_SIZE);
+    expect(recent[0].row.uid).toBe(`r-${RECENT_SIZE + 2}`);
   });
 });
 

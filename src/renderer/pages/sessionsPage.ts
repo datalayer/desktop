@@ -47,6 +47,14 @@ export const SESSIONS_WORDS = {
   startingRuntime: (folder: string): string =>
     `Starting the local runtime of ${folder}…`,
   pickASession: 'Pick a session on the left, or start one.',
+  homeTitle: 'Start a session',
+  homeSays:
+    'A coding agent in a folder of yours on this machine, or an application of yours kept always on on Datalayer.',
+  homeWorkInFolder:
+    'Claude Code, Codex or another harness, in a folder you pick, behind the Shield.',
+  homeOnDatalayer:
+    'The agent of an application you shipped and keep always on.',
+  recentTitle: 'Recent sessions',
   signedOut: 'Sign in to Datalayer to see your sessions there.',
   workInFolder: 'Work in a folder…',
   newOnDatalayer: 'New session on Datalayer…',
@@ -104,6 +112,24 @@ export function entriesByUid(
     }
   }
   return entries;
+}
+
+/** How many sessions the home pane offers to pick up again. */
+export const RECENT_SIZE = 5;
+
+/**
+ * The sessions the home pane offers to pick up again, when none is in
+ * front: the newest first by when they started, neither ended nor
+ * archived, at most `size` of them across both places.
+ */
+export function recentEntries(
+  places: readonly PlaceGroup[],
+  size: number = RECENT_SIZE
+): SessionEntry[] {
+  return [...entriesByUid(places).values()]
+    .filter(entry => entry.row.state !== 'ended' && !entry.row.archived)
+    .sort((a, b) => b.row.startedAt.localeCompare(a.row.startedAt))
+    .slice(0, Math.max(size, 0));
 }
 
 /** The last segment of a folder's path. */
