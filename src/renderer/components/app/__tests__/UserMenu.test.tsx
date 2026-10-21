@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UserMenu from '../UserMenu';
 import type { User } from '../../../../shared/types';
@@ -415,6 +415,27 @@ describe('UserMenu', () => {
 
       const button = screen.getByRole('button', { name: /user menu/i });
       expect(button).toBeInTheDocument();
+    });
+
+    it("draws the handle's initial when there is no avatar", () => {
+      render(
+        <UserMenu {...defaultProps} user={{ ...mockUser, avatarUrl: '' }} />
+      );
+
+      const button = screen.getByRole('button', { name: /user menu/i });
+      expect(button.querySelector('img')).toBeNull();
+      expect(button).toHaveTextContent('J');
+    });
+
+    it("draws the handle's initial when the picture fails to load", () => {
+      render(<UserMenu {...defaultProps} />);
+
+      const button = screen.getByRole('button', { name: /user menu/i });
+      const img = button.querySelector('img');
+      expect(img).not.toBeNull();
+      fireEvent.error(img as HTMLImageElement);
+      expect(button.querySelector('img')).toBeNull();
+      expect(button).toHaveTextContent('J');
     });
 
     it('should handle multiple rapid menu toggles', async () => {

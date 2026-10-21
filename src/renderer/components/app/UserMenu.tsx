@@ -10,8 +10,10 @@
  */
 
 import React, { useEffect } from 'react';
-import { Header, Button, Avatar, Box, Text } from '@primer/react';
+import { Header, Button, Box, Text } from '@primer/react';
+import { EntityAvatar } from '@datalayer/primer-addons';
 import { UserMenuProps } from '../../../shared/types';
+import { avatarInitialOf, avatarSourceOf } from './userAvatar';
 
 /**
  * User menu dropdown component for the application header.
@@ -48,6 +50,20 @@ const UserMenu: React.FC<UserMenuProps> = ({
     onOpenChange(false);
   };
 
+  // The picture when it loads, the initial when there is none or it fails.
+  const avatar = (
+    <EntityAvatar
+      src={avatarSourceOf(user.avatarUrl)}
+      alt=""
+      size={32}
+      shape="circle"
+      ground="emphasis"
+      sx={{ flexShrink: 0 }}
+    >
+      {avatarInitialOf(user)}
+    </EntityAvatar>
+  );
+
   // Toggle user menu visibility
   const handleMenuToggle = () => {
     onOpenChange(!isOpen);
@@ -73,16 +89,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
           },
         }}
       >
-        <Avatar
-          src={user.avatarUrl}
-          size={32}
-          alt=""
-          sx={{
-            borderRadius: '50%',
-            objectFit: 'cover',
-            flexShrink: 0,
-          }}
-        />
+        {avatar}
       </Button>
 
       {isOpen && (
@@ -113,16 +120,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
               gap: 2,
             }}
           >
-            <Avatar
-              src={user.avatarUrl}
-              size={32}
-              alt=""
-              sx={{
-                borderRadius: '50%',
-                objectFit: 'cover',
-                flexShrink: 0,
-              }}
-            />
+            {avatar}
             <Box>
               <Text
                 sx={{
