@@ -176,12 +176,12 @@ test('an approval raised on this machine is answered from the chat’s banner, a
   });
   // The banner's own Review (another page may hold a hidden one).
   await window
-    .getByRole('button', { name: 'Review' })
+    .getByRole('button', { name: 'Review', exact: true })
     .filter({ visible: true })
     .first()
     .click();
   await window
-    .getByRole('button', { name: 'Deny' })
+    .getByRole('button', { name: 'Deny', exact: true })
     .filter({ visible: true })
     .first()
     .click();
