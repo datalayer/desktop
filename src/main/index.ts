@@ -288,7 +288,8 @@ function registerIPCHandlers(): void {
 
   // New method to get current auth state (includes user data)
   ipcMain.handle('datalayer:get-auth-state', async () => {
-    // Use the SDK bridge's getAuthState which checks stored tokens
+    // A stored token kept while IAM did not answer is checked again first.
+    await sdkBridge.retryRestore();
     return sdkBridge.getAuthState();
   });
 

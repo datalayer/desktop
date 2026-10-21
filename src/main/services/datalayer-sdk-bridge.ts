@@ -28,6 +28,8 @@ export class DatalayerSDKBridge {
   private initialized = false;
   private _tokenPath?: string; // Lazy-loaded
   private currentUser: UserJSON | null = null;
+  /** A stored token kept because IAM did not answer at its last check. */
+  private restorePending = false;
 
   /**
    * Get the token storage path (lazy-loaded).
@@ -83,43 +85,74 @@ export class DatalayerSDKBridge {
       // Try to restore stored token on startup
       const storedToken = this.loadStoredToken();
       if (storedToken) {
-        try {
-          log.info(
-            '[SDK Bridge] Found stored token, attempting to restore authentication...'
-          );
-          await this.sdk.setToken(storedToken);
-
-          // Verify the token is still valid
-          const user = await this.sdk.whoami();
-          // Use the User model's toJSON method to get all properties
-          const userJson = user.toJSON();
-          this.currentUser = userJson;
-          log.info(
-            '[SDK Bridge] Successfully restored authentication for user:',
-            {
-              email: userJson.email,
-              firstName: userJson.firstName,
-              lastName: userJson.lastName,
-              avatarUrl: userJson.avatarUrl,
-              handle: userJson.handle,
-            }
-          );
-        } catch (error) {
-          // The reason is said (never the token): an expired token, an IAM
-          // that did not answer, a profile the SDK refused.
-          log.warn(
-            `[SDK Bridge] Stored token is invalid, clearing: ${error instanceof Error ? error.message : String(error)}`
-          );
-          this.clearStoredToken();
-          this.currentUser = null;
-          await this.sdk.setToken('');
-        }
+        await this.restore(storedToken);
       } else {
         log.info('[SDK Bridge] No stored authentication found');
       }
 
       log.info('[SDK Bridge] Initialized with direct SDK access');
     }
+  }
+
+  /**
+   * Restore the session from a stored token. Only IAM refusing the token —
+   * expired, 401, 403 — clears it: an IAM that did not answer (offline, a
+   * 5xx, a timeout) keeps it, and the restore is tried again the next time
+   * the window asks for the auth state (`retryRestore`), so a launch without
+   * a network no longer signs the person out.
+   * @param storedToken - The token kept from the last sign-in
+   */
+  private async restore(storedToken: string): Promise<void> {
+    try {
+      log.info(
+        '[SDK Bridge] Found stored token, attempting to restore authentication...'
+      );
+      await this.sdk.setToken(storedToken);
+
+      // Verify the token is still valid
+      const user = await this.sdk.whoami();
+      // Use the User model's toJSON method to get all properties
+      const userJson = user.toJSON();
+      this.currentUser = userJson;
+      this.restorePending = false;
+      log.info('[SDK Bridge] Successfully restored authentication for user:', {
+        email: userJson.email,
+        firstName: userJson.firstName,
+        lastName: userJson.lastName,
+        avatarUrl: userJson.avatarUrl,
+        handle: userJson.handle,
+      });
+    } catch (error) {
+      // The reason is said (never the token).
+      const reason = error instanceof Error ? error.message : String(error);
+      this.currentUser = null;
+      if (isTokenRefused(error)) {
+        log.warn(`[SDK Bridge] Stored token was refused, clearing: ${reason}`);
+        this.restorePending = false;
+        this.clearStoredToken();
+        await this.sdk.setToken('');
+      } else {
+        log.warn(
+          `[SDK Bridge] Could not check the stored token, keeping it to try again: ${reason}`
+        );
+        this.restorePending = true;
+      }
+    }
+  }
+
+  /**
+   * Try the restore again when the last one could not reach IAM.
+   */
+  async retryRestore(): Promise<void> {
+    if (!this.restorePending || this.currentUser) {
+      return;
+    }
+    const storedToken = this.loadStoredToken();
+    if (!storedToken) {
+      this.restorePending = false;
+      return;
+    }
+    await this.restore(storedToken);
   }
 
   /**
@@ -362,6 +395,23 @@ export class DatalayerSDKBridge {
     const config = this.sdk.getConfig();
     return !!config.token && !!this.currentUser;
   }
+}
+
+/**
+ * Whether IAM refused a token, rather than failed to answer: the SDK's own
+ * expiry check, or a 401/403 response.
+ * @param error - What the check threw
+ */
+export function isTokenRefused(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  if ((error as { name?: unknown }).name === 'TokenExpiredError') {
+    return true;
+  }
+  const status = (error as { response?: { status?: unknown } }).response
+    ?.status;
+  return status === 401 || status === 403;
 }
 
 /**
