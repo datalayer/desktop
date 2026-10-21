@@ -178,10 +178,12 @@ test('an approval raised on this machine is answered from the chat’s banner, a
   await window
     .getByRole('button', { name: 'Review' })
     .filter({ visible: true })
+    .first()
     .click();
   await window
     .getByRole('button', { name: 'Deny' })
     .filter({ visible: true })
+    .first()
     .click();
 
   // The decision went over the runtime's websocket, as the runtime took it.
