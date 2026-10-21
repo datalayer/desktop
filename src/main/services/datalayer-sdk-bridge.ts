@@ -104,8 +104,12 @@ export class DatalayerSDKBridge {
               handle: userJson.handle,
             }
           );
-        } catch {
-          log.warn('[SDK Bridge] Stored token is invalid, clearing...');
+        } catch (error) {
+          // The reason is said (never the token): an expired token, an IAM
+          // that did not answer, a profile the SDK refused.
+          log.warn(
+            `[SDK Bridge] Stored token is invalid, clearing: ${error instanceof Error ? error.message : String(error)}`
+          );
           this.clearStoredToken();
           this.currentUser = null;
           await this.sdk.setToken('');

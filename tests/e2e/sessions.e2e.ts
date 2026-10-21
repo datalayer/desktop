@@ -96,19 +96,22 @@ test('the Sessions page lists this machine’s sessions, and a row opens in the 
   await tab(window, 'Sessions').click();
   const page = window.getByTestId('sessions');
   await expect(page).toBeVisible({ timeout: 30_000 });
-  // The stub's planted sessions, listed from the last folder's runtime.
-  await expect(page.getByText('Rename the helpers')).toBeVisible({
-    timeout: 90_000,
-  });
-  await expect(page.getByText('Add the changelog')).toBeVisible();
+  // The stub's planted sessions, listed from the last folder's runtime —
+  // each a row of the list (the home pane names recent ones too).
+  const first = page.locator('[data-session-row="stub00000001"]');
+  await expect(first).toBeVisible({ timeout: 90_000 });
+  await expect(first).toContainText('Rename the helpers');
+  await expect(page.locator('[data-session-row="stub00000002"]')).toContainText(
+    'Add the changelog'
+  );
   await expect(page.getByText(/on this machine/).first()).toBeVisible();
   // The page drew its groups — a place and its application, as headings.
   await expect(
     page.getByRole('heading', { name: /On this machine/ }).first()
   ).toBeVisible();
-  await page.getByText('Rename the helpers').click();
+  await first.click();
   // The conversation: the stub's two messages drawn by the chat.
-  await expect(window.getByText('The stub answers.')).toBeVisible({
+  await expect(window.getByText('The stub answers.').first()).toBeVisible({
     timeout: 60_000,
   });
 });

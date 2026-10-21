@@ -59,9 +59,9 @@ test('created the Studio view hidden, in its own partition, on the landing’s H
 test('the menu, signed out: no session on Datalayer, no sign-out, no stop', async () => {
   const menu = await menuLabels(launched.app);
   expect(Object.keys(menu)).toEqual([
-    'File',
-    'Edit',
     'Sessions',
+    'Edit',
+    'File',
     'View',
     'Help',
   ]);
