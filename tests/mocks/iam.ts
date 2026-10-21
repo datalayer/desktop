@@ -24,7 +24,7 @@
  * @module tests/mocks/iam
  */
 
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 
 /** What a started stub IAM gives the test. */
@@ -133,7 +133,11 @@ export async function startStubIam(
           email_s: profile.email,
           first_name_t: profile.firstName,
           last_name_t: profile.lastName,
-          avatar_url_s: '',
+          // IAM always says one (Gravatar's, from the email); @datalayer/core
+          // refuses a profile without it.
+          avatar_url_s: `https://www.gravatar.com/avatar/${createHash('md5')
+            .update(profile.email)
+            .digest('hex')}`,
         },
       });
     }
