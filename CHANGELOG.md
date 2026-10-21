@@ -7,8 +7,8 @@ A desktop that supports chat sessions.
 - **Sessions**: your sessions on Datalayer and on this machine in one list; one chat for both places with *Resume*, *Switch agent…*, *Clone from here*, *Export*, *Import…*, *Reveal in Finder* and *Open in the Studio*.
 - **A coding agent in your folder**: *File → Work in a folder…* starts Claude Code or Codex in a folder of yours on a local runtime (`loop`, installed on your machine at 1.5.70 or later: `uv tool install 'agent-runtimes[shield]'`), behind the Shield, with your folder's instructions file kept.
 - **Waiting for you**: approvals answered in the chat; the OS notification, the dock badge and the tray for the sessions that are not in front.
-- **Sign in** with GitHub or Google inside the app, the app and the embedded Studio signed in together; the typed token stays as the second way. No page of the app receives the token any more (the credentials bridge of 0.0.x is gone).
-- **The Studio tab**: the Datalayer web app embedded, in a session of its own.
+- **Sign in** with GitHub or Google in a small sign-in window of the app; the typed token stays as the second way. No page of the app receives the token any more (the credentials bridge of 0.0.x is gone).
+- **The Studio tab**: the app's own page — your applications, each with its Appspec (Build), its chat (Try), its sessions with their lineage (Activity) and its deployments paused and resumed (Deployments); the rest opens on datalayer.ai.
 - **The menu**: File, Sessions, View and Help say what the app can do, with shortcuts.
 - **The suite**: vitest 3.2; a Playwright e2e suite under `tests/e2e/` launched from the build with a stub `loop` and a stub sign-in, run in CI on Linux.
 - `@datalayer/agent-runtimes` 1.5.73 (its `lib/` loads under Node, its files install whole on macOS and Windows) and the matching Datalayer packages.

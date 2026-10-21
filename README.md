@@ -4,7 +4,7 @@
 
 # ☰ 🖥️ Datalayer Desktop
 
-A desktop that supports chat sessions: the sessions you opened on Datalayer and on this machine in one list, each one resumed, swapped to another agent, cloned, exported and imported; a new one started with an application of yours on Datalayer, or with a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, its approvals answered in the app and said by your OS. The Datalayer Agent Studio comes embedded. Notebooks and documents on cloud runtimes stay as they were.
+A desktop that supports chat sessions: the sessions you opened on Datalayer and on this machine in one list, each one resumed, swapped to another agent, cloned, exported and imported; a new one started with an application of yours on Datalayer, or with a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, its approvals answered in the app and said by your OS. Your applications are in the Studio tab: their Appspec, their chat, their sessions and their deployments. Notebooks and documents on cloud runtimes stay as they were.
 
 ## ✨ What it does
 
@@ -16,9 +16,16 @@ A desktop that supports chat sessions: the sessions you opened on Datalayer and 
 - **Waiting for you.** When a rule says *ask me first*, the request appears whole in the chat — a write's diff, a command — and is approved or declined there. With another window in front, your OS shows a notification naming the application and the action's class (never its arguments), the dock badge counts the sessions waiting, the tray lists them.
 - **Nothing syncs silently.** A session moves between the places by *Export* (a `<uid>.session.jsonl` file where you choose) and *Import…* (the place asked each time).
 
-### The Studio, embedded
+### The Studio
 
-The **Studio** tab is the Datalayer web app itself, signed in with the app: Build, Try, Validate, Ship, Activity and Usage as on the site, voice and avatars included. Nothing of it is rebuilt here.
+The **Studio** tab is the app's own page, not a web page: your applications, newest first, each with what its deployments say. Pick one:
+
+- **Build** shows its Appspec — its kind, agent, model, skills, connections and rules, and the Appspec itself as YAML — read-only.
+- **Try** opens its chat on the runtime a deployment of it is kept on (turn on *Always on* in its Ship tab), with its approvals answered in the chat; or says why it cannot be talked to here.
+- **Activity** lists its sessions, on Datalayer and on this machine, with where each comes from (cloned, imported); a row opens the session on the Sessions page.
+- **Deployments** lists each deployment's state, version and runtime, with *Pause* and *Resume* for the version it runs.
+
+Editing an application, Validate, Ship, the Preview of a draft and usage are on datalayer.ai: each section has *Open on datalayer.ai*, and *New application on datalayer.ai* is above the list. *Open in the Studio* on a session opens its application's Activity here.
 
 ### Notebooks, documents, runtimes
 
@@ -63,7 +70,7 @@ For the agent itself (Claude Code, Codex), the app checks what the agent needs �
 
 1. **Download and Install** the application for your operating system.
 2. **Launch** Datalayer Desktop.
-3. **Sign in** - *Sign in with GitHub* or *Sign in with Google* opens Datalayer's sign-in inside the app; the app and the embedded Studio are signed in together. A token typed with its Run URL (*or with a token*, under the buttons) is the second way, for a self-hosted Datalayer or a machine without the browser flow. Your token is held by the app's main process only and kept in your OS keychain; no page of the app ever receives it.
+3. **Sign in** - *Sign in with GitHub* or *Sign in with Google* opens Datalayer's sign-in in a small window of the app, closed once you are signed in. A token typed with its Run URL (*or with a token*, under the buttons) is the second way, for a self-hosted Datalayer or a machine without the browser flow. Your token is held by the app's main process only and kept in your OS keychain; no page of the app ever receives it.
 4. **Sessions** - the app opens on your sessions: the ones on Datalayer, and *No session on this machine yet — File → Work in a folder…* until you open a folder.
 5. **Work in a folder** - *File → Work in a folder…*, pick a folder, Claude Code and the blank harness application: the session's first line says your folder's instructions file is kept. Ask for an edit: the diff appears in the chat and the file changes in your folder. When a rule asks you first, decide in the chat.
 6. **A session on Datalayer** - *File → New session on Datalayer…* lists your applications kept always on (turn on *Always on* in the application's Ship tab in the Studio); pick one and talk to it in the same chat. A session listed *on Datalayer* opens on the kept runtime of its application; one whose application is not kept always on says so.
@@ -89,7 +96,7 @@ npm install
 npm start                            # development mode, hot reload, DevTools
 ```
 
-`DATALAYER_IAM_URL` points the app at another Datalayer; `DATALAYER_LANDING_URL` at another Studio (the development server, `http://localhost:3063`, is used in development by default).
+`DATALAYER_IAM_URL` points the app at another Datalayer; `DATALAYER_LANDING_URL` at another site for what the Studio tab opens on the web (the development server, `http://localhost:3063`, is used in development by default).
 
 ### Tests
 
@@ -99,7 +106,7 @@ npm run build         # the app's bundle (not an installer)
 npm run test:e2e      # Playwright: the app launched from its build with a stub `loop` and a stub sign-in
 ```
 
-The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/loop` stands in for `loop`, `tests/mocks/iam.ts` for Datalayer's sign-in and the Studio. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
+The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/loop` stands in for `loop`, `tests/mocks/iam.ts` for Datalayer's sign-in and the Studio's services. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
 
 ### The pass before 0.1.0
 

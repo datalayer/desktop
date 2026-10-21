@@ -5,7 +5,7 @@
 
 /**
  * Sign in with a provider (DESKTOP DK-03): GitHub or Google, opened by
- * the main process in the Studio view; the renderer only asks, and shows
+ * the main process in a sign-in window; the renderer only asks, and shows
  * the sentence a sign-in ended in when it did not sign the person in.
  *
  * @module renderer/components/auth/ProviderButtons

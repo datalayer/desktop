@@ -15,14 +15,14 @@ tests/
 │   ├── websocket.ts          # WebSocket and proxy mocks
 │   ├── loop.ts, loop, loop.cmd # The stub `loop` (a local runtime from fixtures)
 │   ├── loop.test.ts          # The stub's own tests
-│   └── iam.ts                # The stub IAM and landing (sign-in, the Studio)
+│   └── iam.ts                # The stub IAM, Spacer and ai-agents (sign-in, the Studio)
 ├── fixtures/                  # Test data
 │   └── index.ts              # Mock users, environments, runtimes, etc.
 └── e2e/                       # Playwright: the app launched from its build
-    ├── app.ts                # launchApp, signInWithToken, studioView, menuLabels
-    ├── launch.e2e.ts         # the window, the Studio view, the menu, no token in a renderer
-    ├── sign-in.e2e.ts        # a provider in the Studio view, the typed token, sign-out, a relaunch
-    ├── studio.e2e.ts         # the Studio tab shows and hides the view
+    ├── app.ts                # launchApp, signInWithToken, windowUrls, menuLabels
+    ├── launch.e2e.ts         # the window, no web page embedded, the menu, no token in a renderer
+    ├── sign-in.e2e.ts        # a provider in the sign-in window, the typed token, sign-out, a relaunch
+    ├── studio.e2e.ts         # the Studio tab: applications, Build, Try, Activity, Deployments
     └── sessions.e2e.ts       # the Sessions page lists and a row opens
 ```
 

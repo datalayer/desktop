@@ -12,8 +12,7 @@
  * `local-runtime:changed`, `sessions:changed`, `approvals:changed` and
  * `attention:focus` sent to the window; the runtime of the last folder
  * worked in started at launch (O-7); every runtime stopped when the app
- * quits. `studio:open` is the Studio view's (DK-02) and is not handled
- * here.
+ * quits. The `studio:*` channels are the Studio's (`studio.ts`).
  *
  * @module main/services/sessions-ipc
  */
