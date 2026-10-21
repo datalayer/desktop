@@ -457,6 +457,17 @@ export interface ElectronAPI {
 export interface DatalayerIPCClient {
   // Authentication methods - return void on success, throw on error
   login: (token: string) => Promise<void>;
+  /** A handle and a password, exchanged for a token by the main process. */
+  loginWithPassword: (
+    runUrl: string,
+    handle: string,
+    password: string
+  ) => Promise<{
+    isAuthenticated: boolean;
+    user: UserJSON | null;
+    token: string | null;
+    runUrl: string;
+  }>;
   logout: () => Promise<void>;
 
   // Auth state - returns complete auth state with user data
