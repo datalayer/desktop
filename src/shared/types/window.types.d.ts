@@ -87,6 +87,15 @@ declare global {
       removeAuthStateListener: () => void;
     };
 
+    /** Sign-in in the Studio view (DESKTOP DK-03). */
+    signInAPI: import('./shell.types').SignInAPI;
+
+    /** The Studio, embedded (DESKTOP DK-02). */
+    studioAPI: import('./shell.types').StudioAPI;
+
+    /** The menu's state from the renderer (DESKTOP DK-04). */
+    menuAPI: import('./shell.types').MenuAPI;
+
     /**
      * Loro collaboration API for Lexical document editing.
      * Provides WebSocket connectivity for real-time CRDT collaboration.

@@ -34,6 +34,10 @@ import {
   lendTokenToAppChats,
   listAppChatDeployments,
 } from './services/app-chat';
+import {
+  registerSessionsIpc,
+  startSessionsServices,
+} from './services/sessions-ipc';
 
 // Type definitions
 interface VersionInfo {
@@ -622,6 +626,9 @@ async function main(): Promise<void> {
 
     // Register all IPC handlers
     registerIPCHandlers();
+    // The sessions' handlers: the local runtime, the two lists, the
+    // approvals, the dialogs (DESKTOP §7's contract).
+    registerSessionsIpc();
 
     // Lend the person's token to the chats of their applications only (A-20)
     lendTokenToAppChats();
@@ -631,6 +638,10 @@ async function main(): Promise<void> {
 
     // Initialize the application
     await Application.initialize();
+
+    // The approvals' sources and the last folder's runtime (DESKTOP DK-05,
+    // DK-13, DK-14); its refusal is logged, never shown at launch.
+    void startSessionsServices();
 
     // Check for stored authentication and broadcast if authenticated
     const authState = sdkBridge.getAuthState();

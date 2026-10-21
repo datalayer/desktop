@@ -27,7 +27,7 @@ import type {
   SessionActionContribution,
   SessionFacts,
 } from '@datalayer/agent-runtimes/lib/apps/core';
-import type { SessionPlace } from '../../shared/types/ipc.types';
+import type { SessionPlace } from '@datalayer/agent-runtimes/lib/portable/sessionList';
 
 /** What the entries say. */
 export const DESKTOP_SESSION_ACTION_WORDS = {

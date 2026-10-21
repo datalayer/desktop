@@ -4,8 +4,16 @@
  */
 
 /**
- * IPC communication types for Electron main-renderer bridge.
- * Re-exports SDK types and adds desktop-specific interfaces.
+ * The IPC contract between the main process and the renderer: the channels
+ * by name, the shape each one takes and answers, and the readers that
+ * refuse a wrong shape at the boundary in a sentence (fail fast — a handler
+ * never guesses what the other side meant).
+ *
+ * Sessions (DESKTOP §7, the day-one contract): `local-runtime:*`,
+ * `sessions:*`, `approvals:*`, `dialog:*`, `shell:reveal`, `studio:open`,
+ * `attention:*`. The pure logic of the rows and the merge is not here but
+ * in agent-runtimes `portable/` (decision D-13); these are the shapes that
+ * travel.
  *
  * @module types/ipc
  */
@@ -20,6 +28,16 @@ export type {
   UserJSON,
 } from '@datalayer/agent-runtimes/lib/models';
 import type { UserJSON } from '@datalayer/agent-runtimes/lib/models';
+import type {
+  CredentialSource,
+  HarnessCheck,
+  HarnessFacts,
+} from '@datalayer/agent-runtimes/lib/portable/localRuntime';
+import type {
+  PlaceGroup,
+  SessionFilter,
+  SessionPlace,
+} from '@datalayer/agent-runtimes/lib/portable/sessionList';
 
 /**
  * Authentication state shared between main and renderer processes.
@@ -38,209 +56,385 @@ export interface AuthState {
 export type SerializedData = unknown;
 
 // ---------------------------------------------------------------------------
-// Sessions (DESKTOP §7): the IPC contract between the main process and the
-// renderer — the channels named in the plan, their shapes. The renderer
-// reaches them through `window.desktopAPI` (the preload); the main process
-// answers them (`src/main/services/*`). Shapes the two sides build against.
+// The channels (DESKTOP §7)
 // ---------------------------------------------------------------------------
 
-import type { SessionRow } from '@datalayer/agent-runtimes/lib/portable/activity';
+/** Every channel of the sessions contract, by name: `ipcMain.handle` ones and the events the main process sends. */
+export const IPC = {
+  /** `{folder}` → {@link LocalRuntimeInfo}: the folder's runtime, started when it is not running. */
+  localRuntimeStart: 'local-runtime:start',
+  /** `{folder?}` → void: that folder's runtime, or every runtime. */
+  localRuntimeStop: 'local-runtime:stop',
+  /** → {@link LocalRuntimeInfo}[]: the runtimes running now. */
+  localRuntimeList: 'local-runtime:list',
+  /** `{folder?}` → {@link HarnessFacts}[]: the catalogue from a running runtime's `GET /api/v1/harnesses`. */
+  localRuntimeHarnesses: 'local-runtime:harnesses',
+  /** `{harness}` → {@link HarnessCheckResult}: what the machine has for it (DK-06). */
+  localRuntimeCheckHarness: 'local-runtime:check-harness',
+  /** → {@link RememberedFolders}: the last ten folders worked in, the last one first. */
+  localRuntimeFolders: 'local-runtime:folders',
+  /** Event: a local runtime started or stopped; the renderer lists again. */
+  localRuntimeChanged: 'local-runtime:changed',
+  /** `{name, value}` → void: a credential kept in the app's keychain; an empty value forgets it. Never logged. */
+  credentialsSet: 'credentials:set',
+  /** `{name}` → boolean: whether the keychain holds it (never the value). */
+  credentialsHas: 'credentials:has',
+  /** `{filter?}` → {@link SessionsListed}: the two places merged. */
+  sessionsList: 'sessions:list',
+  /** Event: something changed that the list should show again. */
+  sessionsChanged: 'sessions:changed',
+  /** → {@link PendingApproval}[]: what waits for the person, both places. */
+  approvalsPending: 'approvals:pending',
+  /** {@link ApprovalDecision} → {@link ApprovalDecided}. */
+  approvalsDecide: 'approvals:decide',
+  /** Event: the pending list changed; the payload is the new list. */
+  approvalsChanged: 'approvals:changed',
+  /** → {@link FolderPicked} | null: the OS folder picker, the folder remembered. */
+  dialogOpenFolder: 'dialog:open-folder',
+  /** `{name, text}` → {@link FileSaved} | null: the OS save dialog, the text written. */
+  dialogSave: 'dialog:save',
+  /** `{accept}` → {@link FileOpened} | null: the OS open dialog, the file read as text. */
+  dialogOpenFile: 'dialog:open-file',
+  /** `{path}` → void: the file or folder shown in Finder, Explorer or the file manager. */
+  shellReveal: 'shell:reveal',
+  /** `{path}` → void: the embedded Studio navigated to a path of the landing (DK-02). */
+  studioOpen: 'studio:open',
+  /** `{uid}` renderer → main (invoke, answers nothing): the session the chat shows now, or null — it is never notified (DK-14). */
+  attentionFront: 'attention:front',
+  /** Event main → renderer {@link AttentionFocus}: a notification or the tray was clicked; the renderer opens that session, or the approval's. */
+  attentionFocus: 'attention:focus',
+} as const;
 
-/** Where a session runs: Datalayer's record, or a local runtime of one folder. */
-export type SessionPlace =
-  | { kind: 'datalayer' }
-  | {
-      kind: 'local';
-      /** The folder the runtime works in. */
-      folder: string;
-      /** Its last segment. */
-      folderName: string;
-      /** The runtime's address (`http://127.0.0.1:<port>`). */
-      url: string;
-    };
+/** One of the channels. */
+export type IpcChannel = (typeof IPC)[keyof typeof IPC];
 
-/** The application a session belongs to, as the list groups it. */
-export interface SessionApplication {
-  /** The application's uid, else its id on the runtime, else empty. */
-  key: string;
-  /** Its name, else its id, else its uid. */
-  name: string;
-}
+// ---------------------------------------------------------------------------
+// The shapes
+// ---------------------------------------------------------------------------
 
-/**
- * A session as `sessions:list` answers it: the row as the session API and
- * the record say it (`sessionRowOf`), its application, and, for a session
- * on this machine, the folder it works in (`workspace`, DK-26; `''` while
- * the runtime does not say it).
- */
-export interface ListedSession {
-  row: SessionRow;
-  application: SessionApplication;
-  workspace: string;
-}
-
-/** One place's sessions, or the sentence when the place did not answer. */
-export interface SessionsPlaceListed {
-  place: SessionPlace;
-  sessions: ListedSession[];
-  /** What went wrong, the server's words; `''` when the place answered. */
-  problem: string;
-}
-
-/** `sessions:list` → the places, Datalayer first, then each local runtime running. */
-export interface SessionsListed {
-  places: SessionsPlaceListed[];
-  /** Whether the person is signed in: the Datalayer place is listed only then. */
-  signedIn: boolean;
-}
-
-/** `local-runtime:start {folder}` → the runtime of that folder. */
-export interface LocalRuntimeStarted {
+/** A local runtime running for one folder, as the renderer sees it (no pid, no path). */
+export interface LocalRuntimeInfo {
   folder: string;
   folderName: string;
+  /** `http://127.0.0.1:<port>`. */
   url: string;
+  port: number;
+  /** agent-runtimes' version, as `loop --version` said it. */
+  version: string;
+  /** Where each declared credential came from (O-2). */
+  credentials: Record<string, CredentialSource>;
 }
 
-/** A harness of the local runtime's catalogue (`GET /api/v1/harnesses`), as the picker shows it. */
-export interface HarnessListed {
-  /** `claude-code`, `codex`, … */
-  id: string;
-  /** *Claude Code*. */
-  name: string;
-  /** The credential it takes, the register's words; `''` for none. */
-  credential: string;
-  /** The credential names it declares (`ANTHROPIC_API_KEY`). */
-  secrets: string[];
-  /** `api_key_only`, `permitted`, `organizations_own`. */
-  servedToThirdParties: string;
-  /** The licence, the register's words. */
-  licence: string;
-  /** Tier restrictions, or `''`. */
-  tierRestrictions: string;
-  /** The adapter pinned, and its version; `''` when none. */
-  adapter: string;
-  adapterVersion: string;
-  /** The instructions file the harness reads (`CLAUDE.md`); `''` when none. */
-  instructionsFile: string;
+/** The folders worked in, remembered across launches. */
+export interface RememberedFolders {
+  /** The last ten, the most recent first. */
+  folders: string[];
+  /** The last folder worked in, whose runtime starts at launch (O-7); null when none. */
+  last: string | null;
 }
 
-/** One part of the machine's check for a harness (DK-06): node, the adapter, the credential. */
-export interface HarnessCheckPart {
-  name: string;
-  ok: boolean;
-  /** The sentence, the register's words. */
-  said: string;
+/** What `local-runtime:check-harness` answers: the verdict and the command `setup` would run. */
+export interface HarnessCheckResult {
+  harness: HarnessFacts;
+  check: HarnessCheck;
+  /** Which credential source was used, said (O-2), or empty when none was found. */
+  credentialSaid: string;
 }
 
-/** `local-runtime:check-harness {url, id}` → what the machine has for it. */
-export interface HarnessChecked {
-  ok: boolean;
-  parts: HarnessCheckPart[];
-  /** The `agent-shield setup` line offered for the missing part; `''` when nothing is missing. */
-  setup: string;
-  /** The register's refusal when the harness's terms refuse the person's credential; `''` otherwise. */
-  refused: string;
+/** What `sessions:list` answers. */
+export interface SessionsListed {
+  /** The places in order, Datalayer first, each with its groups or its note. */
+  places: PlaceGroup[];
+  signedIn: boolean;
+  folders: RememberedFolders;
 }
 
-/** An approval waiting for the person, from either place (`approvals:pending`). */
-export interface ApprovalPending {
+/** A pending approval of either place, as the banner and the OS say it. */
+export interface PendingApproval {
   place: SessionPlace;
   id: string;
   toolName: string;
-  toolDescription?: string;
   args: Record<string, unknown>;
   agentId: string;
   requestedAt: string;
-  /** The session asking, when the place says it; `''` otherwise. */
-  sessionUid: string;
+  /** The application asking, in words: the deployment's name, or *The coding agent in <folder>*. */
+  app: string;
 }
 
-/** `approvals:decide {place, id, decision}` → what the place answered. */
+/** A decision on an approval, from the renderer. */
+export interface ApprovalDecision {
+  place: SessionPlace;
+  id: string;
+  decision: 'approve' | 'reject';
+  note?: string;
+}
+
+/** What a decision came to, in a sentence (done, answered elsewhere, gone, refused). */
 export interface ApprovalDecided {
-  /** `200` done; `409` answered elsewhere; `404` gone. */
-  status: number;
-  /** The sentence shown to the person. */
   said: string;
 }
 
-/** The decision sent for an approval. */
-export type ApprovalDecision = 'approve' | 'reject';
+/** What `attention:focus` carries: a session to open, or an approval to show whole in its chat. */
+export type AttentionFocus =
+  | { uid: string; approval?: undefined }
+  | { uid?: undefined; approval: PendingApproval };
 
-/**
- * The menu actions the Sessions page listens to (`menu-action`, as the
- * menu already sends them): File → Work in a folder…, New session on
- * Datalayer…, Import a session…, Stop the local runtime; Sessions →
- * Resume last, Export…; View → Sessions.
- */
-export const SESSIONS_MENU_ACTIONS = {
-  workInFolder: 'sessions:work-in-folder',
-  newOnDatalayer: 'sessions:new-on-datalayer',
-  importSession: 'sessions:import',
-  stopLocalRuntime: 'local-runtime:stop',
-  resumeLast: 'sessions:resume-last',
-  exportSession: 'sessions:export',
-  viewSessions: 'view:sessions',
-} as const;
+/** A folder picked. */
+export interface FolderPicked {
+  folder: string;
+  folderName: string;
+}
 
-export type SessionsMenuAction =
-  (typeof SESSIONS_MENU_ACTIONS)[keyof typeof SESSIONS_MENU_ACTIONS];
+/** A file written where the person chose. */
+export interface FileSaved {
+  path: string;
+}
 
-/** What the preload exposes as `window.desktopAPI`: the contract, typed. */
-export interface DesktopAPI {
-  sessions: {
-    /** `sessions:list`. */
-    list: () => Promise<SessionsListed>;
-    /** `sessions:changed`: a place's sessions changed; the page reads again. */
-    onChanged: (callback: () => void) => () => void;
+/** A file read as text. */
+export interface FileOpened {
+  name: string;
+  path: string;
+  text: string;
+}
+
+// ---------------------------------------------------------------------------
+// The readers at the boundary
+// ---------------------------------------------------------------------------
+
+const record = (value: unknown, channel: string): Record<string, unknown> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(
+      `${channel} takes an object, not ${JSON.stringify(value)}.`
+    );
+  }
+  return value as Record<string, unknown>;
+};
+
+const text = (
+  value: Record<string, unknown>,
+  name: string,
+  channel: string
+): string => {
+  const read = value[name];
+  if (typeof read !== 'string' || !read.trim()) {
+    throw new Error(`${channel} takes ${name} as a non-empty string.`);
+  }
+  return read;
+};
+
+const optionalText = (
+  value: Record<string, unknown>,
+  name: string,
+  channel: string
+): string | undefined => {
+  const read = value[name];
+  if (read === undefined || read === null) {
+    return undefined;
+  }
+  if (typeof read !== 'string') {
+    throw new Error(`${channel} takes ${name} as a string when given.`);
+  }
+  return read;
+};
+
+/** `local-runtime:start {folder}`: the folder, required. */
+export function readFolder(value: unknown, channel: string): string {
+  return text(record(value, channel), 'folder', channel);
+}
+
+/** `local-runtime:stop {folder?}`, `local-runtime:harnesses {folder?}`: the folder when named. */
+export function readOptionalFolder(
+  value: unknown,
+  channel: string
+): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  return optionalText(record(value, channel), 'folder', channel);
+}
+
+/** `local-runtime:check-harness {harness}`. */
+export function readHarness(value: unknown): string {
+  return text(
+    record(value, IPC.localRuntimeCheckHarness),
+    'harness',
+    IPC.localRuntimeCheckHarness
+  );
+}
+
+/** A credential's name: upper-case, as the harness specs declare them. */
+export const CREDENTIAL_NAME = /^[A-Z][A-Z0-9_]*$/;
+
+/** `credentials:set {name, value}`: the value may be empty (forgets it), never anything but a string. */
+export function readCredential(value: unknown): {
+  name: string;
+  value: string;
+} {
+  const given = record(value, IPC.credentialsSet);
+  const name = text(given, 'name', IPC.credentialsSet);
+  if (!CREDENTIAL_NAME.test(name)) {
+    throw new Error(
+      `${IPC.credentialsSet} takes a credential's name as the harness declares it (ANTHROPIC_API_KEY), not ${JSON.stringify(name)}.`
+    );
+  }
+  const read = given.value;
+  if (typeof read !== 'string') {
+    throw new Error(`${IPC.credentialsSet} takes value as a string.`);
+  }
+  return { name, value: read };
+}
+
+/** `credentials:has {name}`. */
+export function readCredentialName(value: unknown): string {
+  const name = text(
+    record(value, IPC.credentialsHas),
+    'name',
+    IPC.credentialsHas
+  );
+  if (!CREDENTIAL_NAME.test(name)) {
+    throw new Error(
+      `${IPC.credentialsHas} takes a credential's name as the harness declares it, not ${JSON.stringify(name)}.`
+    );
+  }
+  return name;
+}
+
+const SESSION_STATES = ['open', 'paused', 'ended', ''] as const;
+const PLACE_KINDS = ['datalayer', 'local', ''] as const;
+
+/** `sessions:list {filter?}`: nothing narrowed when absent. */
+export function readFilter(value: unknown): SessionFilter {
+  if (value === undefined || value === null) {
+    return { app: '', state: '', title: '', place: '' };
+  }
+  const given = record(value, IPC.sessionsList);
+  const filter =
+    given.filter === undefined ? given : record(given.filter, IPC.sessionsList);
+  const app = optionalText(filter, 'app', IPC.sessionsList) ?? '';
+  const title = optionalText(filter, 'title', IPC.sessionsList) ?? '';
+  const state = optionalText(filter, 'state', IPC.sessionsList) ?? '';
+  const place = optionalText(filter, 'place', IPC.sessionsList) ?? '';
+  if (!(SESSION_STATES as readonly string[]).includes(state)) {
+    throw new Error(
+      `${IPC.sessionsList} narrows to a state of open, paused or ended, not ${JSON.stringify(state)}.`
+    );
+  }
+  if (!(PLACE_KINDS as readonly string[]).includes(place)) {
+    throw new Error(
+      `${IPC.sessionsList} narrows to a place of datalayer or local, not ${JSON.stringify(place)}.`
+    );
+  }
+  return {
+    app,
+    title,
+    state: state as SessionFilter['state'],
+    place: place as SessionFilter['place'],
   };
-  localRuntime: {
-    /** `local-runtime:start {folder}`: the folder's runtime, started if need be. */
-    start: (folder: string) => Promise<LocalRuntimeStarted>;
-    /** `local-runtime:stop {folder}`; every runtime when no folder is named. */
-    stop: (folder?: string) => Promise<void>;
-    /** `local-runtime:running`: the runtimes running now. */
-    running: () => Promise<LocalRuntimeStarted[]>;
-    /** `local-runtime:recent-folders`: the last ten folders worked in, newest first. */
-    recentFolders: () => Promise<string[]>;
-    /** `local-runtime:harnesses {url}`: the runtime's catalogue. */
-    harnesses: (url: string) => Promise<HarnessListed[]>;
-    /** `local-runtime:check-harness {url, id}`: the machine checked for it. */
-    checkHarness: (url: string, id: string) => Promise<HarnessChecked>;
-    /** `local-runtime:setup-harness {url, id}`: `agent-shield setup` run; its output, or its refusal thrown. */
-    setupHarness: (url: string, id: string) => Promise<string>;
-    /** `credentials:store {name, value}`: a credential kept in the app's keychain; `''` forgets it. */
-    storeCredential: (name: string, value: string) => Promise<void>;
+}
+
+/** A place as it travels: `{kind: 'datalayer'}` or `{kind: 'local', folder, folderName, url}`. */
+export function readPlace(value: unknown, channel: string): SessionPlace {
+  const given = record(value, channel);
+  if (given.kind === 'datalayer') {
+    return { kind: 'datalayer' };
+  }
+  if (given.kind === 'local') {
+    const url = text(given, 'url', channel);
+    if (!/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(url)) {
+      throw new Error(
+        `${channel} takes a local place's url as http://127.0.0.1:<port>, not ${JSON.stringify(url)}.`
+      );
+    }
+    return {
+      kind: 'local',
+      folder: text(given, 'folder', channel),
+      folderName: text(given, 'folderName', channel),
+      url,
+    };
+  }
+  throw new Error(
+    `${channel} takes a place of kind datalayer or local, not ${JSON.stringify(given.kind)}.`
+  );
+}
+
+/** `approvals:decide {place, id, decision, note?}`. */
+export function readDecision(value: unknown): ApprovalDecision {
+  const given = record(value, IPC.approvalsDecide);
+  const decision = text(given, 'decision', IPC.approvalsDecide);
+  if (decision !== 'approve' && decision !== 'reject') {
+    throw new Error(
+      `${IPC.approvalsDecide} takes a decision of approve or reject, not ${JSON.stringify(decision)}.`
+    );
+  }
+  const note = optionalText(given, 'note', IPC.approvalsDecide);
+  return {
+    place: readPlace(given.place, IPC.approvalsDecide),
+    id: text(given, 'id', IPC.approvalsDecide),
+    decision,
+    ...(note ? { note } : {}),
   };
-  approvals: {
-    /** `approvals:pending`. */
-    pending: () => Promise<ApprovalPending[]>;
-    /** `approvals:decide {place, id, decision}`. */
-    decide: (
-      place: SessionPlace,
-      id: string,
-      decision: ApprovalDecision
-    ) => Promise<ApprovalDecided>;
-    /** `approvals:changed`: the pending list changed. */
-    onChanged: (callback: () => void) => () => void;
-  };
-  dialog: {
-    /** `dialog:open-folder`: a folder picked, or `undefined`. */
-    openFolder: () => Promise<string | undefined>;
-    /** `dialog:save {name, text}`: the file written, or `undefined` when declined. */
-    save: (name: string, text: string) => Promise<string | undefined>;
-    /** `dialog:open-file {accept}`: the file's text, or `undefined` when declined. */
-    openFile: (accept: string) => Promise<string | undefined>;
-  };
-  shell: {
-    /** `shell:reveal {path}`. */
-    reveal: (path: string) => Promise<void>;
-  };
-  studio: {
-    /** `studio:open {path}`: the embedded Studio sent to a page of the landing. */
-    open: (path: string) => Promise<void>;
-  };
-  attention: {
-    /** `attention:focus {uid}`: the main process asks the page to show a session. */
-    onFocus: (callback: (uid: string) => void) => () => void;
-  };
+}
+
+/** `dialog:save {name, text}`. */
+export function readSave(value: unknown): { name: string; text: string } {
+  const given = record(value, IPC.dialogSave);
+  const name = text(given, 'name', IPC.dialogSave);
+  if (/[\\/]/.test(name)) {
+    throw new Error(
+      `${IPC.dialogSave} takes a file name, not a path: ${JSON.stringify(name)}.`
+    );
+  }
+  if (typeof given.text !== 'string') {
+    throw new Error(`${IPC.dialogSave} takes text as a string.`);
+  }
+  return { name, text: given.text };
+}
+
+/** `dialog:open-file {accept}`: the extensions accepted, without dots. */
+export function readOpenFile(value: unknown): { accept: string[] } {
+  const given = record(value, IPC.dialogOpenFile);
+  const accept = given.accept;
+  if (
+    !Array.isArray(accept) ||
+    accept.length === 0 ||
+    !accept.every(
+      item => typeof item === 'string' && /^[A-Za-z0-9.]+$/.test(item)
+    )
+  ) {
+    throw new Error(
+      `${IPC.dialogOpenFile} takes accept as a list of extensions, such as ["jsonl"].`
+    );
+  }
+  return { accept: accept.map(item => item.replace(/^\./, '')) };
+}
+
+/** `shell:reveal {path}`: an absolute path. */
+export function readRevealPath(value: unknown): string {
+  const path = text(record(value, IPC.shellReveal), 'path', IPC.shellReveal);
+  if (!(path.startsWith('/') || /^[A-Za-z]:[\\/]/.test(path))) {
+    throw new Error(
+      `${IPC.shellReveal} takes an absolute path, not ${JSON.stringify(path)}.`
+    );
+  }
+  return path;
+}
+
+/** `studio:open {path}`: a path of the landing, never another origin. */
+export function readStudioPath(value: unknown): string {
+  const path = text(record(value, IPC.studioOpen), 'path', IPC.studioOpen);
+  if (!path.startsWith('/') || path.startsWith('//')) {
+    throw new Error(
+      `${IPC.studioOpen} takes a path of the Studio such as /studio/apps/<uid>, not ${JSON.stringify(path)}.`
+    );
+  }
+  return path;
+}
+
+/** `attention:front {uid}`: the session in front, or null for none. */
+export function readFront(value: unknown): string | null {
+  const given = record(value, IPC.attentionFront);
+  if (given.uid === null || given.uid === undefined) {
+    return null;
+  }
+  return text(given, 'uid', IPC.attentionFront);
 }

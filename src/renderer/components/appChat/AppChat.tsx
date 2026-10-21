@@ -21,9 +21,12 @@
  * `forwardedProps.loop.user_token` (`signedRunFetch`) while the chat is
  * open; what its host may pass (D-10) decides whether its
  * agent is given `host_context`, answered with the notebook last in front as
- * `page`. Its approvals (R-05) are ai-agents' Tool Approvals, polled while
- * the chat is open and answered by `<Chat>`'s approval banner; its tool
- * calls are listed as the transcript's lines (A-06) under the chat.
+ * `page`. Its approvals (R-05, DK-13) are ai-agents' Tool Approvals, read
+ * by the main process and handed in by the Sessions page, answered in
+ * `<Chat>`'s approval banner through the main process; its tool calls are
+ * listed as the transcript's lines (A-06) under the chat. Opened on a
+ * session of the application (DK-08), it draws that conversation and the
+ * session's menu (DK-10).
  *
  * @module renderer/components/appChat/AppChat
  */
@@ -40,20 +43,17 @@ import {
   Chat,
   type ChatSessionActions,
 } from '@datalayer/agent-runtimes/lib/chat/Chat';
+import type { PendingApproval } from '@datalayer/agent-runtimes/lib/chat/tools';
 import {
   agUiEndpoint,
   APP_CHAT_WORDS,
   appHostOf,
   appItemUrl,
-  type AppChatApproval,
   type AppChatHandle,
   type AppHost,
-  decideApprovalUrl,
   hostContextTool,
   notebookContextRefusal,
   type NotebookContext,
-  pendingApprovalsOf,
-  pendingApprovalsUrl,
   revisionRefusal,
   type SignedUser,
   signedRunFetch,
@@ -62,9 +62,6 @@ import {
   toolLineOf,
   userTokenRefusal,
 } from '../../../shared/appChat';
-
-/** How often the approvals the agent waits on are read, while open. */
-const APPROVALS_POLL_MS = 3_000;
 
 /** Props for {@link AppChat}. */
 export interface AppChatProps {
@@ -90,6 +87,15 @@ export interface AppChatProps {
   sessionActions?: ChatSessionActions;
   /** Told the person's message was sent, and the agent's answer received. */
   onTurn?: (phase: 'sent' | 'answered') => void;
+  /**
+   * The approvals its agent waits on (DK-13): read by the main process
+   * (ai-agents polled there) and handed in by the page; a decision goes
+   * back over IPC to ai-agents' one route, refetched before deciding, a
+   * 409 said.
+   */
+  pendingApprovals: PendingApproval[];
+  /** Decides one: resolves once the place answered. */
+  decideApproval: (approvalId: string, approved: boolean) => Promise<void>;
 }
 
 /**
@@ -121,11 +127,18 @@ async function refusalOf(response: Response, what: string): Promise<string> {
  * @returns React element.
  */
 export function AppChat(props: AppChatProps): React.JSX.Element {
-  const { handle, services, user, readNotebook, openUid, sessionActions } =
-    props;
+  const {
+    handle,
+    services,
+    user,
+    readNotebook,
+    openUid,
+    sessionActions,
+    pendingApprovals,
+    decideApproval,
+  } = props;
   const [host, setHost] = useState<AppHost | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const [approvals, setApprovals] = useState<AppChatApproval[]>([]);
   const [lines, setLines] = useState<string[]>([]);
 
   // The Appspec, from the application's Spacer item.
@@ -210,49 +223,6 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
 
   const refused = revisionRefused || signedRefused;
   const waiting = signed && !signedReady && !signedRefused;
-
-  // The approvals its agent waits on, while the chat is open.
-  const readApprovals = useCallback(async (): Promise<void> => {
-    try {
-      const response = await fetch(
-        pendingApprovalsUrl(services.aiAgentsUrl, handle.agentId)
-      );
-      if (response.ok) {
-        setApprovals(pendingApprovalsOf(await response.json(), handle.agentId));
-      }
-    } catch {
-      // Read again at the next tick.
-    }
-  }, [services.aiAgentsUrl, handle.agentId]);
-
-  useEffect(() => {
-    if (!host || refused) {
-      return;
-    }
-    void readApprovals();
-    const timer = setInterval(() => {
-      void readApprovals();
-    }, APPROVALS_POLL_MS);
-    return () => {
-      clearInterval(timer);
-    };
-  }, [host, refused, readApprovals]);
-
-  const decide = useCallback(
-    async (approvalId: string, approved: boolean): Promise<boolean> => {
-      const response = await fetch(
-        decideApprovalUrl(services.aiAgentsUrl, approvalId, approved),
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({}),
-        }
-      );
-      await readApprovals();
-      return response.ok;
-    },
-    [services.aiAgentsUrl, readApprovals]
-  );
 
   // What Desktop passes as the host (D-10): only the version deployed's
   // terms, never a guess.
@@ -346,9 +316,9 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
           }}
           onMessageSent={() => props.onTurn?.('sent')}
           onMessageReceived={() => props.onTurn?.('answered')}
-          pendingApprovals={approvals}
-          onApproveApproval={approvalId => decide(approvalId, true)}
-          onRejectApproval={approvalId => decide(approvalId, false)}
+          pendingApprovals={pendingApprovals}
+          onApproveApproval={approvalId => decideApproval(approvalId, true)}
+          onRejectApproval={approvalId => decideApproval(approvalId, false)}
         />
       </Box>
       <Box

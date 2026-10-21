@@ -153,8 +153,6 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 
   logout: () => ipcRenderer.invoke('datalayer:logout'),
 
-  getCredentials: () => ipcRenderer.invoke('datalayer:get-credentials'),
-
   // Get current auth state with user data
   getAuthState: () => ipcRenderer.invoke('datalayer:get-auth-state'),
 
@@ -316,6 +314,44 @@ const desktopAPI: DesktopAPI = {
 contextBridge.exposeInMainWorld('desktopAPI', desktopAPI);
 
 /**
+ * Sign-in in the Studio view (DESKTOP DK-03): the main process opens IAM's
+ * provider page there and keeps the token; the renderer never sees it.
+ */
+const signInAPI: SignInAPI = {
+  start: (provider: SignInProvider) =>
+    ipcRenderer.invoke('sign-in:start', { provider }),
+  onFailed: (callback: (sentence: string) => void) => {
+    ipcRenderer.on('sign-in:failed', (_, sentence: string) =>
+      callback(sentence)
+    );
+  },
+  removeFailedListener: () => {
+    ipcRenderer.removeAllListeners('sign-in:failed');
+  },
+};
+contextBridge.exposeInMainWorld('signInAPI', signInAPI);
+
+/**
+ * The Studio, embedded (DESKTOP DK-02): shown where the renderer says,
+ * hidden with its page kept, sent to a path of the Studio.
+ */
+const studioAPI: StudioAPI = {
+  show: (bounds: StudioBounds) => ipcRenderer.invoke('studio:show', bounds),
+  hide: () => ipcRenderer.invoke('studio:hide'),
+  open: (path: string) => ipcRenderer.invoke('studio:open', { path }),
+};
+contextBridge.exposeInMainWorld('studioAPI', studioAPI);
+
+/**
+ * The menu (DESKTOP DK-04): what the renderer shows, so the entries enable.
+ */
+const menuAPI: MenuAPI = {
+  setState: (state: MenuRendererState) =>
+    ipcRenderer.invoke('menu:state', state),
+};
+contextBridge.exposeInMainWorld('menuAPI', menuAPI);
+
+/**
  * Proxy API interface for HTTP and WebSocket communication.
  */
 export interface ProxyAPI {
@@ -399,13 +435,6 @@ export interface DatalayerIPCClient {
   // Authentication methods - return void on success, throw on error
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
-
-  // Credentials - special case, returns custom type
-  getCredentials: () => Promise<{
-    runUrl: string;
-    token?: string;
-    isAuthenticated: boolean;
-  }>;
 
   // Auth state - returns complete auth state with user data
   getAuthState: () => Promise<{
