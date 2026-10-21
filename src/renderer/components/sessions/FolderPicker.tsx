@@ -52,7 +52,7 @@ export function FolderPicker(props: FolderPickerProps): React.JSX.Element {
           aria-label={WORK_IN_FOLDER_WORDS.recent}
         >
           <ActionList.Group>
-            <ActionList.GroupHeading>
+            <ActionList.GroupHeading as="h3">
               {WORK_IN_FOLDER_WORDS.recent}
             </ActionList.GroupHeading>
             {recent.map(folder => (

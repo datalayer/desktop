@@ -743,7 +743,7 @@ const Sessions: React.FC<SessionsProps> = ({
             >
               {drawn.places.map(place => (
                 <ActionList.Group key={placeLabel(place.place)}>
-                  <ActionList.GroupHeading>
+                  <ActionList.GroupHeading as="h3">
                     {placeLabel(place.place)}
                   </ActionList.GroupHeading>
                   {place.note ? (

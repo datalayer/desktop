@@ -36,6 +36,7 @@ import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 import { useThemeStore } from './theme/themeStore';
+import { ViewErrorBoundary } from './components/app/ViewErrorBoundary';
 
 /**
  * Lazy load heavy components that aren't needed on startup.
@@ -562,7 +563,9 @@ const App: React.FC = () => {
               flexDirection: 'column',
             }}
           >
-            {renderView()}
+            <ViewErrorBoundary key={activeTabId} view={activeTabId}>
+              {renderView()}
+            </ViewErrorBoundary>
           </Box>
         </AppLayout>
       </Box>
