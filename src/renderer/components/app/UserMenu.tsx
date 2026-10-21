@@ -9,7 +9,7 @@
  * @module renderer/components/app/UserMenu
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Header, Button, Box, Text } from '@primer/react';
 import { EntityAvatar } from '@datalayer/primer-addons';
 import { UserMenuProps } from '../../../shared/types';
@@ -64,13 +64,41 @@ const UserMenu: React.FC<UserMenuProps> = ({
     </EntityAvatar>
   );
 
-  // Toggle user menu visibility
+  // Opens on hover like the appearance menu; closes a moment after the
+  // pointer leaves both the avatar and the menu, so it can be crossed.
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+  // A click or the keyboard opens it (a hover may already have): closing is
+  // leaving it, Escape, or a choice in it — a click never closes what the
+  // hover just opened.
   const handleMenuToggle = () => {
-    onOpenChange(!isOpen);
+    cancelClose();
+    onOpenChange(true);
   };
 
+  const openOnHover = () => {
+    cancelClose();
+    if (!isOpen) {
+      onOpenChange(true);
+    }
+  };
+  const closeAfterLeave = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => onOpenChange(false), 200);
+  };
+  useEffect(() => cancelClose, []);
+
   return (
-    <Header.Item sx={{ position: 'relative' }}>
+    <Header.Item
+      sx={{ position: 'relative' }}
+      onMouseEnter={openOnHover}
+      onMouseLeave={closeAfterLeave}
+    >
       <Button
         variant="invisible"
         onClick={handleMenuToggle}

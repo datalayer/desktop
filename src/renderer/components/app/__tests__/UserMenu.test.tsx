@@ -152,15 +152,13 @@ describe('UserMenu', () => {
       expect(mockOnOpenChange).toHaveBeenCalledWith(true);
     });
 
-    it('should close menu when avatar button clicked while open', async () => {
+    it('keeps the menu open when the avatar is clicked while open (it closes on leave or Escape)', async () => {
       const user = userEvent.setup();
-
       render(<UserMenu {...defaultProps} isOpen={true} />);
-
-      const button = screen.getByRole('button', { name: /user menu/i });
-      await user.click(button);
-
-      expect(mockOnOpenChange).toHaveBeenCalledWith(false);
+      await user.click(screen.getByRole('button', { name: /user menu/i }));
+      expect(mockOnOpenChange.mock.calls.every(([open]) => open === true)).toBe(
+        true
+      );
     });
 
     it('should have aria-expanded attribute', () => {
@@ -449,7 +447,24 @@ describe('UserMenu', () => {
       await user.click(button);
       await user.click(button);
 
-      expect(mockOnOpenChange).toHaveBeenCalledTimes(3);
+      // The hover and each click open it; none of them closes it.
+      expect(mockOnOpenChange).toHaveBeenCalled();
+      expect(mockOnOpenChange.mock.calls.every(([open]) => open === true)).toBe(
+        true
+      );
+    });
+
+    it('opens on hover and closes a moment after the pointer leaves', async () => {
+      vi.useFakeTimers();
+      render(<UserMenu {...defaultProps} />);
+      const button = screen.getByRole('button', { name: /user menu/i });
+      fireEvent.mouseEnter(button.parentElement as HTMLElement);
+      expect(mockOnOpenChange).toHaveBeenLastCalledWith(true);
+      fireEvent.mouseLeave(button.parentElement as HTMLElement);
+      expect(mockOnOpenChange).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(250);
+      expect(mockOnOpenChange).toHaveBeenLastCalledWith(false);
+      vi.useRealTimers();
     });
 
     it('should handle logout during menu close animation', async () => {
