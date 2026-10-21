@@ -8,19 +8,65 @@
  * stub `loop` on `PATH` and a folder remembered, the app starts that
  * folder's runtime at launch, the Sessions page lists this machine's
  * sessions from the stub's file store with their state and folder, a row
- * opens its conversation in the chat, and the stub's pending approval
- * reaches the page's banner.
+ * opens its conversation in the chat, an approval the stub raises is
+ * answered from the chat's banner and reaches the runtime (DK-13), and the
+ * session in front is exported to a file, imported back and reopened from
+ * the list (DK-10, DK-09).
  *
- * The later journeys (work in a folder with the fake harness, an approval
- * decided from the chat, export and import, the app reopened and the
- * session resumed) join this file on the same fixture.
+ * The later journeys (work in a folder with the fake harness, the app
+ * reopened and the session resumed) join this file on the same fixture.
  */
 
 import { expect, test } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { launchApp, signInWithToken, tab, type LaunchedApp } from './app';
+
+/** The stub's answers the journeys read. */
+type Row = Record<string, unknown>;
+
+/**
+ * The URL of the local runtime the app runs for the folder, as the renderer
+ * reads it.
+ */
+async function runtimeUrl(launched: LaunchedApp): Promise<string> {
+  const runtimes = await launched.window.evaluate(() =>
+    (
+      window as unknown as {
+        desktopAPI: { localRuntime: { list: () => Promise<Row[]> } };
+      }
+    ).desktopAPI.localRuntime.list()
+  );
+  const url = runtimes[0]?.url;
+  expect(typeof url).toBe('string');
+  return String(url);
+}
+
+/** Clicks a menu's entry in the main process, as a person would. */
+async function clickMenu(
+  launched: LaunchedApp,
+  menu: string,
+  entry: string
+): Promise<void> {
+  await expect
+    .poll(async () =>
+      launched.app.evaluate(
+        ({ Menu }, [menuLabel, entryLabel]) => {
+          const item = Menu.getApplicationMenu()
+            ?.items.find(top => top.label === menuLabel)
+            ?.submenu?.items.find(one => one.label === entryLabel);
+          if (!item) {
+            return false;
+          }
+          item.click();
+          return true;
+        },
+        [menu, entry]
+      )
+    )
+    .toBe(true);
+}
 
 let launched: LaunchedApp;
 let folder: string;
@@ -76,4 +122,99 @@ test('the menu names the running runtime, and Sessions → Export… once a sess
       )
     )
     .toContain('Export…');
+});
+
+test('an approval raised on this machine is answered from the chat’s banner, and the runtime is told', async () => {
+  const { window } = launched;
+  const url = await runtimeUrl(launched);
+  // The session in front is the stub's first; the stub raises its git push.
+  const raised = await fetch(`${url}/stub/approvals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid: 'stub00000001' }),
+  });
+  expect(raised.status).toBe(201);
+  const approval = (await raised.json()) as Row;
+
+  // The main process's socket reads it; the chat in front shows it whole.
+  await expect(window.getByText('Run git push').first()).toBeVisible({
+    timeout: 30_000,
+  });
+  await window.getByRole('button', { name: 'Review' }).first().click();
+  await window.getByRole('button', { name: 'Deny' }).click();
+
+  // The decision went over the runtime's websocket, as the runtime took it.
+  await expect
+    .poll(
+      async () =>
+        (
+          (await (await fetch(`${url}/stub/decisions`)).json()) as {
+            decisions: Row[];
+          }
+        ).decisions,
+      { timeout: 30_000 }
+    )
+    .toContainEqual({ approvalId: approval.id, approved: false });
+  await expect(window.getByText('Run git push')).toHaveCount(0, {
+    timeout: 30_000,
+  });
+});
+
+test('the session in front is exported to a file, imported back and reopened from the list', async () => {
+  const { window } = launched;
+  const url = await runtimeUrl(launched);
+  const file = join(
+    mkdtempSync(join(tmpdir(), 'desktop-e2e-export-')),
+    'exported.session.jsonl'
+  );
+  // The OS dialogs answer with the file: the save dialog, then the open one.
+  await launched.app.evaluate(({ dialog }, path) => {
+    dialog.showSaveDialog = (async () => ({
+      canceled: false,
+      filePath: path,
+    })) as unknown as typeof dialog.showSaveDialog;
+    dialog.showOpenDialog = (async () => ({
+      canceled: false,
+      filePaths: [path],
+    })) as unknown as typeof dialog.showOpenDialog;
+  }, file);
+
+  await clickMenu(launched, 'Sessions', 'Export…');
+  await expect.poll(() => existsSync(file), { timeout: 30_000 }).toBe(true);
+  const [head] = readFileSync(file, 'utf8').split('\n');
+  expect(JSON.parse(head)).toMatchObject({
+    kind: 'session',
+    uid: 'stub00000001',
+    agent: 'default',
+  });
+  const exportedAt = String(JSON.parse(head).exported_at);
+
+  await clickMenu(launched, 'File', 'Import a session…');
+  // The runtime holds a new session, paused, imported from that file.
+  const found: { row?: Row } = {};
+  await expect
+    .poll(
+      async () => {
+        const { sessions } = (await (
+          await fetch(`${url}/api/v1/apps/sessions`)
+        ).json()) as { sessions: Row[] };
+        found.row = sessions.find(
+          session =>
+            (session.lineage as { imported_from?: Row | null })?.imported_from
+              ?.exported_at === exportedAt
+        );
+        return found.row?.state;
+      },
+      { timeout: 30_000 }
+    )
+    .toBe('paused');
+
+  // The list shows it, said imported; opened, its conversation is there.
+  const row = window.locator(`[data-session-row="${String(found.row?.uid)}"]`);
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await expect(row).toContainText(/imported/i);
+  await row.click();
+  await expect(window.getByText('Hello from the stub').first()).toBeVisible({
+    timeout: 60_000,
+  });
 });

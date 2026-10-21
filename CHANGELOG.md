@@ -11,7 +11,7 @@ A desktop that supports chat sessions.
 - **The Studio tab**: the Datalayer web app embedded, in a session of its own.
 - **The menu**: File, Sessions, View and Help say what the app can do, with shortcuts.
 - **The suite**: vitest 3.2; a Playwright e2e suite under `tests/e2e/` launched from the build with a stub `loop` and a stub sign-in, run in CI on Linux.
-- `@datalayer/agent-runtimes` 1.5.70 and the matching Datalayer packages.
+- `@datalayer/agent-runtimes` 1.5.73 (its `lib/` loads under Node, its files install whole on macOS and Windows) and the matching Datalayer packages.
 
 0.1.0 is a development build: unsigned installers, no auto-update.
 

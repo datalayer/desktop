@@ -28,8 +28,9 @@
  * - the approvals websocket `/api/v1/tool-approvals/ws`: `agent.snapshot`
  *   out, `tool_approval_decision` in (VS-07 as built); one approval raised
  *   per session opened, `git push`, pending until decided;
- * - `GET /stub/decisions` and `POST /stub/sessions` (the suite's own
- *   back door: the decisions taken, a session planted).
+ * - `GET /stub/decisions`, `POST /stub/sessions` and `POST /stub/approvals`
+ *   `{uid}` (the suite's own back door: the decisions taken, a session
+ *   planted, an approval raised for a session that exists).
  *
  * Shapes follow `routes/apps.py`, `routes/harnesses.py` and
  * `routes/tool_approvals.py` of agent-runtimes 1.5.70 and VS Code's stub
@@ -41,6 +42,7 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from 'node:http';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { WebSocketServer, type WebSocket } from 'ws';
 
@@ -188,7 +190,7 @@ function sessionRow(given: {
     harness: given.harness,
     title: given.title,
     archived: false,
-    lineage: given.lineage ?? { cloned_from: null, imported_from: null },
+    lineage: given.lineage ?? { forked_from: null, imported_from: null },
     runs_on: null,
     settings: {},
     profile: null,
@@ -401,11 +403,15 @@ function serve(): Promise<void> {
           title: String(head.title || 'Imported session'),
           turns: lines.filter(l => l.role === 'user').length,
           harness: 'claude-code',
+          workspace: process.env.AGENT_RUNTIMES_WORKSPACE_ROOT,
+          // As the route says it: the file's digest, when and by whom it
+          // was exported (never the source session's uid).
           lineage: {
-            cloned_from: null,
+            forked_from: null,
             imported_from: {
-              uid: String(head.uid || ''),
-              at: new Date().toISOString(),
+              digest: `sha256:${createHash('sha256').update(text).digest('hex')}`,
+              exported_at: String(head.exported_at || ''),
+              exported_by: head.exported_by ?? null,
             },
           },
         });
@@ -448,6 +454,8 @@ function serve(): Promise<void> {
               app: session.app,
               title: session.title,
               harness: session.harness,
+              exported_at: new Date().toISOString(),
+              exported_by: { kind: 'person', uid: 'person-1' },
             },
             ...(messages.get(uid) || []),
           ];
@@ -497,7 +505,7 @@ function serve(): Promise<void> {
             turns: at,
             harness: session.harness as string | null,
             workspace: session.workspace as string | undefined,
-            lineage: { cloned_from: { uid, turn: at }, imported_from: null },
+            lineage: { forked_from: { uid, at_turn: at }, imported_from: null },
           });
           sessions.push(clone);
           messages.set(
@@ -588,6 +596,14 @@ function serve(): Promise<void> {
 
       if (method === 'GET' && path === '/stub/decisions')
         return json(200, { decisions });
+      if (method === 'POST' && path === '/stub/approvals') {
+        const asked = JSON.parse((await body(request)) || '{}');
+        const uid = String(asked.uid || '');
+        if (!find(uid))
+          return json(404, { detail: `No session ${uid} is held here.` });
+        raise(uid);
+        return json(201, approvals[approvals.length - 1]);
+      }
       if (method === 'POST' && path === '/stub/sessions') {
         const asked = JSON.parse((await body(request)) || '{}') as Row;
         const uid = String(asked.uid || newUid());

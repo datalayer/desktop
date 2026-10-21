@@ -206,7 +206,7 @@ describe('the stub loop', () => {
     expect(clone).toMatchObject({
       state: 'paused',
       turns: 1,
-      lineage: { cloned_from: { uid: 'stub00000001', turn: 1 } },
+      lineage: { forked_from: { uid: 'stub00000001', at_turn: 1 } },
     });
     const exported = await fetch(
       `${base}/api/v1/apps/sessions/stub00000001/export`
@@ -223,7 +223,14 @@ describe('the stub loop', () => {
     expect(imported.status).toBe(201);
     expect(await imported.json()).toMatchObject({
       state: 'paused',
-      lineage: { imported_from: { uid: 'stub00000001' } },
+      lineage: {
+        forked_from: null,
+        imported_from: {
+          digest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          exported_at: JSON.parse(lines[0]).exported_at,
+          exported_by: { kind: 'person', uid: 'person-1' },
+        },
+      },
     });
     expect(
       (await post('/api/v1/apps/sessions/stub00000002/resume')).status
