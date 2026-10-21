@@ -10,8 +10,8 @@
  * of its own — nothing of it needs a Datalayer account, Python or a model.
  *
  * `launchApp` gives the Electron app, its window and the stubs;
- * `signInWithToken` is the typed way; `studioView` reads the embedded view
- * from the main process.
+ * `signInWithToken` is the typed way; `windowUrls` lists the app's windows
+ * as the main process holds them (the sign-in window among them).
  *
  * @module tests/e2e/app
  */
@@ -69,6 +69,11 @@ export interface LaunchOptions {
    * the stub `loop` serves its planted sessions from the start.
    */
   rememberedFolders?: string[];
+  /**
+   * Spacer and ai-agents on the stub IAM too (`DATALAYER_SPACER_URL`,
+   * `DATALAYER_AI_AGENTS_URL`): the Studio's journeys read them there.
+   */
+  studioServices?: boolean;
 }
 
 /**
@@ -104,6 +109,9 @@ export async function launchApp(
       PATH: `${STUB_BIN}${delimiter}${process.env.PATH || ''}`,
       DATALAYER_IAM_URL: iam.url,
       DATALAYER_LANDING_URL: iam.url,
+      ...(options.studioServices
+        ? { DATALAYER_SPACER_URL: iam.url, DATALAYER_AI_AGENTS_URL: iam.url }
+        : {}),
       DATALAYER_DESKTOP_USER_DATA: userData,
       AGENT_RUNTIMES_WORKSPACE_ROOT: options.workspace || '',
       ELECTRON_DISABLE_SANDBOX: '1',
@@ -180,14 +188,13 @@ function printMainLog(userData: string): void {
 }
 
 /**
- * The main window's page: Playwright lists the Studio view's page (a
- * `WebContentsView` on the landing origin) and, in development, the
- * DevTools as windows too, so the main window is the page on the app's
- * own URL — `file://` from the build, `ELECTRON_RENDERER_URL` from the
- * development server.
+ * The main window's page: Playwright lists the sign-in window's page (on
+ * the stub IAM's origin) and, in development, the DevTools as windows too,
+ * so the main window is the page on the app's own URL — `file://` from
+ * the build, `ELECTRON_RENDERER_URL` from the development server.
  *
  * @param app - The app.
- * @param landing - The landing origin the Studio view is on (excluded).
+ * @param landing - The stub IAM's origin, where the sign-in window is (excluded).
  *
  * @returns The renderer's page.
  */
@@ -260,41 +267,23 @@ export async function signInWithToken(launched: LaunchedApp): Promise<void> {
   await expect(tab(window, 'Spaces')).toBeVisible({ timeout: 60_000 });
 }
 
-/** What the main process says of the Studio view. */
-export interface StudioViewSeen {
-  url: string;
-  visible: boolean;
-  bounds: { x: number; y: number; width: number; height: number };
-  /** `own` when the view's session is not the window's. */
-  partition: 'own' | 'default';
-}
-
 /**
- * Reads the Studio view from the main process: the one child view of the
- * main window.
+ * The URLs of the app's windows, as the main process holds them: the main
+ * window's, and the sign-in window's while one is open.
  *
  * @param app - The app.
  *
- * @returns Its URL, visibility, bounds and partition.
+ * @returns One URL per window, and how many child views the main window has.
  */
-export async function studioView(
+export async function windowUrls(
   app: ElectronApplication
-): Promise<StudioViewSeen> {
-  return app.evaluate(({ BrowserWindow, webContents }) => {
-    const main = BrowserWindow.getAllWindows()[0];
-    const view = main.contentView.children[0] as Electron.WebContentsView;
-    // The view's contents, found by id: the child view's own reference can
-    // be a bare View wrapper.
-    const contents =
-      webContents
-        .getAllWebContents()
-        .find(c => c.id === view.webContents?.id) || view.webContents;
+): Promise<{ urls: string[]; childViews: number }> {
+  return app.evaluate(({ BrowserWindow }) => {
+    const windows = BrowserWindow.getAllWindows();
+    const main = windows.find(window => !window.getParentWindow());
     return {
-      url: contents.getURL(),
-      visible: view.getVisible(),
-      bounds: view.getBounds(),
-      partition:
-        contents.session === main.webContents.session ? 'default' : 'own',
+      urls: windows.map(window => window.webContents.getURL()),
+      childViews: main ? main.contentView.children.length : 0,
     };
   });
 }

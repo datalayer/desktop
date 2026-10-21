@@ -5,8 +5,8 @@
 
 /**
  * The app launches (DESKTOP DK-15): the window opens on the Login page
- * with the two ways to sign in, the Studio view is created hidden on the
- * landing origin, the menu says what the app can do while signed out, and
+ * with the two ways to sign in, no web page is embedded (the Studio is the
+ * app's own page), the menu says what the app can do while signed out, and
  * no renderer can ask for the token.
  */
 
@@ -15,7 +15,7 @@ import {
   launchApp,
   loginHeading,
   menuLabels,
-  studioView,
+  windowUrls,
   type LaunchedApp,
 } from './app';
 
@@ -48,12 +48,10 @@ test('opens on the Login page with a provider sign-in, a handle and password, an
   await expect(window).toHaveTitle(/Datalayer/);
 });
 
-test('created the Studio view hidden, in its own partition, on the landing’s Home', async () => {
-  const view = await studioView(launched.app);
-  expect(view.visible).toBe(false);
-  expect(view.partition).toBe('own');
-  expect(view.url).toBe(`${launched.iam.url}/studio`);
-  expect(launched.iam.landingPaths).toContain('/studio');
+test('embeds no web page: one window, no child view', async () => {
+  const seen = await windowUrls(launched.app);
+  expect(seen.urls).toHaveLength(1);
+  expect(seen.childViews).toBe(0);
 });
 
 test('the menu, signed out: no session on Datalayer, no sign-out, no stop', async () => {

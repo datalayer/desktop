@@ -6,7 +6,7 @@
 /**
  * A stub IAM and landing for the suite (DESKTOP DK-15, DK-03): one HTTP
  * server on loopback that answers what sign-in asks of IAM and what the
- * embedded Studio view loads of the landing, so no test needs a Datalayer
+ * Studio tab reads of Spacer and ai-agents, so no test needs a Datalayer
  * account. The app is pointed at it with `DATALAYER_IAM_URL` and
  * `DATALAYER_LANDING_URL`.
  *
@@ -19,7 +19,14 @@
  * - `GET /stub/provider?state=`: the provider's page, which sends the
  *   browser on to the callback as IAM does — `window.location.replace(
  *   '<callback>?_xsrf=<nonce>&user=…&token=…')`;
- * - `GET /studio`, `/studio/*` and `/`: the landing's pages, one line each.
+ * - the Studio's routes, for a launch that points `DATALAYER_SPACER_URL`
+ *   and `DATALAYER_AI_AGENTS_URL` here: Spacer's applications
+ *   (`/api/spacer/v1/spaces/items/types/app`, one application `app-1`) and
+ *   its item (`/api/spacer/v1/lexicals/app-1`, with its Appspec);
+ *   ai-agents' deployments (`/api/ai-agents/v1/apps/deployments`, one live,
+ *   not kept always on) and their change (`PATCH …/{uid}`, recorded in
+ *   `stateChanges`), its sessions (one of `app-1`, cloned) and its pending
+ *   Tool Approvals (none).
  *
  * @module tests/mocks/iam
  */
@@ -41,8 +48,8 @@ export interface StubIam {
     firstName: string;
     lastName: string;
   };
-  /** The paths the landing was asked for, in order. */
-  landingPaths: string[];
+  /** The deployment changes asked (`PATCH /apps/deployments/{uid}`), in order. */
+  stateChanges: Array<{ uid: string; version: number; state: string }>;
   /** The authorization URLs asked for, with their callback URIs. */
   authzAsked: Array<{ provider: string; callbackUri: string; nonce: string }>;
   /** Stops it. */
@@ -92,7 +99,17 @@ export async function startStubIam(
     firstName: 'Ada',
     lastName: 'Lovelace',
   };
-  const landingPaths: string[] = [];
+  const stateChanges: StubIam['stateChanges'] = [];
+  const deployment = {
+    uid: 'dep-1',
+    app_uid: 'app-1',
+    app_name: 'Desk',
+    version: 3,
+    state: 'live',
+    target: 'hosted',
+    slug: 'desk',
+    always_on: false,
+  };
   const authzAsked: StubIam['authzAsked'] = [];
   const nonces = new Set<string>();
   let origin = '';
@@ -183,13 +200,90 @@ export async function startStubIam(
           `<script>window.location.replace(${JSON.stringify(target)});</script></body></html>`
       );
     }
-    if (path === '/' || path.startsWith('/studio')) {
-      landingPaths.push(path + url.search);
-      return html(
-        200,
-        `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Studio</title></head>` +
-          `<body><h1 id="studio">Studio</h1><p>${path}</p></body></html>`
-      );
+    if (path.startsWith('/api/spacer/') || path.startsWith('/api/ai-agents/')) {
+      if (bearer !== token) {
+        return json(401, { detail: 'The token is not one IAM issued.' });
+      }
+    }
+    if (path === '/api/spacer/v1/spaces/items/types/app') {
+      return json(200, {
+        success: true,
+        items: [
+          {
+            uid: 'app-1',
+            type_s: 'app',
+            name_t: 'Desk',
+            description_t: 'Answers the books.',
+            last_update_ts_dt: '2026-10-20T10:00:00Z',
+          },
+        ],
+      });
+    }
+    if (path === '/api/spacer/v1/lexicals/app-1') {
+      return json(200, {
+        success: true,
+        document: {
+          uid: 'app-1',
+          type_s: 'app',
+          name_t: 'Desk',
+          model_s: JSON.stringify({
+            format: 'loop.app.item/v1',
+            spec: {
+              schema: 'loop.app/v1',
+              name: 'Desk',
+              kind: 'chat',
+              description: 'Answers the books.',
+              agent: 'accountant',
+            },
+            state: { revision: 3 },
+          }),
+        },
+      });
+    }
+    if (path === '/api/ai-agents/v1/apps/deployments' && method === 'GET') {
+      return json(200, { deployments: [deployment] });
+    }
+    if (
+      path === `/api/ai-agents/v1/apps/deployments/${deployment.uid}` &&
+      method === 'PATCH'
+    ) {
+      let body = '';
+      request.on('data', chunk => (body += String(chunk)));
+      request.on('end', () => {
+        const asked = JSON.parse(body || '{}') as {
+          version: number;
+          state: string;
+        };
+        stateChanges.push({ uid: deployment.uid, ...asked });
+        if (asked.version !== deployment.version) {
+          return json(409, {
+            detail: `Version ${asked.version} is not the one deployed.`,
+          });
+        }
+        deployment.state = asked.state;
+        json(200, { deployment });
+      });
+      return;
+    }
+    if (path === '/api/ai-agents/v1/apps/sessions') {
+      return json(200, {
+        sessions: [
+          {
+            uid: 'ses-2',
+            state: 'paused',
+            title: 'Close the books',
+            app_uid: 'app-1',
+            agent: 'accountant',
+            version: 3,
+            started_at: '2026-10-20T11:00:00Z',
+            lineage: { forked_from: { uid: 'ses-1', at_turn: 2 } },
+          },
+        ],
+        has_more: false,
+      });
+    }
+    if (path === '/api/ai-agents/v1/tool-approvals') {
+      return json(200, { approvals: [] });
     }
     json(404, { detail: `The stub IAM does not serve ${method} ${path}.` });
   });
@@ -203,7 +297,7 @@ export async function startStubIam(
     url: origin,
     token,
     profile,
-    landingPaths,
+    stateChanges,
     authzAsked,
     close: () =>
       new Promise<void>(resolve => {

@@ -4,12 +4,12 @@
  */
 
 /**
- * Sign-in with a stub IAM (DESKTOP DK-03, DK-15): with a provider in the
- * Studio view — IAM asked for the page with the `datalayer://auth`
- * callback, its page sent on to the callback, the token kept, the app
- * signed in, the view back on the Studio's Home, the menu with its
- * signed-in entries; the typed token as the second way; sign-out; the
- * token kept across a relaunch.
+ * Sign-in with a stub IAM (DESKTOP DK-03, DK-15): with a provider in a
+ * sign-in window of its own — IAM asked for the page with the
+ * `datalayer://auth` callback, its page sent on to the callback, the token
+ * kept, the app signed in, the window closed, the menu with its signed-in
+ * entries; the typed token as the second way; sign-out; the token kept
+ * across a relaunch.
  */
 
 import { expect, test } from '@playwright/test';
@@ -18,14 +18,14 @@ import {
   loginHeading,
   menuLabels,
   signInWithToken,
-  studioView,
+  windowUrls,
   tab,
   type LaunchedApp,
 } from './app';
 
 test.describe.configure({ mode: 'serial' });
 
-test('signs in with GitHub inside the Studio view, then signs out', async () => {
+test('signs in with GitHub in a sign-in window, then signs out', async () => {
   const launched = await launchApp();
   const { window, app, iam } = launched;
   try {
@@ -40,10 +40,8 @@ test('signs in with GitHub inside the Studio view, then signs out', async () => 
     });
     expect(iam.authzAsked[0].nonce).toMatch(/^[0-9a-f]{64}$/);
 
-    await expect
-      .poll(async () => (await studioView(app)).url)
-      .toBe(`${iam.url}/studio`);
-    expect((await studioView(app)).visible).toBe(false);
+    await expect.poll(async () => (await windowUrls(app)).urls.length).toBe(1);
+    expect((await windowUrls(app)).childViews).toBe(0);
 
     const menu = await menuLabels(app);
     expect(menu.File).toEqual([
