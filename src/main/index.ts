@@ -772,6 +772,8 @@ async function main(): Promise<void> {
       log.info(
         '[Main] Found stored authentication, broadcasting to renderer...'
       );
+      // The menu opens up at once; the renderer hears it below.
+      refreshMenu({ signedIn: true });
       // Wait a bit for the renderer to be ready
       setTimeout(() => {
         const mainWindow = getMainWindow();

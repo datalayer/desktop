@@ -14,7 +14,9 @@
  * `menuTemplate` is pure: the entries from the state, each with its
  * `when` applied (signed out: no session on Datalayer and no sign-out; no
  * local runtime: no stop; no session in front: no export, no Studio for
- * it). `createMenu` and `refreshMenu` build Electron's menu from it; an
+ * it). Sessions comes first, then Edit, File, View (and Window on macOS),
+ * Help; on macOS the app's own menu stays first, as the OS puts it. Signed
+ * out, every menu but Help is disabled (see `signedOutTemplate`). `createMenu` and `refreshMenu` build Electron's menu from it; an
  * entry with an `action` sends it to the renderer as `menu-action`, which
  * already listens.
  *
@@ -61,6 +63,8 @@ export type MenuEntry =
       /** What the main process does itself. */
       click?: MenuClick;
       accelerator?: string;
+      /** False greys the entry out (and, on a top-level menu, all of it). */
+      enabled?: boolean;
       submenu?: MenuEntry[];
     };
 
@@ -242,24 +246,66 @@ function appMenu(state: MenuState): MenuEntry {
  * @returns The top-level menus with their entries.
  */
 export function menuTemplate(state: MenuState): MenuEntry[] {
-  if (state.platform === 'darwin') {
-    return [
-      appMenu(state),
-      fileMenu(state),
-      editMenu(state),
-      sessionsMenu(state),
-      viewMenu(state),
-      windowMenu(),
-      helpMenu(state),
-    ];
-  }
-  return [
-    fileMenu(state),
-    editMenu(state),
-    sessionsMenu(state),
-    viewMenu(state),
-    helpMenu(state),
-  ];
+  const template =
+    state.platform === 'darwin'
+      ? [
+          appMenu(state),
+          sessionsMenu(state),
+          editMenu(state),
+          fileMenu(state),
+          viewMenu(state),
+          windowMenu(),
+          helpMenu(state),
+        ]
+      : [
+          sessionsMenu(state),
+          editMenu(state),
+          fileMenu(state),
+          viewMenu(state),
+          helpMenu(state),
+        ];
+  return state.signedIn ? template : signedOutTemplate(template, state);
+}
+
+/** The app menu's entries that stay enabled when signed out on macOS. */
+const SIGNED_OUT_APP_CLICKS: ReadonlySet<MenuClick> = new Set([
+  'about',
+  'quit',
+]);
+
+/**
+ * Signed out, nothing but Help is enabled: the app can do nothing for the
+ * person before they sign in. Two exceptions the OS asks for on macOS: the
+ * app menu keeps About and Quit (the OS needs Quit there, and Command+Q
+ * only works through it), and Edit stays enabled, because macOS routes
+ * Command+C / Command+V through the Edit menu, and the Login page's fields
+ * need paste.
+ */
+function signedOutTemplate(
+  template: MenuEntry[],
+  state: MenuState
+): MenuEntry[] {
+  const darwin = state.platform === 'darwin';
+  return template.map(entry => {
+    if ('type' in entry || entry.label === 'Help') {
+      return entry;
+    }
+    if (darwin && entry.label === state.appName) {
+      return {
+        ...entry,
+        submenu: (entry.submenu || []).map(item =>
+          'type' in item ||
+          (item.click && SIGNED_OUT_APP_CLICKS.has(item.click))
+            ? item
+            : { ...item, enabled: false }
+        ),
+      };
+    }
+    if (darwin && entry.label === 'Edit') {
+      return entry;
+    }
+    return { ...entry, enabled: false };
+  });
 }
 
 /**
@@ -354,6 +400,9 @@ function electronEntry(entry: MenuEntry): Electron.MenuItemConstructorOptions {
   }
   if (entry.accelerator) {
     built.accelerator = entry.accelerator;
+  }
+  if (entry.enabled === false) {
+    built.enabled = false;
   }
   if (entry.action) {
     const action = entry.action;
