@@ -61,7 +61,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         borderBottom: '1px solid',
         borderColor: 'border.default',
         // The appearance menu's overlay is drawn inside the header (not in a
-        // portal), so the header stacks above the page it opens over.
+        // portal): Primer's Header clips its overflow (overflow: auto), which
+        // hid the overlay below the header's edge, and the header must stack
+        // above the page it opens over.
+        overflow: 'visible',
         position: 'relative',
         zIndex: 100,
       }}
