@@ -198,11 +198,13 @@ test('an approval raised on this machine is answered from the chat’s banner, a
       { timeout: 30_000 }
     )
     .toContainEqual({ approvalId: approval.id, approved: false });
-  await expect(
-    window.getByText('Run git push').filter({ visible: true })
-  ).toHaveCount(0, {
+  // The banner is gone; the page says what was decided, in the place's words.
+  await expect(window.getByText(/tool approvals? pending/)).toHaveCount(0, {
     timeout: 30_000,
   });
+  await expect(window.getByTestId('sessions-said')).toContainText(
+    'Declined: Run git push.'
+  );
 });
 
 test('the session in front is exported to a file, imported back and reopened from the list', async () => {
