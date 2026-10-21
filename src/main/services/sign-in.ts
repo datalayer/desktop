@@ -4,16 +4,17 @@
  */
 
 /**
- * One sign-in for the shell and the embedded Studio (DESKTOP DK-03,
- * decision D-2): *Sign in* opens IAM's provider sign-in (GitHub, Google,
- * LinkedIn, Okta — the authorization URL `@datalayer/core`'s `oauth2`
- * gives, with the callback `datalayer://auth`, the contract VS Code's
- * `oauthFlowManager.ts` uses) inside the Studio view, so IAM's cookie lands
- * in the view's partition and the web app signs itself in from it. IAM's
- * page then sends the browser to `datalayer://auth?_xsrf=<state>&token=…`,
- * which the Studio view catches (`will-navigate`) and hands here: the state
- * is checked against the sign-in started, the token kept in `safeStorage`
- * through the SDK bridge as a typed token is, the view sent on to `/studio`.
+ * The provider sign-in (DESKTOP DK-03, decision D-2): *Sign in* opens
+ * IAM's provider sign-in (GitHub, Google, LinkedIn, Okta — the
+ * authorization URL `@datalayer/core`'s `oauth2` gives, with the callback
+ * `datalayer://auth`, the contract VS Code's `oauthFlowManager.ts` uses) in
+ * a small window of its own (`sign-in-window.ts`: its own partition, IAM's
+ * page only). IAM's page then sends the browser to
+ * `datalayer://auth?_xsrf=<state>&token=…`, which that window catches
+ * (`will-navigate`) and hands here: the state is checked against the
+ * sign-in started, the token kept in `safeStorage` through the SDK bridge
+ * as a typed token is, the window closed. No protocol is registered with
+ * the OS: the callback never leaves the app.
  *
  * The typed run URL and token of the Login page stay as the second way.
  * No renderer ever holds the token: the `datalayer:get-credentials` IPC is
@@ -29,6 +30,17 @@ import { randomBytes } from 'crypto';
 
 /** The callback IAM sends the browser to, the scheme the phone's (O-4). */
 export const SIGN_IN_CALLBACK = 'datalayer://auth';
+
+/**
+ * Whether a URL is the sign-in callback (`datalayer://auth…`).
+ *
+ * @param url - The URL asked for.
+ *
+ * @returns Whether it is.
+ */
+export function isSignInCallback(url: string): boolean {
+  return url === SIGN_IN_CALLBACK || url.startsWith(`${SIGN_IN_CALLBACK}?`);
+}
 
 /** The providers IAM signs in with. */
 export const SIGN_IN_PROVIDERS = [
@@ -53,6 +65,8 @@ export const SIGN_IN_SENTENCES = {
   mismatch:
     'The sign-in callback did not match the sign-in started: start again.',
   expired: 'The sign-in took more than five minutes: start again.',
+  windowClosed:
+    'The sign-in window was closed before it finished: start again.',
   noLoginUrl: 'Datalayer gave no sign-in page for this provider.',
   noServerState: "Datalayer's sign-in page names no state.",
   unknownProvider: (provider: string) =>
@@ -125,7 +139,7 @@ export type SignInCallback =
  * Reads the callback: `datalayer://auth?_xsrf=<state>&token=…` (IAM's
  * `_xsrf`, or `state` as the standard names it), or its error.
  *
- * @param url - The URL the view was sent to.
+ * @param url - The URL the sign-in window was sent to.
  *
  * @returns The token and state, or the sentence that refuses it.
  */
@@ -174,7 +188,7 @@ export interface StartDeps {
     callbackUri: string,
     nonce: string
   ) => Promise<unknown>;
-  /** Shows the URL in the Studio view. */
+  /** Shows the URL in the sign-in window. */
   load: (url: string) => void;
   /** The clock. */
   now?: () => number;
@@ -205,10 +219,10 @@ export class SignIn {
 
   /**
    * Starts a sign-in: asks IAM for the provider's page with a fresh nonce,
-   * remembers the server's state and shows the page in the Studio view.
+   * remembers the server's state and shows the page in the sign-in window.
    *
    * @param provider - The provider.
-   * @param deps - IAM, the view, the clock.
+   * @param deps - IAM, the window, the clock.
    *
    * @returns The login URL shown, or the sentence that refused.
    */
@@ -251,7 +265,7 @@ export class SignIn {
    * Takes the callback: the state must be the pending sign-in's and not
    * older than five minutes; then the token is kept.
    *
-   * @param url - The callback URL the view caught.
+   * @param url - The callback URL the sign-in window caught.
    * @param deps - The keeper, the clock.
    *
    * @returns How it ended.
