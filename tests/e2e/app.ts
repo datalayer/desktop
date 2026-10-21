@@ -71,6 +71,14 @@ export async function launchApp(
   const iam = options.iam ?? (await startStubIam());
   const userData =
     options.userData ?? mkdtempSync(join(tmpdir(), 'desktop-e2e-'));
+  if (options.rememberedFolders?.length) {
+    // As the main process writes it (local-runtime.ts's FOLDERS_FILE).
+    mkdirSync(userData, { recursive: true });
+    writeFileSync(
+      join(userData, 'sessions-folders.json'),
+      JSON.stringify({ folders: options.rememberedFolders }, null, 2)
+    );
+  }
   // A shell that runs Electron as Node (`ELECTRON_RUN_AS_NODE`, set by
   // some editors and agents) must not reach the app.
   const inherited = { ...process.env };

@@ -151,6 +151,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
           <Box sx={{ p: 1 }}>
             <Button
               variant="invisible"
+              role="menuitem"
               onClick={handleLogout}
               sx={{
                 width: '100%',
