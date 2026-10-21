@@ -10,7 +10,6 @@ import { resolve } from 'path';
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
 import importAsString from 'vite-plugin-string';
 import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 
 const resolveWorkspaceDependency = (pkgPath: string) => {
   const localPath = resolve(__dirname, 'node_modules', pkgPath);
@@ -112,6 +111,11 @@ export default defineConfig({
       keepNames: true,
     },
     publicDir: '../../resources',
+    // Workers are ES modules too, so a worker that imports WASM keeps its
+    // native top-level await (an iife worker could not).
+    worker: {
+      format: 'es',
+    },
     build: {
       outDir: 'dist/renderer',
       target: 'esnext', // Use modern JS to avoid polyfill conflicts
@@ -866,8 +870,12 @@ export default defineConfig({
       react({
         jsxRuntime: 'automatic', // Use automatic JSX runtime to avoid CJS/ESM issues
       }),
-      wasm(), // Add WASM support for loro-crdt
-      topLevelAwait(), // Add top-level await support
+      // WASM support for loro-crdt. Its top-level await runs natively: the
+      // renderer is an ES module for Electron's Chromium (target esnext), so
+      // no transform is needed — vite-plugin-top-level-await's swc pass held
+      // each chunk's AST as one string and ran the build out of an 8 GB heap
+      // once the chat's modules joined the bundle (16,000 modules).
+      wasm(),
       {
         name: 'fix-raw-css-imports',
         enforce: 'pre',
