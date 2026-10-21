@@ -10,7 +10,7 @@
  * @module renderer/pages/Login
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Box } from '@primer/react';
 import { useService } from '../contexts/ServiceContext';
 import iconImage from '../assets/icon.png';
@@ -20,7 +20,7 @@ import Form from '../components/auth/Form';
 import ProviderButtons from '../components/auth/ProviderButtons';
 import Footer from '../components/auth/Footer';
 import Version from '../components/auth/Version';
-import { LoginFormData, LoginState } from '../../shared/types';
+import { LoginFormData, LoginState, LoginWay } from '../../shared/types';
 import { validateLoginForm, formatLoginError } from '../utils/login';
 // User payload isn't typed here; treating it as Record<string, unknown>.
 
@@ -40,8 +40,12 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
   const authService = useService('authService');
   const [formData, setFormData] = useState<LoginFormData>({
     runUrl: 'https://prod1.datalayer.run',
+    handle: '',
+    password: '',
     token: '',
   });
+  // A handle and password by default; the token under More options.
+  const [way, setWay] = useState<LoginWay>('password');
 
   const [state, setState] = useState<LoginState>({
     loading: false,
@@ -62,9 +66,16 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
     [state.error]
   );
 
+  // Enter in a field and the form's own submit can both fire: one sign-in.
+  const submitting = useRef(false);
+
   const handleSubmit = useCallback(async () => {
+    if (submitting.current) {
+      return;
+    }
+    submitting.current = true;
     try {
-      const validationError = validateLoginForm(formData);
+      const validationError = validateLoginForm(formData, way);
       if (validationError) {
         setState(prev => ({ ...prev, error: validationError }));
         return;
@@ -81,10 +92,14 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
       setState(prev => ({ ...prev, loading: true, error: '' }));
 
       // Use AuthService to login
-      const user = await authService.login(
-        formData.runUrl,
-        formData.token.trim()
-      );
+      const user =
+        way === 'password'
+          ? await authService.loginWithPassword(
+              formData.runUrl,
+              formData.handle.trim(),
+              formData.password
+            )
+          : await authService.login(formData.runUrl, formData.token.trim());
 
       // Call the callback if provided (for backwards compatibility)
       if (onUserDataFetched && user) {
@@ -100,8 +115,10 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
         loading: false,
         error: formatLoginError(error),
       }));
+    } finally {
+      submitting.current = false;
     }
-  }, [formData, authService, onUserDataFetched]);
+  }, [formData, way, authService, onUserDataFetched]);
 
   // A sign-in with a provider ended in a sentence (DK-03).
   const handleSignInFailed = useCallback((sentence: string) => {
@@ -155,6 +172,8 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
           onFormDataChange={handleFormDataChange}
           onSubmit={handleSubmit}
           onKeyPress={handleKeyPress}
+          way={way}
+          onWayChange={setWay}
         />
 
         <Footer />

@@ -159,6 +159,12 @@ contextBridge.exposeInMainWorld('loroAPI', {
 contextBridge.exposeInMainWorld('datalayerClient', {
   // Authentication - SDK only needs token, uses default URLs
   login: (token: string) => ipcRenderer.invoke('datalayer:login', { token }),
+  loginWithPassword: (runUrl: string, handle: string, password: string) =>
+    ipcRenderer.invoke('datalayer:login-password', {
+      runUrl,
+      handle,
+      password,
+    }),
 
   logout: () => ipcRenderer.invoke('datalayer:logout'),
 

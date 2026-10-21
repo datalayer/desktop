@@ -177,6 +177,16 @@ declare global {
         token: string;
         runUrl: string;
       }>;
+      loginWithPassword: (
+        runUrl: string,
+        handle: string,
+        password: string
+      ) => Promise<{
+        isAuthenticated: boolean;
+        user: import('@datalayer/agent-runtimes/lib/models').UserJSON;
+        token: string;
+        runUrl: string;
+      }>;
       logout: () => Promise<void>;
       whoami: () => Promise<
         import('@datalayer/agent-runtimes/lib/models').UserJSON

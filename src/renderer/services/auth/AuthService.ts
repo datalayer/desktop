@@ -127,6 +127,33 @@ export class AuthService extends BaseService implements IAuthService {
   }
 
   /**
+   * Sign in with a handle and password: the main process exchanges them for a
+   * token with IAM and signs in with it; the password is never kept.
+   */
+  async loginWithPassword(
+    runUrl: string,
+    handle: string,
+    password: string
+  ): Promise<User> {
+    this.assertReady();
+    if (!window.datalayerClient?.loginWithPassword) {
+      throw new Error('Sign-in with a password is not available.');
+    }
+    this.logger.info('Attempting login with a password', { runUrl });
+    const authState = await window.datalayerClient.loginWithPassword(
+      runUrl,
+      handle,
+      password
+    );
+    this.updateAuthState(authState);
+    const userData = await window.datalayerClient.whoami();
+    if (!userData) {
+      throw new Error('Login failed: No user data returned');
+    }
+    return userData as User;
+  }
+
+  /**
    * Logout current user.
    */
   async logout(): Promise<void> {

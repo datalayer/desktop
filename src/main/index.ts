@@ -20,6 +20,7 @@ setupConsoleOverrides();
 import { app, ipcMain, shell } from 'electron';
 import { getMainWindow, setSignInCallbackHandler } from './app/window-manager';
 import { refreshMenu } from './app/menu-manager';
+import { exchangePasswordForToken } from './services/password-login';
 
 // The app's name, unpackaged as packaged (the menu's About, the user data
 // folder); the suite runs the app with a user data folder of its own
@@ -239,6 +240,30 @@ function registerIPCHandlers(): void {
     // Return auth state for immediate use in renderer
     return authState;
   });
+
+  // A handle and password, exchanged with IAM for a token; the token then
+  // signs in as a typed token does. The password is never kept.
+  ipcMain.handle(
+    'datalayer:login-password',
+    async (_, { runUrl, handle, password }) => {
+      const token = await exchangePasswordForToken({
+        runUrl,
+        handle,
+        password,
+      });
+      await sdkBridge.call('login', token);
+      const user = await sdkBridge.call('whoami');
+      const config = sdkBridge.getConfig();
+      const authState: AuthState = {
+        isAuthenticated: true,
+        user: user,
+        token: config.token || null,
+        runUrl: config.iamUrl || '',
+      };
+      broadcastAuthState(authState);
+      return authState;
+    }
+  );
 
   ipcMain.handle('datalayer:logout', async () => {
     // Nothing of an application's chat is signed once signed out (A-20).
