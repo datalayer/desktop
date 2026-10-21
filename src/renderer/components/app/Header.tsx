@@ -60,6 +60,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         color: 'fg.default',
         borderBottom: '1px solid',
         borderColor: 'border.default',
+        // The appearance menu's overlay is drawn inside the header (not in a
+        // portal), so the header stacks above the page it opens over.
+        position: 'relative',
+        zIndex: 100,
       }}
     >
       <Header.Item sx={{ mr: 3 }}>
