@@ -8,7 +8,7 @@
  *
  * Wraps `createThemeStore` from `@datalayer/primer-addons` so that color
  * mode and theme variant are persisted to localStorage and can be driven
- * from the appearance controls in the header while being consumed by the
+ * from the appearance menu in the header while being consumed by the
  * `ThemedProvider` that wraps the whole application.
  *
  * @module renderer/theme/themeStore

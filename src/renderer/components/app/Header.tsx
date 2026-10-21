@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Header } from '@primer/react';
 import {
-  AppearanceControlsWithStore,
+  AppearanceMenuWithStore,
   DatalayerLogoText,
   useSystemColorMode,
 } from '@datalayer/primer-addons';
@@ -82,7 +82,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       />
 
       <Header.Item sx={{ mr: 2 }}>
-        <AppearanceControlsWithStore useStore={useThemeStore} />
+        <AppearanceMenuWithStore useStore={useThemeStore} />
       </Header.Item>
 
       {isAuthenticated && user && (
