@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.1.0 (prepared, not released)
+## 0.1.1
+
+- The appearance menu opens above the page (it opened beneath it).
+- The Sessions page's place filter reads *All · Datalayer · Local*, each on one line.
+- Sign in with a handle and password by default; the Run URL and an API token under *More options*.
+- The menu is disabled until you sign in (except Help); Sessions comes first.
+- The avatar falls back to your initial when its picture does not load; the appearance menu replaces the header's swatches.
+
+## 0.1.0
 
 A desktop that supports chat sessions.
 
