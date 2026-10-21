@@ -24,6 +24,7 @@
  * @module tests/mocks/iam
  */
 
+import { randomBytes } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 
 /** What a started stub IAM gives the test. */
@@ -49,6 +50,31 @@ export interface StubIam {
 }
 
 /**
+ * A token shaped as IAM's are — a JWT: three base64url parts, its payload
+ * the subject and an hour of life — since `@datalayer/core` refuses any
+ * other shape before it asks IAM. Unsigned: only this stub reads it.
+ *
+ * @param subject - The person's uid.
+ *
+ * @returns The token.
+ */
+export function stubJwt(subject: string): string {
+  const part = (value: unknown) =>
+    Buffer.from(JSON.stringify(value)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  return [
+    part({ alg: 'HS256', typ: 'JWT' }),
+    part({
+      sub: subject,
+      iat: now,
+      exp: now + 3600,
+      jti: randomBytes(16).toString('hex'),
+    }),
+    randomBytes(32).toString('base64url'),
+  ].join('.');
+}
+
+/**
  * Starts the stub IAM on a free loopback port.
  *
  * @param options - The token it knows (random by default).
@@ -58,8 +84,7 @@ export interface StubIam {
 export async function startStubIam(
   options: { token?: string } = {}
 ): Promise<StubIam> {
-  const token =
-    options.token ?? `stub-token-${Math.random().toString(36).slice(2)}`;
+  const token = options.token ?? stubJwt('person-1');
   const profile = {
     uid: 'person-1',
     handle: 'ada',
