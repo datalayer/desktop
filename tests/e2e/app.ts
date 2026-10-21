@@ -91,6 +91,22 @@ export async function launchApp(
     timeout: 60_000,
   });
   const window = await mainWindowOf(app, iam.url);
+  // What the renderer and the main process say when something breaks, in
+  // the run's log: a blank window says nothing by itself.
+  window.on('pageerror', error =>
+    console.log(`[renderer pageerror] ${error.stack || error.message}`)
+  );
+  window.on('console', message => {
+    if (message.type() === 'error') {
+      console.log(`[renderer console.error] ${message.text()}`);
+    }
+  });
+  app.process().stderr?.on('data', chunk => {
+    const text = String(chunk);
+    if (/error/i.test(text)) {
+      console.log(`[main stderr] ${text.trimEnd()}`);
+    }
+  });
   return {
     app,
     window,
