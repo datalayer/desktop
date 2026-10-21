@@ -13,7 +13,7 @@
  * the real command prints (`Auto-selected free port N`, `Uvicorn running on
  * http://127.0.0.1:N`) and serves what the app's main process and tests call:
  *
- * - `GET /api/v1/health`;
+ * - `GET /health` (`routes/health.py`, at the root as the runtime mounts it);
  * - `GET /api/v1/harnesses` (the catalogue: Claude Code and a fake harness);
  * - `GET /api/v1/apps`, `POST /api/v1/apps/configure`;
  * - `GET|POST /api/v1/apps/sessions` with the rows `loop sessions list`
@@ -284,7 +284,7 @@ function serve(): Promise<void> {
       const method = request.method || 'GET';
       const path = url.pathname;
 
-      if (method === 'GET' && path === '/api/v1/health') {
+      if (method === 'GET' && path === '/health') {
         return json(200, {
           status: 'healthy',
           timestamp: new Date().toISOString(),

@@ -78,7 +78,7 @@ describe('the stub loop', () => {
   });
 
   it('is healthy and serves the harness catalogue', async () => {
-    expect(await get('/api/v1/health')).toMatchObject({
+    expect(await get('/health')).toMatchObject({
       status: 'healthy',
       service: 'agent-runtimes',
     });
