@@ -261,6 +261,9 @@ declare global {
      * deployments, listed by the main process, which lends the person's
      * token to their runtimes' requests and to nothing else.
      */
+    /** The sessions contract (DESKTOP §7): `shared/types/ipc.types.ts`. */
+    desktopAPI: import('./ipc.types').DesktopAPI;
+
     appChatAPI: {
       /** Whether it is on (`agentChatEnabled` in settings.json; off by default). */
       enabled: () => Promise<boolean>;

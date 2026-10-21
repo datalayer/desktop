@@ -36,7 +36,10 @@ import React, {
   useState,
 } from 'react';
 import { Box, Text } from '@primer/react';
-import { Chat } from '@datalayer/agent-runtimes/lib/chat/Chat';
+import {
+  Chat,
+  type ChatSessionActions,
+} from '@datalayer/agent-runtimes/lib/chat/Chat';
 import {
   agUiEndpoint,
   APP_CHAT_WORDS,
@@ -73,6 +76,20 @@ export interface AppChatProps {
   user: { handle: string } | null;
   /** Reads the notebook last in front; `undefined` when none is open. */
   readNotebook: () => Promise<NotebookContext | undefined>;
+  /**
+   * A session of the application opened from the Sessions page (DK-08):
+   * its conversation is read by uid from the kept runtime, held there or
+   * resumed from its record; none opens a new conversation.
+   */
+  openUid?: string;
+  /**
+   * What the session's `⋯` menu may use (the app's save and open dialogs,
+   * its picker) and is told; the menu is drawn from the Reactor registered
+   * for the renderer. Absent, no menu is drawn (A-20's chat as it was).
+   */
+  sessionActions?: ChatSessionActions;
+  /** Told the person's message was sent, and the agent's answer received. */
+  onTurn?: (phase: 'sent' | 'answered') => void;
 }
 
 /**
@@ -104,7 +121,8 @@ async function refusalOf(response: Response, what: string): Promise<string> {
  * @returns React element.
  */
 export function AppChat(props: AppChatProps): React.JSX.Element {
-  const { handle, services, user, readNotebook } = props;
+  const { handle, services, user, readNotebook, openUid, sessionActions } =
+    props;
   const [host, setHost] = useState<AppHost | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [approvals, setApprovals] = useState<AppChatApproval[]>([]);
@@ -296,8 +314,17 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
       </Text>
       <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         <Chat
-          key={handle.uid}
+          // Another session opened is another conversation.
+          key={`${handle.uid} ${openUid ?? ''}`}
           protocol="ag-ui"
+          // The session opened from the Sessions page (DK-08), read from
+          // the kept runtime by uid; its menu beside the header (DK-10).
+          thread={
+            openUid
+              ? { id: openUid, messages: [], fromRuntime: true }
+              : undefined
+          }
+          sessionActions={sessionActions}
           baseUrl={handle.url}
           endpoint={agUiEndpoint(handle)}
           configEndpoint={`${handle.url}/api/v1/configure`}
@@ -317,6 +344,8 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
               toolLineOf(handle.name, toolName, host),
             ]);
           }}
+          onMessageSent={() => props.onTurn?.('sent')}
+          onMessageReceived={() => props.onTurn?.('answered')}
           pendingApprovals={approvals}
           onApproveApproval={approvalId => decide(approvalId, true)}
           onRejectApproval={approvalId => decide(approvalId, false)}

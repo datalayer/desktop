@@ -22,6 +22,7 @@ import type {
   LexicalJSON,
   UserJSON,
 } from '@datalayer/agent-runtimes/lib/models';
+import type { DesktopAPI } from '../shared/types/ipc.types';
 
 /**
  * Electron API for system information and menu actions.
@@ -253,6 +254,68 @@ contextBridge.exposeInMainWorld('appChatAPI', {
 });
 
 /**
+ * Sessions (DESKTOP §7): the contract between the renderer and the main
+ * process, typed in `shared/types/ipc.types.ts`. The renderer never holds
+ * the token: the main process reads the two places and lends the token
+ * where it is needed; a local runtime needs none.
+ */
+const on = (channel: string, listener: (...args: unknown[]) => void) => {
+  const wrapped = (_event: unknown, ...args: unknown[]) => listener(...args);
+  ipcRenderer.on(channel, wrapped);
+  return () => {
+    ipcRenderer.removeListener(channel, wrapped);
+  };
+};
+
+const desktopAPI: DesktopAPI = {
+  sessions: {
+    list: () => ipcRenderer.invoke('sessions:list'),
+    onChanged: callback => on('sessions:changed', () => callback()),
+  },
+  localRuntime: {
+    start: folder => ipcRenderer.invoke('local-runtime:start', { folder }),
+    stop: folder => ipcRenderer.invoke('local-runtime:stop', { folder }),
+    running: () => ipcRenderer.invoke('local-runtime:running'),
+    recentFolders: () => ipcRenderer.invoke('local-runtime:recent-folders'),
+    harnesses: url => ipcRenderer.invoke('local-runtime:harnesses', { url }),
+    checkHarness: (url, id) =>
+      ipcRenderer.invoke('local-runtime:check-harness', { url, id }),
+    setupHarness: (url, id) =>
+      ipcRenderer.invoke('local-runtime:setup-harness', { url, id }),
+    storeCredential: (name, value) =>
+      ipcRenderer.invoke('credentials:store', { name, value }),
+  },
+  approvals: {
+    pending: () => ipcRenderer.invoke('approvals:pending'),
+    decide: (place, id, decision) =>
+      ipcRenderer.invoke('approvals:decide', { place, id, decision }),
+    onChanged: callback => on('approvals:changed', () => callback()),
+  },
+  dialog: {
+    openFolder: () => ipcRenderer.invoke('dialog:open-folder'),
+    save: (name, text) => ipcRenderer.invoke('dialog:save', { name, text }),
+    openFile: accept => ipcRenderer.invoke('dialog:open-file', { accept }),
+  },
+  shell: {
+    reveal: path => ipcRenderer.invoke('shell:reveal', { path }),
+  },
+  studio: {
+    open: path => ipcRenderer.invoke('studio:open', { path }),
+  },
+  attention: {
+    onFocus: callback =>
+      on('attention:focus', payload => {
+        const uid = (payload as { uid?: unknown } | undefined)?.uid;
+        if (typeof uid === 'string') {
+          callback(uid);
+        }
+      }),
+  },
+};
+
+contextBridge.exposeInMainWorld('desktopAPI', desktopAPI);
+
+/**
  * Proxy API interface for HTTP and WebSocket communication.
  */
 export interface ProxyAPI {
@@ -430,5 +493,7 @@ declare global {
     electronAPI: ElectronAPI;
     datalayerClient: DatalayerIPCClient;
     proxyAPI: ProxyAPI;
+    /** The sessions contract (DESKTOP §7). */
+    desktopAPI: DesktopAPI;
   }
 }
