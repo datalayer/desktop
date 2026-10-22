@@ -120,6 +120,14 @@ body {
    (it drew a green border on every focused control, the segmented control's
    selected button included). */
 
+/* The segmented control's selected segment is told by its raised knob, not a
+   ring: Electron marks a clicked segment :focus-visible, so Primer's focus
+   outline (the theme's accent, a dark green frame) stayed on it after every
+   click. */
+[class*='prc-SegmentedControl-Button']:focus-visible:not(:disabled) {
+  outline: none;
+}
+
 /* Remove webkit/safari default blue outline */
 *::-webkit-focus-ring-color {
   outline-color: transparent !important;
