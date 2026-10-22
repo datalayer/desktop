@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+
+- No green or grey frame on the segmented controls (Sessions' *All · Datalayer · Local*, Apps' sections): the selected segment is the white knob alone, and a click leaves no ring.
+- A focused text field, text area or select shows one focus ring, not a second green outline inside it.
+- `make dev` (and `make start`) runs the app in development.
+
 ## 0.1.4
 
 - The tab is **Apps** (it was Studio): *View → Apps*, *Open in Apps* in the Sessions menu and a session's menu.
