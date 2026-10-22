@@ -126,9 +126,20 @@ body {
    click. Primer rings both :focus and :focus-visible, and its stylesheet loads
    after this one with the same weight: hence both states, and !important. */
 [class*='prc-SegmentedControl-Button']:focus:not(:disabled),
-[class*='prc-SegmentedControl-Button']:focus-visible:not(:disabled) {
+[class*='prc-SegmentedControl-Button']:focus-visible:not(:disabled),
+[class*='prc-SegmentedControl-IconButton']:focus:not(:disabled),
+[class*='prc-SegmentedControl-IconButton']:focus-visible:not(:disabled),
+[class*='prc-SegmentedControl-Content'],
+[class*='prc-SegmentedControl-SegmentedControl']:focus-within {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* The selected segment's knob: Primer frames it with
+   --controlKnob-borderColor-rest; the white knob on the grey track is enough. */
+[class*='prc-SegmentedControl-Button'][aria-current='true'] [class*='prc-SegmentedControl-Content'],
+[class*='prc-SegmentedControl-IconButton'][aria-current='true'] {
+  border-color: transparent !important;
 }
 
 /* Remove webkit/safari default blue outline */
