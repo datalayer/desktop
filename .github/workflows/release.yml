@@ -147,34 +147,24 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Generate changelog
+      - name: Release notes from CHANGELOG.md
         id: changelog
         run: |
-          # Check for manual release notes first
-          if [ -f "RELEASE_NOTES.md" ]; then
-            echo "Using manual RELEASE_NOTES.md"
-            cp RELEASE_NOTES.md CHANGELOG.txt
-          else
-            echo "Auto-generating changelog from git history"
-            # Get the previous tag
-            PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
-
-            if [ -z "$PREVIOUS_TAG" ]; then
-              echo "No previous tag found, using initial commit"
-              PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-            fi
-
-            echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
-
-            # Generate changelog
-            CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)" --no-merges)
-
-            # Save to file
-            cat > CHANGELOG.txt << 'EOF'
-          ## What's Changed
-
-          $CHANGELOG
-
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          # The version's own section of CHANGELOG.md: `## <version>` up to the
+          # next `## `. A tag whose version has no section fails here rather
+          # than publishing a release without its notes.
+          NOTES=$(awk -v v="## $VERSION" '$0 == v { f = 1; next } /^## / { if (f) exit } f' CHANGELOG.md | sed '/./,$!d')
+          if [ -z "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md has no section '## $VERSION'."
+            exit 1
+          fi
+          {
+            echo "## What's Changed"
+            echo
+            printf '%s\n' "$NOTES"
+            echo
+            cat << 'EOF'
           ## Downloads
 
           Choose the appropriate installer for your platform:
@@ -210,7 +200,8 @@ jobs:
           sudo rpm -i datalayer-desktop-*.x86_64.rpm
           ```
           EOF
-          fi
+          } > CHANGELOG.txt
+          cat CHANGELOG.txt
 
       - name: Download the installers
         uses: actions/download-artifact@v4
