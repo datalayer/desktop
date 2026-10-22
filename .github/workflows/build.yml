@@ -76,6 +76,21 @@ jobs:
             platform: mac
             arch: universal
 
+          # macOS single-arch builds, disabled: the universal build covers
+          # both. To re-enable, uncomment the two entries below; the
+          # "Package for macOS" step packages whatever arch the entry names.
+          #
+          # # macOS Intel only (GitHub retired the macos-13 image; jobs on it
+          # # queue forever)
+          # - os: macos-15-intel
+          #   platform: mac
+          #   arch: x64
+          #
+          # # macOS Apple Silicon only
+          # - os: macos-latest
+          #   platform: mac
+          #   arch: arm64
+
     runs-on: ${{ matrix.os }}
     env:
       ELECTRON_DEV_PROD: ${{ github.event.inputs.build_type == 'dev-prod' && 'true' || '' }}
@@ -133,7 +148,13 @@ jobs:
       # macOS Package (unsigned)
       - name: Package for macOS
         if: matrix.platform == 'mac'
-        run: npm run package:mac
+        run: |
+          if [ "${{ matrix.arch }}" = "universal" ]; then
+            npm run package:mac
+          else
+            # The disabled single-arch entries (x64, arm64) land here.
+            npx electron-builder --mac --${{ matrix.arch }} --publish never
+          fi
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
