@@ -303,13 +303,15 @@ select:focus-visible,
   color: var(--datalayer-green-accessible-dark) !important;
 }
 
-/* NUCLEAR OPTION: Remove ALL outlines and use only box-shadow for ActionList */
+/* NUCLEAR OPTION: Remove ALL outlines and use only box-shadow for ActionList.
+   Not the segmented control: it is a ul of li too, and this framed its focused
+   segment in green. */
 li[role='none'] > *:focus,
 li[role='none'] > *:focus-visible,
 li[role='none'] > *:focus-within,
-ul > li:focus,
-ul > li:focus-visible,
-ul > li:focus-within,
+ul:not([class*='prc-SegmentedControl']) > li:focus,
+ul:not([class*='prc-SegmentedControl']) > li:focus-visible,
+ul:not([class*='prc-SegmentedControl']) > li:focus-within,
 .ActionList li:focus,
 .ActionList li:focus-visible,
 .ActionList li:focus-within {
