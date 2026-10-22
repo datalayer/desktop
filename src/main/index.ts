@@ -19,6 +19,16 @@ setupConsoleOverrides();
 // Core Electron imports
 import { app, ipcMain, shell } from 'electron';
 import { getMainWindow } from './app/window-manager';
+import { refreshMenu } from './app/menu-manager';
+import { exchangePasswordForToken } from './services/password-login';
+
+// The app's name, unpackaged as packaged (the menu's About, the user data
+// folder); the suite runs the app with a user data folder of its own
+// (DK-15) — both set before anything reads them.
+app.setName('Datalayer Desktop');
+if (process.env.DATALAYER_DESKTOP_USER_DATA) {
+  app.setPath('userData', process.env.DATALAYER_DESKTOP_USER_DATA);
+}
 
 // Application components
 import { Application } from './app/application';
@@ -27,6 +37,23 @@ import { Application } from './app/application';
 import { sdkBridge } from './services/datalayer-sdk-bridge';
 import { websocketProxy } from './services/websocket-proxy';
 import { LoroWebSocketAdapter } from './services/loro-websocket-adapter';
+import {
+  appChatUserToken,
+  forgetAppChats,
+  lendTokenToAppChats,
+  listAppChatDeployments,
+} from './services/app-chat';
+import {
+  registerSessionsIpc,
+  startSessionsServices,
+} from './services/sessions-ipc';
+import {
+  SIGN_IN_CALLBACK,
+  SIGN_IN_SENTENCES,
+  signIn,
+} from './services/sign-in';
+import { closeSignInWindow, openSignInWindow } from './services/sign-in-window';
+import { registerAppsIpc } from './services/apps';
 
 // Type definitions
 interface VersionInfo {
@@ -102,7 +129,93 @@ function registerIPCHandlers(): void {
         hasUser: !!authState.user,
       });
     }
+    refreshMenu({ signedIn: authState.isAuthenticated });
   }
+
+  /**
+   * The sign-in callback the sign-in window caught (DK-03): the token kept
+   * through the SDK bridge once the state matches, the person signed in;
+   * otherwise the sentence goes to the Login page.
+   * @param url - The `datalayer://auth…` URL
+   */
+  async function signInCallbackReceived(url: string): Promise<void> {
+    const outcome = await signIn.callback(url, {
+      keep: async token => {
+        await sdkBridge.call('login', token);
+      },
+    });
+    if (!outcome.ok) {
+      log.warn(`[Sign-in] ${outcome.sentence}`);
+      getMainWindow()?.webContents.send('sign-in:failed', outcome.sentence);
+      return;
+    }
+    const user = await sdkBridge.call('whoami');
+    const config = sdkBridge.getConfig();
+    log.info(`[Sign-in] Signed in with ${outcome.provider}`);
+    broadcastAuthState({
+      isAuthenticated: true,
+      user,
+      token: config.token || null,
+      runUrl: config.iamUrl || '',
+    });
+  }
+
+  // Sign in with a provider (DK-03): IAM's page in a small window of its
+  // own over the main window, closed once the callback comes back.
+  ipcMain.handle('sign-in:start', async (_, { provider }) => {
+    const { getOAuth2AuthzUrl } =
+      await import('@datalayer/core/lib/api/iam/oauth2');
+    const iamUrl = sdkBridge.getConfig().iamUrl || '';
+    const started = await signIn.start(provider, {
+      authorizationUrl: (chosen, callbackUri, nonce) =>
+        getOAuth2AuthzUrl(chosen, callbackUri, nonce, iamUrl),
+      load: url => {
+        openSignInWindow(url, getMainWindow(), {
+          onCallback: callback => {
+            signInCallbackReceived(callback).catch(error => {
+              log.error('[Sign-in] The callback failed:', error);
+              getMainWindow()?.webContents.send(
+                'sign-in:failed',
+                SIGN_IN_SENTENCES.refused(
+                  error instanceof Error ? error.message : String(error)
+                )
+              );
+            });
+          },
+          onClosed: () => {
+            if (!signIn.inFlight) {
+              return;
+            }
+            signIn.cancel();
+            log.info('[Sign-in] The sign-in window was closed');
+            getMainWindow()?.webContents.send(
+              'sign-in:failed',
+              SIGN_IN_SENTENCES.windowClosed
+            );
+          },
+        });
+      },
+    });
+    if (started.ok) {
+      log.info(
+        `[Sign-in] ${provider} opened in the sign-in window, callback ${SIGN_IN_CALLBACK}`
+      );
+      return { ok: true };
+    }
+    log.warn(`[Sign-in] ${started.sentence}`);
+    return { ok: false, sentence: started.sentence };
+  });
+
+  // Apps' reads and its one change (DK-02): the main process's token.
+  registerAppsIpc();
+
+  // The menu's entries follow what the renderer shows (DK-04).
+  ipcMain.handle(
+    'menu:state',
+    async (_, state: { sessionInFront?: boolean }) => {
+      refreshMenu({ sessionInFront: Boolean(state?.sessionInFront) });
+    }
+  );
 
   // Authentication handlers - using SDK bridge
   ipcMain.handle('datalayer:login', async (_, { token }) => {
@@ -125,13 +238,41 @@ function registerIPCHandlers(): void {
     return authState;
   });
 
+  // A handle and password, exchanged with IAM for a token; the token then
+  // signs in as a typed token does. The password is never kept.
+  ipcMain.handle(
+    'datalayer:login-password',
+    async (_, { runUrl, handle, password }) => {
+      const token = await exchangePasswordForToken({
+        runUrl,
+        handle,
+        password,
+      });
+      await sdkBridge.call('login', token);
+      const user = await sdkBridge.call('whoami');
+      const config = sdkBridge.getConfig();
+      const authState: AuthState = {
+        isAuthenticated: true,
+        user: user,
+        token: config.token || null,
+        runUrl: config.iamUrl || '',
+      };
+      broadcastAuthState(authState);
+      return authState;
+    }
+  );
+
   ipcMain.handle('datalayer:logout', async () => {
+    // Nothing of an application's chat is signed once signed out (A-20).
+    forgetAppChats();
+    // A sign-in in progress ends with the token (DK-03).
+    signIn.cancel();
+    closeSignInWindow();
     try {
       await sdkBridge.call('logout');
     } catch {
       // Don't fail logout - silently ignore errors
     }
-
     // Broadcast logged out state
     const authState = {
       isAuthenticated: false,
@@ -147,22 +288,9 @@ function registerIPCHandlers(): void {
 
   // New method to get current auth state (includes user data)
   ipcMain.handle('datalayer:get-auth-state', async () => {
-    // Use the SDK bridge's getAuthState which checks stored tokens
+    // A stored token kept while IAM did not answer is checked again first.
+    await sdkBridge.retryRestore();
     return sdkBridge.getAuthState();
-  });
-
-  // Legacy credentials method (for backward compatibility)
-  ipcMain.handle('datalayer:get-credentials', async () => {
-    try {
-      const config = sdkBridge.getConfig();
-      return {
-        runUrl: config.iamUrl,
-        token: config.token,
-        isAuthenticated: !!config.token,
-      };
-    } catch {
-      return { runUrl: '', token: '', isAuthenticated: false };
-    }
   });
 
   // Environment and runtime handlers - using SDK bridge
@@ -376,6 +504,18 @@ function registerIPCHandlers(): void {
     const user = await sdkBridge.call('whoami');
     return user; // Returns User directly, throws on error
   });
+
+  // A deployed application's agent (APPS A-20): the person's deployments,
+  // listed here with the token the main process holds; the runtimes they
+  // are kept on are the only ones the session lends it to.
+  ipcMain.handle('app-chat:list-deployments', async () =>
+    listAppChatDeployments()
+  );
+  // A deployment that takes only a signed user (D-21): signed here, with
+  // the token this process holds; only the user token goes back.
+  ipcMain.handle('app-chat:user-token', async (_event, deploymentUid: string) =>
+    appChatUserToken(deploymentUid)
+  );
 
   // Configuration handlers
   ipcMain.handle('datalayer:get-spacer-run-url', async () => {
@@ -598,6 +738,12 @@ async function main(): Promise<void> {
 
     // Register all IPC handlers
     registerIPCHandlers();
+    // The sessions' handlers: the local runtime, the two lists, the
+    // approvals, the dialogs (DESKTOP §7's contract).
+    registerSessionsIpc();
+
+    // Lend the person's token to the chats of their applications only (A-20)
+    lendTokenToAppChats();
 
     // Set up application event handlers
     Application.setupEventHandlers();
@@ -605,12 +751,18 @@ async function main(): Promise<void> {
     // Initialize the application
     await Application.initialize();
 
+    // The approvals' sources and the last folder's runtime (DESKTOP DK-05,
+    // DK-13, DK-14); its refusal is logged, never shown at launch.
+    void startSessionsServices();
+
     // Check for stored authentication and broadcast if authenticated
     const authState = sdkBridge.getAuthState();
     if (authState.isAuthenticated) {
       log.info(
         '[Main] Found stored authentication, broadcasting to renderer...'
       );
+      // The menu opens up at once; the renderer hears it below.
+      refreshMenu({ signedIn: true });
       // Wait a bit for the renderer to be ready
       setTimeout(() => {
         const mainWindow = getMainWindow();

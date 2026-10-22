@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Header } from '@primer/react';
 import {
-  AppearanceControlsWithStore,
+  AppearanceMenuWithStore,
   DatalayerLogoText,
   useSystemColorMode,
 } from '@datalayer/primer-addons';
@@ -60,6 +60,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         color: 'fg.default',
         borderBottom: '1px solid',
         borderColor: 'border.default',
+        // The appearance menu's overlay is drawn inside the header (not in a
+        // portal): Primer's Header clips its overflow (overflow: auto), which
+        // hid the overlay below the header's edge, and the header must stack
+        // above the page it opens over.
+        overflow: 'visible',
+        position: 'relative',
+        zIndex: 100,
       }}
     >
       <Header.Item sx={{ mr: 3 }}>
@@ -82,7 +89,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       />
 
       <Header.Item sx={{ mr: 2 }}>
-        <AppearanceControlsWithStore useStore={useThemeStore} />
+        <AppearanceMenuWithStore useStore={useThemeStore} />
       </Header.Item>
 
       {isAuthenticated && user && (

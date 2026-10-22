@@ -180,6 +180,9 @@ import ReactDOM from 'react-dom/client';
 import { setupPrimerPortals } from '@datalayer/primer-addons';
 import App from './App';
 import { ServiceProvider } from './contexts/ServiceContext';
+import { registerDesktopReactor } from './plugins/desktopReactor';
+import { desktopSessionActions } from './plugins/desktopSessionActions';
+import { desktopWays } from './plugins/sessionWays';
 import './index.css';
 
 // Suppress widget detachment errors that occur during cleanup
@@ -248,6 +251,10 @@ const init = async () => {
 
   // Ensure Primer overlays/dialogs mount to dedicated portal roots in Electron.
   setupPrimerPortals();
+
+  // The Reactor the chat reads its display renderers and session entries
+  // from (DESKTOP DK-01): registered before anything mounts.
+  registerDesktopReactor(desktopSessionActions(desktopWays));
 
   const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement

@@ -12,10 +12,18 @@ tests/
 │   ├── index.ts              # Central export
 │   ├── electron.ts           # Electron API mocks
 │   ├── datalayer-api.ts      # Datalayer Client/API mocks
-│   └── websocket.ts          # WebSocket and proxy mocks
+│   ├── websocket.ts          # WebSocket and proxy mocks
+│   ├── loop.ts, loop, loop.cmd # The stub `loop` (a local runtime from fixtures)
+│   ├── loop.test.ts          # The stub's own tests
+│   └── iam.ts                # The stub IAM, Spacer and ai-agents (sign-in, Apps)
 ├── fixtures/                  # Test data
 │   └── index.ts              # Mock users, environments, runtimes, etc.
-└── e2e/                       # End-to-end tests (coming soon)
+└── e2e/                       # Playwright: the app launched from its build
+    ├── app.ts                # launchApp, signInWithToken, windowUrls, menuLabels
+    ├── launch.e2e.ts         # the window, no web page embedded, the menu, no token in a renderer
+    ├── sign-in.e2e.ts        # a provider in the sign-in window, the typed token, sign-out, a relaunch
+    ├── apps.e2e.ts           # the Apps tab: applications, Build, Try, Activity, Deployments
+    └── sessions.e2e.ts       # the Sessions page lists and a row opens
 ```
 
 ## 🧪 Test Types
@@ -39,15 +47,10 @@ Tests that involve multiple components, services, or IPC communication.
 - `src/main/services/datalayer-sdk-bridge.integration.test.ts`
 - `src/renderer/pages/NotebookEditor.integration.test.tsx`
 
-### E2E Tests (`*.e2e.ts`, `*.e2e.tsx`)
-Full application tests using Playwright for Electron.
+### E2E Tests (`*.e2e.ts`)
+Full application tests using Playwright for Electron: the app launched from its build (`npm run build` first) with the stub `loop` on `PATH` and the stub IAM on loopback. See TESTING.md.
 
 **Location**: `tests/e2e/`
-
-**Examples** (coming soon):
-- `tests/e2e/app-launch.e2e.ts`
-- `tests/e2e/authentication.e2e.ts`
-- `tests/e2e/notebook-workflow.e2e.ts`
 
 ## 🚀 Running Tests
 

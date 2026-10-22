@@ -1,0 +1,3 @@
+#!/bin/sh
+# The stub `loop` of the desktop suite (DESKTOP DK-15): see loop.ts beside it.
+exec node --no-warnings --experimental-strip-types "$(dirname "$0")/loop.ts" "$@"

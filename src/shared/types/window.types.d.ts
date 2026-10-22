@@ -87,6 +87,12 @@ declare global {
       removeAuthStateListener: () => void;
     };
 
+    /** The provider sign-in, in a window of its own (DESKTOP DK-03). */
+    signInAPI: import('./shell.types').SignInAPI;
+
+    /** The menu's state from the renderer (DESKTOP DK-04). */
+    menuAPI: import('./shell.types').MenuAPI;
+
     /**
      * Loro collaboration API for Lexical document editing.
      * Provides WebSocket connectivity for real-time CRDT collaboration.
@@ -163,6 +169,16 @@ declare global {
     datalayerClient: {
       // Authentication
       login: (token: string) => Promise<{
+        isAuthenticated: boolean;
+        user: import('@datalayer/agent-runtimes/lib/models').UserJSON;
+        token: string;
+        runUrl: string;
+      }>;
+      loginWithPassword: (
+        runUrl: string,
+        handle: string,
+        password: string
+      ) => Promise<{
         isAuthenticated: boolean;
         user: import('@datalayer/agent-runtimes/lib/models').UserJSON;
         token: string;
@@ -254,6 +270,22 @@ declare global {
         description?: string
       ) => Promise<import('@datalayer/agent-runtimes/lib/models').LexicalJSON>;
       deleteLexical: (lexicalId: string) => Promise<void>;
+    };
+
+    /**
+     * A deployed application's agent (APPS A-20): the person's
+     * deployments, listed by the main process, which lends the person's
+     * token to their runtimes' requests and to nothing else.
+     */
+    /** The sessions contract (DESKTOP §7): `shared/types/ipc.types.ts`. */
+    desktopAPI: import('./desktopApi.types').DesktopAPI;
+
+    appChatAPI: {
+      listDeployments: () => Promise<import('../appChat').AppChatDeployments>;
+      /** A user token for a deployment that takes only a signed user (D-21). */
+      userToken: (
+        deploymentUid: string
+      ) => Promise<import('../appChat').SignedUser>;
     };
   }
 }
