@@ -33,7 +33,7 @@ const ways: DesktopSessionWays = {
 };
 
 describe('the desktop Reactor (DK-01)', () => {
-  it('carries the session entries: the chat’s five, then the app’s', async () => {
+  it('carries the session entries: the chat’s six, then the app’s', async () => {
     const reactor = buildDesktopReactor(desktopSessionActions(ways));
     reactor.start();
     await reactor.whenReady();
@@ -43,6 +43,7 @@ describe('the desktop Reactor (DK-01)', () => {
     expect(ids).toEqual([
       'switch-agent',
       'clone-from-here',
+      'session-rules',
       'export',
       'import',
       'resume',

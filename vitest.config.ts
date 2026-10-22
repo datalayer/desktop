@@ -47,6 +47,10 @@ const shared = {
     environment: 'happy-dom',
     setupFiles: ['./tests/setup.ts', './src/renderer/test-setup.ts'],
     exclude: ['node_modules', 'dist', 'dist-electron', 'tests/e2e/**'],
+    // The Datalayer packages' `lib/` is written for a bundler (directory and
+    // extensionless imports, which Node's ESM loader refuses): Vite
+    // transforms them as the app's build does, instead of Node loading them.
+    server: { deps: { inline: [/@datalayer\//] } },
   },
 } as const;
 

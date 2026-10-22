@@ -11,6 +11,9 @@
  */
 
 import '@testing-library/jest-dom/vitest';
+// The webpack global Jupyter widgets read bare when they load, declared as
+// the app declares it before any module runs.
+import './polyfills/webpack-public-path';
 
 /*
  * happy-dom's `document` is not an `instanceof Document` (it is an
