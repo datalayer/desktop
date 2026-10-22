@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- The tab is **Apps** (it was Studio): *View → Apps*, *Open in Apps* in the Sessions menu and a session's menu.
+- An unreachable sign-in service at launch no longer signs you out: only a refused token (expired, 401, 403) is cleared, otherwise it is kept and checked again when the window asks.
+- No green outline on a selected control: the segmented control's entry had a border after a click.
+- The kernel indicator's details open below and to the right, not cut by the sidebar's edge.
+- The chat's session menu has *Rules for this session…*.
+
 ## 0.1.3
 
 - The profile menu opens on hover, as the appearance menu does; leaving it closes it.
