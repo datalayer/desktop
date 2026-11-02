@@ -4,69 +4,36 @@
  */
 
 /**
- * Playwright configuration for E2E testing of the Electron application.
+ * Playwright configuration for the e2e suite of the Electron app (DESKTOP
+ * DK-15): `tests/e2e/*.e2e.ts`, one worker (one Electron at a time), the
+ * app launched from its build by `tests/e2e/app.ts` with the stub `loop`
+ * and the stub IAM — `npm run build` first, then `npm run test:e2e`
+ * (`xvfb-run -a npm run test:e2e` on a Linux box without a display).
  *
  * @module playwright.config
  */
 
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: '**/*.e2e.{ts,tsx}',
-
-  // Test timeout
-  timeout: 60000,
-  expect: {
-    timeout: 10000,
-  },
-
-  // Run tests in files in parallel
+  testMatch: '**/*.e2e.ts',
+  timeout: 120_000,
+  expect: { timeout: 15_000 },
   fullyParallel: false,
-
-  // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
-
-  // Retry on CI only
-  retries: process.env.CI ? 2 : 0,
-
-  // Workers
-  workers: 1, // Electron apps should run in single worker mode
-
-  // Reporter configuration
-  reporter: [
-    ['list'],
-    ['html', { outputFolder: 'test-results/html' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
-  ],
-
-  // Shared test setup
+  retries: process.env.CI ? 1 : 0,
+  workers: 1,
+  reporter: process.env.CI
+    ? [
+        ['list'],
+        ['html', { outputFolder: 'test-results/html', open: 'never' }],
+        ['junit', { outputFile: 'test-results/junit.xml' }],
+      ]
+    : [['list']],
   use: {
-    // Collect trace on failure
-    trace: 'on-first-retry',
-
-    // Screenshot on failure
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-
-    // Video on failure
-    video: 'retain-on-failure',
   },
-
-  // Project configuration for Electron
-  projects: [
-    {
-      name: 'electron',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-
-  // Output directory
   outputDir: 'test-results/playwright',
-
-  // Web server configuration (if needed for local testing)
-  // webServer: {
-  //   command: 'npm run dev',
-  //   port: 5173,
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

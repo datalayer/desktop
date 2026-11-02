@@ -1,4 +1,4 @@
-name: Release Desktop App
+name: Release
 
 on:
   push:
@@ -9,9 +9,53 @@ permissions:
   contents: write  # Required for creating releases
 
 jobs:
+  # The checks and the app's JavaScript (main, preload, renderer) run once on
+  # Linux; each platform job then only packages that build.
+  build-app:
+    name: Check and build the app (JS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-environment
+        with:
+          node-version: '22'
+
+      - name: Verify package.json version matches tag
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $PACKAGE_VERSION"
+
+      - name: Run linter
+        run: npm run lint
+
+      # Type-checks, then electron-vite builds main, preload and renderer.
+      - name: Build application
+        run: npm run build
+
+      - name: Upload the app build
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
   build-and-release:
     name: Build and Release (${{ matrix.os }})
+    needs: build-app
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
 
     strategy:
       matrix:
@@ -34,76 +78,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history for changelog
 
+      # The platform's node_modules: electron-builder packages the production
+      # dependencies, native modules included, for this platform.
       - name: Setup build environment
         uses: ./.github/actions/setup-environment
         with:
           node-version: '22'
           os: ${{ matrix.os }}
 
-      - name: Extract version from tag
-        id: extract_version
-        shell: bash
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
-
-      - name: Verify package.json version matches tag
-        shell: bash
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${{ steps.extract_version.outputs.version }}"
-          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
-            exit 1
-          fi
-          echo "Version verified: $PACKAGE_VERSION"
-
-      - name: Run type checking
-        run: npm run type-check
-
-      - name: Run linter
-        run: npm run lint
-
-      - name: Build application
-        run: npm run build
+      - name: Download the app build
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dist
+          path: dist
 
       # Package for each platform (unsigned builds for GitHub Releases only)
       - name: Package application (macOS)
         if: matrix.platform == 'mac'
-        run: npm run dist:mac-universal
+        run: npm run package:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Package application (Windows)
         if: matrix.platform == 'win'
-        run: npm run dist:win
+        run: npm run package:win
 
       - name: Package application (Linux)
         if: matrix.platform == 'linux'
-        run: npm run dist:linux
+        run: npm run package:linux
 
-      # Find and list generated artifacts
       - name: List artifacts
-        id: artifacts
         shell: bash
         run: |
           echo "Generated artifacts:"
           ls -lh dist-electron/
-
-          # Find artifact files (DMG for macOS, EXE/MSI for Windows, AppImage/deb for Linux)
-          if [ "${{ matrix.platform }}" == "mac" ]; then
-            ARTIFACTS=$(find dist-electron -name "*.dmg" -o -name "*.zip")
-          elif [ "${{ matrix.platform }}" == "win" ]; then
-            ARTIFACTS=$(find dist-electron -name "*.exe" -o -name "*.msi")
-          else
-            ARTIFACTS=$(find dist-electron -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm")
-          fi
-
-          echo "artifacts<<EOF" >> $GITHUB_OUTPUT
-          echo "$ARTIFACTS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
       # Upload artifacts to GitHub Actions
       - name: Upload build artifacts
@@ -118,6 +127,7 @@ jobs:
             dist-electron/*.AppImage
             dist-electron/*.deb
             dist-electron/*.rpm
+          if-no-files-found: error
           retention-days: 30
 
   create-release:
@@ -137,34 +147,24 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Generate changelog
+      - name: Release notes from CHANGELOG.md
         id: changelog
         run: |
-          # Check for manual release notes first
-          if [ -f "RELEASE_NOTES.md" ]; then
-            echo "Using manual RELEASE_NOTES.md"
-            cp RELEASE_NOTES.md CHANGELOG.txt
-          else
-            echo "Auto-generating changelog from git history"
-            # Get the previous tag
-            PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
-
-            if [ -z "$PREVIOUS_TAG" ]; then
-              echo "No previous tag found, using initial commit"
-              PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-            fi
-
-            echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
-
-            # Generate changelog
-            CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)" --no-merges)
-
-            # Save to file
-            cat > CHANGELOG.txt << 'EOF'
-          ## What's Changed
-
-          $CHANGELOG
-
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          # The version's own section of CHANGELOG.md: `## <version>` up to the
+          # next `## `. A tag whose version has no section fails here rather
+          # than publishing a release without its notes.
+          NOTES=$(awk -v v="## $VERSION" '$0 == v { f = 1; next } /^## / { if (f) exit } f' CHANGELOG.md | sed '/./,$!d')
+          if [ -z "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md has no section '## $VERSION'."
+            exit 1
+          fi
+          {
+            echo "## What's Changed"
+            echo
+            printf '%s\n' "$NOTES"
+            echo
+            cat << 'EOF'
           ## Downloads
 
           Choose the appropriate installer for your platform:
@@ -200,11 +200,13 @@ jobs:
           sudo rpm -i datalayer-desktop-*.x86_64.rpm
           ```
           EOF
-          fi
+          } > CHANGELOG.txt
+          cat CHANGELOG.txt
 
-      - name: Download all artifacts
+      - name: Download the installers
         uses: actions/download-artifact@v4
         with:
+          pattern: datalayer-desktop-*
           path: artifacts/
 
       - name: Display artifact structure

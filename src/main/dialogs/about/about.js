@@ -42,7 +42,7 @@ function initializeAboutDialog() {
   if (docsBtn) {
     docsBtn.addEventListener('click', () => {
       if (window.aboutAPI) {
-        window.aboutAPI.openExternal('https://docs.datalayer.io');
+        window.aboutAPI.openExternal('https://datalayer.ai/docs');
       }
     });
   }

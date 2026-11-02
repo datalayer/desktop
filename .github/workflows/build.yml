@@ -25,9 +25,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The app's JavaScript (main, preload, renderer) is the same on every
+  # platform: electron-vite builds it once here, and each platform job only
+  # packages it with electron-builder.
+  app:
+    name: Build app (JS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ELECTRON_DEV_PROD: ${{ github.event.inputs.build_type == 'dev-prod' && 'true' || '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Build main, preload and renderer
+        run: npm run build
+
+      - name: Upload the app build
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
   build:
     name: Build ${{ matrix.platform }} (${{ matrix.arch }})
-    timeout-minutes: 60
+    needs: app
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -42,47 +71,51 @@ jobs:
             platform: win
             arch: x64
 
-          # macOS Universal (Intel + Apple Silicon)
+          # macOS Universal (Intel + Apple Silicon): the only macOS build
           - os: macos-latest
             platform: mac
             arch: universal
 
-          # macOS Intel only (GitHub retired the macos-13 image; jobs on it
-          # queue forever)
-          - os: macos-15-intel
-            platform: mac
-            arch: x64
-
-          # macOS Apple Silicon only
-          - os: macos-latest
-            platform: mac
-            arch: arm64
+          # macOS single-arch builds, disabled: the universal build covers
+          # both. To re-enable, uncomment the two entries below; the
+          # "Package for macOS" step packages whatever arch the entry names.
+          #
+          # # macOS Intel only (GitHub retired the macos-13 image; jobs on it
+          # # queue forever)
+          # - os: macos-15-intel
+          #   platform: mac
+          #   arch: x64
+          #
+          # # macOS Apple Silicon only
+          # - os: macos-latest
+          #   platform: mac
+          #   arch: arm64
 
     runs-on: ${{ matrix.os }}
+    env:
+      ELECTRON_DEV_PROD: ${{ github.event.inputs.build_type == 'dev-prod' && 'true' || '' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
+      # Installs the platform's node_modules: electron-builder packages the
+      # production dependencies, native modules included, for this platform.
       - name: Setup build environment
         uses: ./.github/actions/setup-environment
         with:
           os: ${{ matrix.os }}
 
-      # Linux Build
-      - name: Build for Linux
+      - name: Download the app build
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dist
+          path: dist
+
+      # Linux Package
+      - name: Package for Linux
         if: matrix.platform == 'linux'
-        run: |
-          if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
-            npm run dist:dev-prod:linux
-          else
-            npm run dist:linux
-          fi
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run package:linux
 
       - name: Upload Linux artifacts
         if: matrix.platform == 'linux'
@@ -96,19 +129,11 @@ jobs:
             dist-electron/*.snap
           retention-days: 30
 
-      # Windows Build
-      - name: Build for Windows
+      # Windows Package
+      - name: Package for Windows
         if: matrix.platform == 'win'
         shell: bash
-        run: |
-          if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
-            npm run dist:dev-prod:win
-          else
-            npm run dist:win
-          fi
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run package:win
 
       - name: Upload Windows artifacts
         if: matrix.platform == 'win'
@@ -120,31 +145,17 @@ jobs:
             dist-electron/*.msi
           retention-days: 30
 
-      # macOS Build
-      - name: Build for macOS
+      # macOS Package (unsigned)
+      - name: Package for macOS
         if: matrix.platform == 'mac'
         run: |
-          # Skip code signing if certificates aren't available
-          if [ -z "${{ secrets.MACOS_CERTIFICATE }}" ]; then
-            echo "No code signing certificates available, building unsigned app"
-            export CSC_IDENTITY_AUTO_DISCOVERY=false
-          fi
-
-          # Build based on architecture and build type
           if [ "${{ matrix.arch }}" = "universal" ]; then
-            if [ "${{ github.event.inputs.build_type }}" = "dev-prod" ]; then
-              npm run dist:dev-prod:mac
-            else
-              npm run dist:mac-universal
-            fi
-          elif [ "${{ matrix.arch }}" = "arm64" ]; then
-            npm run dist:mac-arm
+            npm run package:mac
           else
-            npm run dist:mac-intel
+            # The disabled single-arch entries (x64, arm64) land here.
+            npx electron-builder --mac --${{ matrix.arch }} --publish never
           fi
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload macOS artifacts
@@ -178,17 +189,20 @@ jobs:
     if: success()
 
     steps:
-      - name: Download all artifacts
+      - name: Download the installers
         uses: actions/download-artifact@v4
         with:
+          pattern: datalayer-desktop-*
           path: artifacts
 
-      - name: List artifacts structure
+      - name: Check the three installers are there
         run: |
-          echo "Artifact Structure:"
-          find artifacts -type f -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" | head -20
+          set -e
+          ls artifacts/datalayer-desktop-linux-x64/*.AppImage
+          ls artifacts/datalayer-desktop-win-x64/*.exe
+          ls artifacts/datalayer-desktop-mac-universal/*-universal.dmg
 
       - name: Check artifact sizes
         run: |
           echo "Artifact Sizes:"
-          find artifacts -type f \( -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -exec ls -lh {} \;
+          find artifacts -type f \( -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.zip" -o -name "*.deb" -o -name "*.rpm" \) -exec ls -lh {} \;

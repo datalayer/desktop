@@ -9,11 +9,16 @@
  * @module shared/types/login
  */
 
+/** How the form signs in: a handle and password (the default), or a token. */
+export type LoginWay = 'password' | 'token';
+
 /**
  * Data structure for login form submission.
  */
 export interface LoginFormData {
   runUrl: string;
+  handle: string;
+  password: string;
   token: string;
 }
 
@@ -36,6 +41,8 @@ export interface LoginFormProps {
   onFormDataChange: (field: keyof LoginFormData, value: string) => void;
   onSubmit: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
+  way: LoginWay;
+  onWayChange: (way: LoginWay) => void;
 }
 
 export interface LoginErrorProps {

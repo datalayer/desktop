@@ -40,6 +40,15 @@ export interface IAuthService extends ILifecycle {
   login(runUrl: string, token: string): Promise<User>;
 
   /**
+   * Sign in with a handle and a password; the password is never kept.
+   */
+  loginWithPassword(
+    runUrl: string,
+    handle: string,
+    password: string
+  ): Promise<User>;
+
+  /**
    * Logout current user.
    */
   logout(): Promise<void>;

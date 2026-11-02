@@ -1626,12 +1626,11 @@ npm run test:coverage   # All tests with coverage
 
 **Triggers**: Push to main, pull requests, tags, manual dispatch
 
-**Matrix**: Builds for all platforms and architectures
-- Linux (x64)
-- Windows (x64)
-- macOS Universal (Intel + Apple Silicon)
-- macOS Intel only (x64)
-- macOS Apple Silicon only (arm64)
+**Jobs**:
+- **Build app (JS)**: on Linux, `npm run build` (type check, then electron-vite builds main, preload and renderer) once; `dist/` is uploaded as the `app-dist` artifact
+- **Build linux (x64)**, **Build win (x64)**, **Build mac (universal)**: each installs its platform's dependencies, downloads `dist/` and only packages it (`npm run package:linux`, `package:win`, `package:mac`)
+
+macOS ships one universal build (Intel + Apple Silicon); there are no separate x64 or arm64 builds.
 
 **Artifacts**: Generated installers (.dmg, .exe, .AppImage, .deb, .rpm)
 
@@ -1655,7 +1654,7 @@ npm run test:coverage   # All tests with coverage
 **Triggers**: Push tags matching `v*` pattern
 
 **Process**:
-1. Builds for all platforms
+1. Checks the tag against `package.json`, lints and builds the app's JavaScript once, then packages it for Linux, Windows and macOS (universal)
 2. Creates GitHub Release
 3. Uploads installers as release assets
 4. Auto-generates changelog
@@ -1693,8 +1692,9 @@ npm run dist:mac-universal
 ### Workflow Configuration
 
 All workflows use the reusable action `.github/actions/setup-environment` which:
-1. Sets up Node.js 22
-2. Installs the desktop dependencies with `npm install` (`--force` on Windows)
+1. Sets up Node.js 22, with the npm cache keyed on `package.json` (no lockfile is committed)
+2. Restores Electron's and electron-builder's download caches, keyed on the OS and the Electron version
+3. Installs the desktop dependencies with `npm install` (`--force` on Windows)
 
 The Datalayer packages (`@datalayer/core`, `@datalayer/agent-runtimes`, `@datalayer/jupyter-react`, ...) are the published npm releases pinned in `package.json`; no sibling checkout is cloned or built.
 
