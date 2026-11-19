@@ -7,7 +7,7 @@
  * The Sessions page's view model (DESKTOP DK-07, DK-09): the merged list
  * paged, the entries by uid, and what opening a row does — a session held
  * in VS Code or a terminal refused until paused (D-12), an ended one, a
- * folder unknown (DK-26), an application not kept always on, the folder's
+ * folder unknown (DK-26), an application not always on, the folder's
  * runtime started first.
  */
 
@@ -205,7 +205,7 @@ describe('places and folders', () => {
 });
 
 describe('opening a row', () => {
-  const kept: AppChatChoice = {
+  const alwaysOn: AppChatChoice = {
     kind: 'talk',
     handle: {
       uid: 'd-1',
@@ -296,8 +296,8 @@ describe('opening a row', () => {
     expect(decision.said).toBe(SESSIONS_WORDS.resumeFolderUnknown('s-1'));
   });
 
-  it('opens a session on Datalayer on the kept deployment of its application, else says why not', () => {
-    const opened = openDecision(entry({}, DATALAYER), RUNNING, [closed, kept]);
+  it('opens a session on Datalayer on the always-on deployment of its application, else says why not', () => {
+    const opened = openDecision(entry({}, DATALAYER), RUNNING, [closed, alwaysOn]);
     expect(opened.target).toMatchObject({
       kind: 'datalayer',
       uid: 's-1',

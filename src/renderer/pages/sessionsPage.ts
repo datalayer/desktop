@@ -8,11 +8,11 @@
  * the main process answers (`sessions:list`, agent-runtimes'
  * `portable/sessionList`: the places, the groups by application, each row
  * as `loop sessions list` prints it, the elsewhere rule) paged for the
- * page; what opening a row does — the kept deployment of its application,
+ * page; what opening a row does — the always-on deployment of its application,
  * or the local runtime of its folder, started first when it is not
  * running — and the sentences said when it cannot: a session held in VS
  * Code or a terminal (decision D-12), a folder unknown (DK-26), an
- * application not kept always on.
+ * application not always on.
  *
  * Pure: no React, no `window`, no network. The page fetches and draws.
  *
@@ -41,7 +41,7 @@ export const SESSIONS_WORDS = {
   resumeFolderUnknown: (uid: string): string =>
     `${uid} runs in a folder this runtime does not name yet: open the folder it was started in (File → Work in a folder…), then resume it.`,
   noDeployment: (title: string): string =>
-    `${title || 'This session'} runs on Datalayer, and its application is not kept always on: turn on Always on in its Ship tab, then open it again.`,
+    `${title || 'This session'} runs on Datalayer, and its application is not always on: turn on Always on in its Ship tab, then open it again.`,
   opened: (title: string, state: string): string =>
     `${title || 'This session'} (${state}): its conversation is open here.`,
   startingRuntime: (folder: string): string =>
@@ -49,7 +49,7 @@ export const SESSIONS_WORDS = {
   pickASession: 'Pick a session on the left, or start one.',
   homeTitle: 'Start a session',
   homeSays:
-    'A coding agent in a folder of yours on this machine, or an application of yours kept always on on Datalayer.',
+    'A coding agent in a folder of yours on this machine, or an always-on application of yours on Datalayer.',
   homeWorkInFolder:
     'Claude Code, Codex or another harness, in a folder you pick, behind the Shield.',
   homeOnDatalayer:
@@ -151,7 +151,7 @@ export function localPlaceOf(
   };
 }
 
-/** What the chat opens: a session on a local runtime, or on a kept deployment. */
+/** What the chat opens: a session on a local runtime, or on an always-on deployment. */
 export type ChatTarget =
   | {
       kind: 'local';
@@ -181,7 +181,7 @@ export type OpenDecision =
  * What opening a row does: a session on this machine opens on the runtime
  * holding it, else on the runtime of its folder — running, or started
  * first — unless it is held in VS Code or a terminal (D-12: refused until
- * paused) or ended; a session on Datalayer opens on the kept deployment of
+ * paused) or ended; a session on Datalayer opens on the always-on deployment of
  * its application, or says why not.
  */
 export function openDecision(

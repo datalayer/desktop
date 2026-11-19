@@ -9,7 +9,7 @@
  * The main process lists the person's deployments at ai-agents
  * (`GET /api/ai-agents/v1/apps/deployments`, on the runtimes plane) with the
  * token it holds, and answers the renderer each one talked to or said why
- * not (`deploymentChoicesOf`). The runtimes those deployments are kept on,
+ * not (`deploymentChoicesOf`). Those deployments' always-on runtimes,
  * ai-agents' Tool Approvals and Spacer's items become the prefixes it
  * signs: the session's `webRequest` lends the person's token to the
  * renderer's requests under them (`lentHeaders`), and to nothing else — the
@@ -19,7 +19,7 @@
  * The renderer reaches only what the window's Content Security Policy lets
  * it (`connect-src`): the Datalayer domains and the configured services'
  * origins (`appChatConnectSources`, read by the security manager). A
- * deployment kept on a runtime elsewhere is listed closed, with why.
+ * deployment always on on a runtime elsewhere is listed closed, with why.
  *
  * An application that takes only a signed user (D-21) is signed for the
  * person here — ai-agents asked with the token this process holds
@@ -155,7 +155,7 @@ export function reachedUnder(
 }
 
 /**
- * The choices, a deployment kept on a runtime the window does not reach
+ * The choices, a deployment always on on a runtime the window does not reach
  * listed closed with why.
  *
  * @param choices - The choices, as ai-agents answered them.
@@ -175,7 +175,7 @@ function reachableChoices(choices: AppChatChoice[]): AppChatChoice[] {
           kind: 'closed',
           uid: choice.handle.uid,
           name: choice.handle.name,
-          why: `${choice.handle.name} is kept on ${origin || choice.handle.url}, which Desktop does not reach.`,
+          why: `${choice.handle.name} is always on on ${origin || choice.handle.url}, which Desktop does not reach.`,
         };
   });
 }
@@ -218,8 +218,8 @@ export function forgetAppChats(): void {
 }
 
 /**
- * Lists the person's deployments at ai-agents; the runtimes they are kept
- * on become the prefixes the session signs.
+ * Lists the person's deployments at ai-agents; their always-on runtimes
+ * become the prefixes the session signs.
  *
  * @returns The deployments and the services' base URLs.
  *

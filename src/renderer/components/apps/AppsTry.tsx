@@ -5,7 +5,7 @@
 
 /**
  * An application's Try, native (DESKTOP DK-02): its chat on the runtime a
- * deployment of it is kept on — the same `AppChat` a session on Datalayer
+ * deployment of it is always on on — the same `AppChat` a session on Datalayer
  * opens in (agent-runtimes' `<Chat>` on the session API's AG-UI route,
  * each thread a session, the token lent by the main process, the
  * deployed version's Appspec deciding), with its approvals decided

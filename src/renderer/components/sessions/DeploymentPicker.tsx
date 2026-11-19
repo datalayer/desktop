@@ -6,7 +6,7 @@
 /**
  * New session on Datalayer (DESKTOP DK-08): the person's applications as
  * ai-agents lists their deployments (A-20's `deploymentChoiceOf`) — one
- * kept always on and live is pickable, every other one closed with its
+ * always on and live is pickable, every other one closed with its
  * sentence, none talkable said so.
  *
  * @module renderer/components/sessions/DeploymentPicker

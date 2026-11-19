@@ -6,7 +6,7 @@
 /**
  * The deployments a session on Datalayer picks from (APPS A-20, DESKTOP
  * DK-08): the main process lists them with the token it holds, one not
- * kept always on closed with why, and lends the token to the chats'
+ * always on closed with why, and lends the token to the chats'
  * prefixes once. The `agentChatEnabled` flag of 0.0.5 is gone (O-1).
  */
 
@@ -86,7 +86,7 @@ describe('the deployments listed', () => {
     rmSync(electron.userData, { recursive: true, force: true });
   });
 
-  it('on, lists the deployments; one not kept always on is closed, saying why', async () => {
+  it('on, lists the deployments; one not always on is closed, saying why', async () => {
     const chat = await load();
     chat.lendTokenToAppChats();
     chat.lendTokenToAppChats();
@@ -102,7 +102,7 @@ describe('the deployments listed', () => {
         kind: 'closed',
         uid: 'dep-1',
         name: 'Support Desk',
-        why: 'Support Desk is not kept always on, so no runtime holds its agent: turn on Always on in its Ship tab to talk to it here.',
+        why: 'Support Desk is not always on, so no runtime holds its agent: turn on Always on in its Ship tab to talk to it here.',
       },
     ]);
   });

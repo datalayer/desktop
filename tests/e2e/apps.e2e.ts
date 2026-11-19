@@ -69,7 +69,7 @@ test('Try says why the application cannot be talked to here', async () => {
     'None of this application’s deployments can be talked to here.',
     { timeout: 30_000 }
   );
-  await expect(tried).toContainText('is not kept always on');
+  await expect(tried).toContainText('is not always on');
 });
 
 test('Activity lists its sessions with their lineage', async () => {

@@ -12,7 +12,7 @@
  * two ways to start one, front and centre, and the five most recent
  * sessions to pick up again. *Work in a folder…* starts a coding agent
  * in a folder of theirs on a local runtime; *New session on Datalayer…*
- * opens one on an application kept always on; a row opens its session in
+ * opens one on an always-on application; a row opens its session in
  * the chat, a paused one resumed on the folder's runtime started if need
  * be, one held in VS Code or a terminal refused until paused (D-12). The
  * verbs are the chat's own entries and the app's, drawn from the one

@@ -24,7 +24,7 @@
  *   (`/api/spacer/v1/spaces/items/types/app`, one application `app-1`) and
  *   its item (`/api/spacer/v1/lexicals/app-1`, with its Appspec);
  *   ai-agents' deployments (`/api/ai-agents/v1/apps/deployments`, one live,
- *   not kept always on) and their change (`PATCH …/{uid}`, recorded in
+ *   not always on) and their change (`PATCH …/{uid}`, recorded in
  *   `stateChanges`), its sessions (one of `app-1`, cloned) and its pending
  *   Tool Approvals (none).
  *

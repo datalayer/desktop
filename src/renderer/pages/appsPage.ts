@@ -7,7 +7,7 @@
  * The Apps page's pure parts (DESKTOP DK-02): the applications listed
  * with what their deployments say, an application's Build (its Appspec's
  * facts and its YAML, written by agent-runtimes' `writeAppspecYaml`), Try
- * (the kept deployment the chat opens on, or why there is none), Activity
+ * (the always-on deployment the chat opens on, or why there is none), Activity
  * (its sessions from the Sessions page's list, with their lineage) and
  * Deployments (each one's state and the one change offered), with the
  * words the page says.
@@ -187,14 +187,14 @@ export function buildViewOf(document: AppDocument): BuildView {
   return { kind: 'spec', facts, yaml: writeAppspecYaml(app), problems };
 }
 
-/** What Try opens: the kept deployment's chat, or why not. */
+/** What Try opens: the always-on deployment's chat, or why not. */
 export type TryDecision =
   | { kind: 'talk'; handle: AppChatHandle }
   | { kind: 'closed'; sentence: string };
 
 /**
  * Try: the first deployment of the application that can be talked to (a
- * live one, kept always on, on a running runtime the app reaches), else
+ * live one, always on, on a running runtime the app reaches), else
  * the sentences of those that cannot.
  *
  * @param appUid - The application.
@@ -310,11 +310,11 @@ export function deploymentRowsOf(
   deployments: readonly AppDeployment[]
 ): DeploymentRow[] {
   return deployments.map(deployment => {
-    const kept = deployment.alwaysOn
-      ? deployment.keptState === 'running'
-        ? 'kept always on, running'
-        : `kept always on, ${deployment.keptState || 'not running'}${deployment.keptWhy ? `: ${deployment.keptWhy}` : ''}`
-      : 'not kept always on';
+    const alwaysOn = deployment.alwaysOn
+      ? deployment.alwaysOnState === 'running'
+        ? 'always-on, running'
+        : `always-on, ${deployment.alwaysOnState || 'not running'}${deployment.alwaysOnWhy ? `: ${deployment.alwaysOnWhy}` : ''}`
+      : 'not always-on';
     return {
       deployment,
       title: `${deployment.target}${deployment.slug ? ` · ${deployment.slug}` : ''}`,
@@ -323,7 +323,7 @@ export function deploymentRowsOf(
         deployment.version > 0
           ? `version ${deployment.version}`
           : 'no version said',
-        kept,
+        alwaysOn,
       ].join(' · '),
       action:
         deployment.version > 0

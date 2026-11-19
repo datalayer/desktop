@@ -8,7 +8,7 @@
  * this machine opens in Agent Runtimes' `<Chat thread sessionActions>` on
  * the local runtime's session API — nothing signed, the runtime is this
  * machine's own — and a session on Datalayer in `AppChat` (A-20's chat on
- * the kept deployment, its lender, its signed user and `host_context`
+ * the always-on deployment, its lender, its signed user and `host_context`
  * kept whole), the same thread, the same menu drawn from the Reactor
  * registered for the renderer, the same approval banner fed by the main
  * process (DK-13).
@@ -53,7 +53,7 @@ export const SERVICES_UNKNOWN =
   'The Datalayer services are not known yet: list your applications first.';
 
 /**
- * The chat for the target: the local runtime's, or the kept deployment's.
+ * The chat for the target: the local runtime's, or the always-on deployment's.
  *
  * @param props - Component props.
  *

@@ -43,7 +43,7 @@ const DEPLOYMENTS = appDeploymentsOf({
       target: 'hosted',
       slug: 'desk',
       always_on: true,
-      kept: { state: 'running' },
+      always_on_record: { state: 'running' },
     },
     {
       uid: 'd2',
@@ -211,8 +211,8 @@ describe('Deployments', () => {
       ['hosted · desk', 'pause'],
       ['embedded', 'resume'],
     ]);
-    expect(rows[0].said).toBe('Live · version 3 · kept always on, running');
-    expect(rows[1].said).toBe('Paused · version 2 · not kept always on');
+    expect(rows[0].said).toBe('Live · version 3 · always-on, running');
+    expect(rows[1].said).toBe('Paused · version 2 · not always-on');
   });
 
   it('offers nothing for a deployment that says no version', () => {

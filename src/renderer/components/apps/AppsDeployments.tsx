@@ -5,7 +5,7 @@
 
 /**
  * An application's Deployments, native (DESKTOP DK-02): each one's
- * target, address, state, version and kept runtime, with the one change
+ * target, address, state, version and always-on runtime, with the one change
  * the tab makes — pause a live one, resume a paused one, for the version it
  * runs (ai-agents' `PATCH /apps/deployments/{uid}`, through the main
  * process). Shipping a version, rolling back, access and reset are the web

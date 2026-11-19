@@ -244,10 +244,10 @@ export interface AppDeployment {
   state: DeploymentState;
   slug: string;
   alwaysOn: boolean;
-  /** The kept runtime's state (`running`, …), empty when none is kept. */
-  keptState: string;
-  /** Why the kept runtime is not running, as ai-agents says it. */
-  keptWhy: string;
+  /** Its always-on runtime's state (`running`, …), from `always_on_record`; empty when none. */
+  alwaysOnState: string;
+  /** Why its always-on runtime is not running, as ai-agents says it. */
+  alwaysOnWhy: string;
   updatedAt: string;
 }
 
@@ -265,7 +265,7 @@ export function appDeploymentOf(raw: unknown): AppDeployment | undefined {
     return undefined;
   }
   const version = Number(deployment.version);
-  const kept = record(deployment.kept);
+  const alwaysOnRecord = record(deployment.always_on_record);
   return {
     uid,
     appUid: text(deployment.app_uid),
@@ -275,8 +275,8 @@ export function appDeploymentOf(raw: unknown): AppDeployment | undefined {
     state: deployment.state === 'paused' ? 'paused' : 'live',
     slug: text(deployment.slug),
     alwaysOn: deployment.always_on === true,
-    keptState: text(kept.state),
-    keptWhy: text(kept.why),
+    alwaysOnState: text(alwaysOnRecord.state),
+    alwaysOnWhy: text(alwaysOnRecord.why),
     updatedAt: text(deployment.updated_at),
   };
 }

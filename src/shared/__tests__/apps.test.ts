@@ -146,7 +146,7 @@ describe('the deployments', () => {
           state: 'live',
           slug: 'desk',
           always_on: true,
-          kept: { state: 'running', url: 'https://r.io' },
+          always_on_record: { state: 'running', url: 'https://r.io' },
         },
         { app_uid: 'no-uid' },
       ],
@@ -160,8 +160,8 @@ describe('the deployments', () => {
       state: 'live',
       slug: 'desk',
       alwaysOn: true,
-      keptState: 'running',
-      keptWhy: '',
+      alwaysOnState: 'running',
+      alwaysOnWhy: '',
       updatedAt: '',
     });
     expect(() => appDeploymentsOf({})).toThrow(/no list of deployments/);

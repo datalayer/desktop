@@ -506,8 +506,8 @@ function registerIPCHandlers(): void {
   });
 
   // A deployed application's agent (APPS A-20): the person's deployments,
-  // listed here with the token the main process holds; the runtimes they
-  // are kept on are the only ones the session lends it to.
+  // listed here with the token the main process holds; their always-on
+  // runtimes are the only ones the session lends it to.
   ipcMain.handle('app-chat:list-deployments', async () =>
     listAppChatDeployments()
   );

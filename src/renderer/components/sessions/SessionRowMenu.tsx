@@ -9,7 +9,7 @@
  * from here*, *Export*, *Import…*, *Resume*) and the app's own — read from
  * the one `loop.session.action` registry, each entry's `when` deciding
  * whether it applies to the row as it stands; each run against the
- * runtime that answers for the row (the local runtime, or the kept
+ * runtime that answers for the row (the local runtime, or the always-on
  * deployment's), its refusal shown as it said it. Nothing of the menu is
  * copied.
  *
@@ -35,7 +35,7 @@ export interface SessionRowMenuProps {
   /**
    * What an entry may do against the row's runtime; `null` when no runtime
    * answers for the row (a session on Datalayer whose application is not
-   * kept always on): then only *Open* is offered, which says why.
+   * always on): then only *Open* is offered, which says why.
    */
   context: SessionActionContext | null;
 }

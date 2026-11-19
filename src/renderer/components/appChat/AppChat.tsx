@@ -8,7 +8,7 @@
  *
  * The conversation is `@datalayer/agent-runtimes`' `<Chat>` over the
  * runtime's session API — an AG-UI run on
- * `<kept runtime>/api/v1/apps/agents/<agent>/ag-ui/`, each thread a session
+ * `<always-on runtime>/api/v1/apps/agents/<agent>/ag-ui/`, each thread a session
  * (R-02), as the application's hosted page speaks to it. The view never
  * asks for the person's token: the main process lends it to the requests
  * under the runtimes listed, Tool Approvals and Spacer's items.
@@ -75,7 +75,7 @@ export interface AppChatProps {
   readNotebook: () => Promise<NotebookContext | undefined>;
   /**
    * A session of the application opened from the Sessions page (DK-08):
-   * its conversation is read by uid from the kept runtime, held there or
+   * its conversation is read by uid from the always-on runtime, held there or
    * resumed from its record; none opens a new conversation.
    */
   openUid?: string;
@@ -288,7 +288,7 @@ export function AppChat(props: AppChatProps): React.JSX.Element {
           key={`${handle.uid} ${openUid ?? ''}`}
           protocol="ag-ui"
           // The session opened from the Sessions page (DK-08), read from
-          // the kept runtime by uid; its menu beside the header (DK-10).
+          // the always-on runtime by uid; its menu beside the header (DK-10).
           thread={
             openUid
               ? { id: openUid, messages: [], fromRuntime: true }
