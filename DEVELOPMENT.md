@@ -944,10 +944,6 @@ npm run build
 **Steps**:
 1. TypeScript type checking (`tsc --noEmit`)
 2. Vite builds all three targets (main, preload, renderer)
-3. Post-build script (`scripts/fix-production-bundle.js`) runs:
-   - Injects critical polyfills at bundle start
-   - Fixes CommonJS/ESM interop issues
-   - Adds Symbol polyfill for React
 
 ```bash
 npm run dist:mac-universal  # or dist:win, dist:linux
