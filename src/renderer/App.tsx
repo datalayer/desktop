@@ -15,6 +15,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   lazy,
   Suspense,
 } from 'react';
@@ -29,10 +30,13 @@ import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import { MENU_ACTION_EVENT } from './pages/Sessions';
+import { OPEN_SESSION_EVENT, OPEN_APPS_EVENT } from './pages/appsEvents';
 import { User, NotebookData, DocumentData } from '../shared/types';
 import { setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 import { useThemeStore } from './theme/themeStore';
+import { ViewErrorBoundary } from './components/app/ViewErrorBoundary';
 
 /**
  * Lazy load heavy components that aren't needed on startup.
@@ -42,6 +46,8 @@ const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Spaces'));
 const Runtimes = lazy(() => import('./pages/Runtimes'));
+const Sessions = lazy(() => import('./pages/Sessions'));
+const Apps = lazy(() => import('./pages/Apps'));
 
 /**
  * Main application component.
@@ -65,7 +71,17 @@ const App: React.FC = () => {
   // Support multiple open notebooks and documents
   const [openNotebooks, setOpenNotebooks] = useState<NotebookData[]>([]);
   const [openDocuments, setOpenDocuments] = useState<DocumentData[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string>('spaces');
+  // Sessions is the first view after sign-in (DESKTOP DK-07).
+  const [activeTabId, setActiveTabId] = useState<string>('sessions');
+
+  // The notebook last in front: what an application's agent is given as
+  // the host's page, when its Appspec lets it (APPS A-20, D-10).
+  const frontNotebookId = useRef<string | null>(null);
+  if (activeTabId.startsWith('notebook-')) {
+    frontNotebookId.current = activeTabId.slice('notebook-'.length);
+  }
+  const frontNotebook =
+    openNotebooks.find(nb => nb.id === frontNotebookId.current) ?? null;
 
   const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   // const { configuration } = useCoreStore(); // Unused for now
@@ -181,30 +197,11 @@ const App: React.FC = () => {
 
     initializeApp();
 
-    // Listen for menu actions
+    // Listen for menu actions (DESKTOP DK-04): the latest handler, so a
+    // view or a sign-out of the current render answers
     if (window.electronAPI) {
       window.electronAPI.onMenuAction((action: string) => {
-        // Handle menu actions here
-        switch (action) {
-          case 'new-notebook':
-            // Implement new notebook logic
-            break;
-          case 'open-notebook':
-            // Implement open notebook logic
-            break;
-          case 'save-notebook':
-            // Implement save notebook logic
-            break;
-          case 'restart-kernel':
-            // Implement restart kernel logic
-            break;
-          case 'interrupt-kernel':
-            // Implement interrupt kernel logic
-            break;
-          case 'shutdown-kernel':
-            // Implement shutdown kernel logic
-            break;
-        }
+        menuAction.current(action);
       });
     }
 
@@ -214,6 +211,60 @@ const App: React.FC = () => {
       }
     };
   }, [startAllPreloads]);
+
+  // *Open in Apps* brings Apps to the front; a session of
+  // its Activity, the Sessions page (DESKTOP DK-02).
+  useEffect(() => {
+    const toApps = () => setActiveTabId('apps');
+    const toSessions = () => setActiveTabId('sessions');
+    window.addEventListener(OPEN_APPS_EVENT, toApps);
+    window.addEventListener(OPEN_SESSION_EVENT, toSessions);
+    return () => {
+      window.removeEventListener(OPEN_APPS_EVENT, toApps);
+      window.removeEventListener(OPEN_SESSION_EVENT, toSessions);
+    };
+  }, []);
+
+  // What the menu's entries do (DESKTOP DK-04): the views switched, sign
+  // out; the sessions' entries are the Sessions page's (DK-07, DK-10).
+  const menuAction = useRef<(action: string) => void>(() => undefined);
+  menuAction.current = (action: string) => {
+    switch (action) {
+      case 'show-sessions':
+        setActiveTabId('sessions');
+        break;
+      case 'show-apps':
+        setActiveTabId('apps');
+        break;
+      case 'show-spaces':
+        setActiveTabId('sessions');
+        break;
+      case 'show-runtimes':
+        setActiveTabId('runtimes');
+        break;
+      case 'show-environments':
+        setActiveTabId('environments');
+        break;
+      case 'sign-out':
+        handleLogout();
+        break;
+      case 'work-in-folder':
+      case 'new-datalayer-session':
+      case 'import-session':
+      case 'resume-last-session':
+        // The Sessions page answers these (DK-07, DK-10), shown first.
+        setActiveTabId('sessions');
+        window.dispatchEvent(
+          new CustomEvent(MENU_ACTION_EVENT, { detail: action })
+        );
+        break;
+      default:
+        window.dispatchEvent(
+          new CustomEvent(MENU_ACTION_EVENT, { detail: action })
+        );
+        break;
+    }
+  };
 
   // Monitor network connectivity
 
@@ -230,7 +281,7 @@ const App: React.FC = () => {
           } else if (openDocuments.length > 0) {
             setActiveTabId(`document-${openDocuments[0].id}`);
           } else {
-            setActiveTabId('spaces');
+            setActiveTabId('sessions');
           }
         }
 
@@ -253,7 +304,7 @@ const App: React.FC = () => {
           } else if (openNotebooks.length > 0) {
             setActiveTabId(`notebook-${openNotebooks[0].id}`);
           } else {
-            setActiveTabId('spaces');
+            setActiveTabId('sessions');
           }
         }
 
@@ -272,7 +323,7 @@ const App: React.FC = () => {
       // Clean up app state
       setOpenNotebooks([]);
       setOpenDocuments([]);
-      setActiveTabId('spaces');
+      setActiveTabId('sessions');
     } catch (error) {
       logger.error('[Auth] Logout failed:', error);
     }
@@ -367,6 +418,24 @@ const App: React.FC = () => {
           </Box>
         ))}
 
+        {/* Apps, native (DESKTOP DK-02): the person's applications,
+            Build, Try, Activity and Deployments */}
+        <Box
+          sx={{
+            display: activeTabId === 'apps' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          <Suspense
+            fallback={
+              <LoadingSpinner variant="inline" message="Loading Apps..." />
+            }
+          >
+            <Apps isAuthenticated={isAuthenticated} user={user} />
+          </Suspense>
+        </Box>
+
         {/* Library view */}
         <Box
           sx={{
@@ -402,6 +471,28 @@ const App: React.FC = () => {
             }
           >
             <Runtimes isAuthenticated={isAuthenticated} />
+          </Suspense>
+        </Box>
+
+        {/* Sessions: the person's sessions on Datalayer and on this
+            machine, the chat beside them (DESKTOP DK-07) */}
+        <Box
+          sx={{
+            display: activeTabId === 'sessions' ? 'block' : 'none',
+            height: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          <Suspense
+            fallback={
+              <LoadingSpinner variant="inline" message="Loading sessions..." />
+            }
+          >
+            <Sessions
+              isAuthenticated={isAuthenticated}
+              user={user}
+              frontNotebook={frontNotebook}
+            />
           </Suspense>
         </Box>
 
@@ -489,7 +580,9 @@ const App: React.FC = () => {
               flexDirection: 'column',
             }}
           >
-            {renderView()}
+            <ViewErrorBoundary key={activeTabId} view={activeTabId}>
+              {renderView()}
+            </ViewErrorBoundary>
           </Box>
         </AppLayout>
       </Box>

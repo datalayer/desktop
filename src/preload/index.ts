@@ -22,6 +22,14 @@ import type {
   LexicalJSON,
   UserJSON,
 } from '@datalayer/agent-runtimes/lib/models';
+import type {
+  MenuAPI,
+  MenuRendererState,
+  SignInAPI,
+  SignInProvider,
+} from '../shared/types/shell.types';
+import { IPC, type PendingApproval } from '../shared/types/ipc.types';
+import type { DesktopAPI } from '../shared/types/desktopApi.types';
 
 /**
  * Electron API for system information and menu actions.
@@ -149,10 +157,14 @@ contextBridge.exposeInMainWorld('loroAPI', {
 contextBridge.exposeInMainWorld('datalayerClient', {
   // Authentication - SDK only needs token, uses default URLs
   login: (token: string) => ipcRenderer.invoke('datalayer:login', { token }),
+  loginWithPassword: (runUrl: string, handle: string, password: string) =>
+    ipcRenderer.invoke('datalayer:login-password', {
+      runUrl,
+      handle,
+      password,
+    }),
 
   logout: () => ipcRenderer.invoke('datalayer:logout'),
-
-  getCredentials: () => ipcRenderer.invoke('datalayer:get-credentials'),
 
   // Get current auth state with user data
   getAuthState: () => ipcRenderer.invoke('datalayer:get-auth-state'),
@@ -241,6 +253,119 @@ contextBridge.exposeInMainWorld('datalayerClient', {
 });
 
 /**
+ * A deployed application's agent (APPS A-20): the person's deployments,
+ * listed by the main process. No token is handed over: the main process
+ * lends it to the requests of the runtimes listed.
+ */
+contextBridge.exposeInMainWorld('appChatAPI', {
+  listDeployments: () => ipcRenderer.invoke('app-chat:list-deployments'),
+  userToken: (deploymentUid: string) =>
+    ipcRenderer.invoke('app-chat:user-token', deploymentUid),
+});
+
+/**
+ * Sessions (DESKTOP §7): the contract between the renderer and the main
+ * process — the channels of `ipc.types.ts`'s `IPC`, typed for the renderer
+ * in `desktopApi.types.ts`. The renderer never holds the token: the main
+ * process reads the two places and lends the token where it is needed; a
+ * local runtime needs none.
+ */
+const on = (channel: string, listener: (...args: unknown[]) => void) => {
+  const wrapped = (_event: unknown, ...args: unknown[]) => listener(...args);
+  ipcRenderer.on(channel, wrapped);
+  return () => {
+    ipcRenderer.removeListener(channel, wrapped);
+  };
+};
+
+const desktopAPI: DesktopAPI = {
+  sessions: {
+    list: filter =>
+      ipcRenderer.invoke(IPC.sessionsList, filter ? { filter } : undefined),
+    onChanged: callback => on(IPC.sessionsChanged, () => callback()),
+  },
+  localRuntime: {
+    start: folder => ipcRenderer.invoke(IPC.localRuntimeStart, { folder }),
+    stop: folder =>
+      ipcRenderer.invoke(IPC.localRuntimeStop, folder ? { folder } : {}),
+    list: () => ipcRenderer.invoke(IPC.localRuntimeList),
+    folders: () => ipcRenderer.invoke(IPC.localRuntimeFolders),
+    harnesses: folder =>
+      ipcRenderer.invoke(IPC.localRuntimeHarnesses, folder ? { folder } : {}),
+    checkHarness: harness =>
+      ipcRenderer.invoke(IPC.localRuntimeCheckHarness, { harness }),
+    onChanged: callback => on(IPC.localRuntimeChanged, () => callback()),
+  },
+  credentials: {
+    set: (name, value) =>
+      ipcRenderer.invoke(IPC.credentialsSet, { name, value }),
+    has: name => ipcRenderer.invoke(IPC.credentialsHas, { name }),
+  },
+  approvals: {
+    pending: () => ipcRenderer.invoke(IPC.approvalsPending),
+    decide: decision => ipcRenderer.invoke(IPC.approvalsDecide, decision),
+    onChanged: callback =>
+      on(IPC.approvalsChanged, pending =>
+        callback(Array.isArray(pending) ? (pending as PendingApproval[]) : [])
+      ),
+  },
+  dialog: {
+    openFolder: () => ipcRenderer.invoke(IPC.dialogOpenFolder),
+    save: (name, text) => ipcRenderer.invoke(IPC.dialogSave, { name, text }),
+    openFile: accept => ipcRenderer.invoke(IPC.dialogOpenFile, { accept }),
+  },
+  shell: {
+    reveal: path => ipcRenderer.invoke(IPC.shellReveal, { path }),
+  },
+  apps: {
+    list: () => ipcRenderer.invoke(IPC.appsList),
+    app: uid => ipcRenderer.invoke(IPC.appsApp, { uid }),
+    deployments: () => ipcRenderer.invoke(IPC.appsDeployments),
+    setDeploymentState: change =>
+      ipcRenderer.invoke(IPC.appsDeploymentState, change),
+  },
+  attention: {
+    front: uid => ipcRenderer.invoke(IPC.attentionFront, { uid }),
+    onFocus: callback =>
+      on(IPC.attentionFocus, payload => {
+        const uid = (payload as { uid?: unknown } | undefined)?.uid;
+        if (typeof uid === 'string') {
+          callback(uid);
+        }
+      }),
+  },
+};
+
+contextBridge.exposeInMainWorld('desktopAPI', desktopAPI);
+
+/**
+ * Sign-in (DESKTOP DK-03): the main process opens IAM's provider page in
+ * a sign-in window of its own and keeps the token; the renderer never sees it.
+ */
+const signInAPI: SignInAPI = {
+  start: (provider: SignInProvider) =>
+    ipcRenderer.invoke('sign-in:start', { provider }),
+  onFailed: (callback: (sentence: string) => void) => {
+    ipcRenderer.on('sign-in:failed', (_, sentence: string) =>
+      callback(sentence)
+    );
+  },
+  removeFailedListener: () => {
+    ipcRenderer.removeAllListeners('sign-in:failed');
+  },
+};
+contextBridge.exposeInMainWorld('signInAPI', signInAPI);
+
+/**
+ * The menu (DESKTOP DK-04): what the renderer shows, so the entries enable.
+ */
+const menuAPI: MenuAPI = {
+  setState: (state: MenuRendererState) =>
+    ipcRenderer.invoke('menu:state', state),
+};
+contextBridge.exposeInMainWorld('menuAPI', menuAPI);
+
+/**
  * Proxy API interface for HTTP and WebSocket communication.
  */
 export interface ProxyAPI {
@@ -323,14 +448,18 @@ export interface ElectronAPI {
 export interface DatalayerIPCClient {
   // Authentication methods - return void on success, throw on error
   login: (token: string) => Promise<void>;
-  logout: () => Promise<void>;
-
-  // Credentials - special case, returns custom type
-  getCredentials: () => Promise<{
-    runUrl: string;
-    token?: string;
+  /** A handle and a password, exchanged for a token by the main process. */
+  loginWithPassword: (
+    runUrl: string,
+    handle: string,
+    password: string
+  ) => Promise<{
     isAuthenticated: boolean;
+    user: UserJSON | null;
+    token: string | null;
+    runUrl: string;
   }>;
+  logout: () => Promise<void>;
 
   // Auth state - returns complete auth state with user data
   getAuthState: () => Promise<{
@@ -418,5 +547,7 @@ declare global {
     electronAPI: ElectronAPI;
     datalayerClient: DatalayerIPCClient;
     proxyAPI: ProxyAPI;
+    /** The sessions contract (DESKTOP §7). */
+    desktopAPI: DesktopAPI;
   }
 }

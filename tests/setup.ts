@@ -38,8 +38,7 @@ global.console = {
 
 // Mock global objects that may not be available in test environment
 global.structuredClone =
-  global.structuredClone ||
-  ((val: any) => JSON.parse(JSON.stringify(val)));
+  global.structuredClone || ((val: any) => JSON.parse(JSON.stringify(val)));
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
@@ -55,20 +54,22 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
-// Mock matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// Mock matchMedia (a main-process test runs in node, with no window)
+const hasWindow = typeof window !== 'undefined';
+if (hasWindow)
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 
 // Mock window.requestAnimationFrame
 global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {

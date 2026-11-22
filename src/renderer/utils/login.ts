@@ -9,18 +9,26 @@
  * @module renderer/utils/login
  */
 
-import { LoginFormData } from '../../shared/types';
+import { LoginFormData, LoginWay } from '../../shared/types';
 
 /**
  * Validates login form data.
  * @param formData - Login form data to validate
  * @returns Error message or empty string if valid
  */
-export const validateLoginForm = (formData: LoginFormData): string => {
-  if (!formData.runUrl || !formData.token) {
-    return 'Please provide both Run URL and Token';
+export const validateLoginForm = (
+  formData: LoginFormData,
+  way: LoginWay = 'password'
+): string => {
+  if (!formData.runUrl) {
+    return 'Please provide the Run URL (under More options).';
   }
-  return '';
+  if (way === 'password') {
+    return formData.handle && formData.password
+      ? ''
+      : 'Please provide your handle and your password.';
+  }
+  return formData.token ? '' : 'Please provide your API token.';
 };
 
 /**
@@ -39,6 +47,16 @@ export const getDefaultRunUrl = (): string => {
 export const formatLoginError = (error: unknown): string => {
   if (typeof error === 'string') {
     return error;
+  }
+  // The main process's sentence, without Electron's remote-call prefix.
+  if (error instanceof Error && error.message) {
+    const sentence = error.message
+      .replace(/^Error invoking remote method '[^']*':\s*/, '')
+      .replace(/^Error:\s*/, '')
+      .trim();
+    if (sentence) {
+      return sentence;
+    }
   }
   return 'Failed to login. Please check your credentials.';
 };

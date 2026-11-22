@@ -1,0 +1,94 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * The app launches (DESKTOP DK-15): the window opens on the Login page
+ * with the two ways to sign in, no web page is embedded (Apps is the
+ * app's own page), the menu says what the app can do while signed out, and
+ * no renderer can ask for the token.
+ */
+
+import { expect, test } from '@playwright/test';
+import {
+  launchApp,
+  loginHeading,
+  menuLabels,
+  windowUrls,
+  type LaunchedApp,
+} from './app';
+
+let launched: LaunchedApp;
+
+test.beforeAll(async () => {
+  launched = await launchApp();
+});
+
+test.afterAll(async () => {
+  await launched.close();
+});
+
+test('opens on the Login page with a provider sign-in, a handle and password, and the token under More options', async () => {
+  const { window } = launched;
+  await expect(loginHeading(window)).toBeVisible({ timeout: 60_000 });
+  await expect(window.getByTestId('sign-in-github')).toBeVisible();
+  await expect(window.getByTestId('sign-in-google')).toBeVisible();
+  await expect(window.getByRole('textbox', { name: /Handle/ })).toBeVisible();
+  await expect(window.getByRole('textbox', { name: /API Token/ })).toHaveCount(
+    0
+  );
+  await window.getByRole('button', { name: 'More options' }).click();
+  await window
+    .getByRole('button', { name: 'Sign in with an API token instead' })
+    .click();
+  await expect(
+    window.getByRole('textbox', { name: /API Token/ })
+  ).toBeVisible();
+  await expect(window).toHaveTitle(/Datalayer/);
+});
+
+test('embeds no web page: one window, no child view', async () => {
+  const seen = await windowUrls(launched.app);
+  expect(seen.urls).toHaveLength(1);
+  expect(seen.childViews).toBe(0);
+});
+
+test('the menu, signed out: no session on Datalayer, no sign-out, no stop', async () => {
+  const menu = await menuLabels(launched.app);
+  expect(Object.keys(menu)).toEqual([
+    'Sessions',
+    'Edit',
+    'File',
+    'View',
+    'Help',
+  ]);
+  expect(menu.File).toEqual(['Work in a folder…', 'Import a session…', 'Quit']);
+  expect(menu.Sessions).toEqual(['Resume last']);
+  expect(menu.View.slice(0, 5)).toEqual([
+    'Sessions',
+    'Apps',
+    'Spaces',
+    'Agents',
+    'Environments',
+  ]);
+  expect(menu.Help).toEqual([
+    'Datalayer docs',
+    'Report a problem',
+    'GitHub',
+    'About Datalayer Desktop',
+  ]);
+});
+
+test('no renderer can ask for the token', async () => {
+  const exposed = await launched.window.evaluate(() => {
+    const client =
+      (window as unknown as { datalayerClient?: Record<string, unknown> })
+        .datalayerClient || {};
+    return {
+      login: typeof client.login,
+      credentials: Object.keys(client).filter(name => /credential/i.test(name)),
+    };
+  });
+  expect(exposed).toEqual({ login: 'function', credentials: [] });
+});

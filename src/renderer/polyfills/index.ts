@@ -10,9 +10,13 @@
  * Ensures compatibility with various module systems and provides required globals.
  *
  * Loading order:
+ * 0. `__webpack_public_path__` - read bare by Jupyter widgets when they load
  * 1. Lodash globals - Makes _ and Backbone available globally for Jupyter widgets
  * 2. RequireJS - AMD module compatibility for Jupyter widgets
  */
+
+// 0. The webpack global Jupyter widgets read (first: nothing may run before it)
+import './webpack-public-path';
 
 // 1. Global lodash/underscore/Backbone setup (needed by Jupyter widgets)
 import './lodash-globals';

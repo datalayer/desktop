@@ -10,12 +10,16 @@
  * @module main/app/environment
  */
 
+import { app } from 'electron';
+
 /**
- * Checks if the application is running in development mode.
- * @returns True if NODE_ENV is 'development'
+ * Checks if the application is running in development mode: NODE_ENV says
+ * so, or the app runs unpackaged (`npm start` / `electron-vite dev`, which
+ * sets no NODE_ENV for the main process).
+ * @returns True in development
  */
 export function isDevelopment(): boolean {
-  return process.env.NODE_ENV === 'development';
+  return process.env.NODE_ENV === 'development' || !app.isPackaged;
 }
 
 /**

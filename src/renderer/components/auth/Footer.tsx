@@ -34,7 +34,7 @@ const Footer: React.FC<LoginFooterProps> = () => {
           as="a"
           variant="invisible"
           size="small"
-          href="https://docs.datalayer.io"
+          href="https://datalayer.ai/docs"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Visit Datalayer documentation (opens in new tab)"
@@ -49,7 +49,7 @@ const Footer: React.FC<LoginFooterProps> = () => {
             },
           }}
         >
-          docs.datalayer.io
+          datalayer.ai/docs
         </Button>{' '}
         for more information.
       </Text>

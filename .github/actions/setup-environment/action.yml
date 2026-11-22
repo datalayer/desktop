@@ -13,10 +13,34 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    # No lockfile is committed: the npm cache is keyed on package.json.
     - name: Setup Node.js ${{ inputs.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package.json
+
+    - name: Read the Electron version
+      id: electron
+      shell: bash
+      run: echo "version=$(node -p "require('./package.json').devDependencies.electron")" >> "$GITHUB_OUTPUT"
+
+    # Electron's binaries (downloaded by its postinstall and by electron-builder)
+    # and electron-builder's tools (NSIS, AppImage, dmg-builder, ...).
+    - name: Cache Electron and electron-builder downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/electron
+          ~/.cache/electron-builder
+          ~/Library/Caches/electron
+          ~/Library/Caches/electron-builder
+          ~/AppData/Local/electron/Cache
+          ~/AppData/Local/electron-builder/Cache
+        key: electron-${{ runner.os }}-${{ steps.electron.outputs.version }}-${{ hashFiles('package.json') }}
+        restore-keys: |
+          electron-${{ runner.os }}-${{ steps.electron.outputs.version }}-
 
     - name: Install desktop dependencies
       shell: bash
