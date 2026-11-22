@@ -4,11 +4,11 @@
  */
 
 /**
- * A stand-in for `loop` in the desktop suite (DESKTOP DK-15): no Python,
- * no model, no key. Run as `node tests/mocks/loop.ts` (Node 22 strips the
- * types; `tests/mocks/loop` is the wrapper a `PATH` entry points at).
+ * A stand-in for `agent` in the desktop suite (DESKTOP DK-15): no Python,
+ * no model, no key. Run as `node tests/mocks/agent.ts` (Node 22 strips the
+ * types; `tests/mocks/agent` is the wrapper a `PATH` entry points at).
  *
- * It answers `--version` (`agent_runtimes: 1.5.70`, `LOOP_STUB_VERSION`
+ * It answers `--version` (`agent_runtimes: 1.5.70`, `AGENT_STUB_VERSION`
  * to say another), and `serve --host 127.0.0.1 --port 0` prints the lines
  * the real command prints (`Auto-selected free port N`, `Uvicorn running on
  * http://127.0.0.1:N`) and serves what the app's main process and tests call:
@@ -16,7 +16,7 @@
  * - `GET /health` (`routes/health.py`, at the root as the runtime mounts it);
  * - `GET /api/v1/harnesses` (the catalogue: Claude Code and a fake harness);
  * - `GET /api/v1/apps`, `POST /api/v1/apps/configure`;
- * - `GET|POST /api/v1/apps/sessions` with the rows `loop sessions list`
+ * - `GET|POST /api/v1/apps/sessions` with the rows `agent sessions list`
  *   prints (state, turn, agent, harness, turns, title, lineage, `held`),
  *   filtered as the route is (`?state=`, `?agent=`, `?app=`, `?q=`,
  *   `?archived=`, `?held=`), and by uid: `GET`, `/messages`, `/resume`,
@@ -34,7 +34,7 @@
  *
  * Shapes follow `routes/apps.py`, `routes/harnesses.py` and
  * `routes/tool_approvals.py` of agent-runtimes 1.5.70 and VS Code's stub
- * (`src/test/fixtures/stub-loop`). Anything else is a 404 in a sentence.
+ * (`src/test/fixtures/stub-agent`). Anything else is a 404 in a sentence.
  */
 
 import {
@@ -46,7 +46,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { WebSocketServer, type WebSocket } from 'ws';
 
-const VERSION = process.env.LOOP_STUB_VERSION || '1.5.70';
+const VERSION = process.env.AGENT_STUB_VERSION || '1.5.70';
 const args = process.argv.slice(2);
 
 type Row = Record<string, unknown>;
@@ -127,10 +127,10 @@ const BLANK_APP = {
 /**
  * The sessions the file store holds when the stub starts: one paused in a
  * folder, one ended — what the Sessions page lists before anything is
- * opened. `LOOP_STUB_SESSIONS` names a JSON file with other rows.
+ * opened. `AGENT_STUB_SESSIONS` names a JSON file with other rows.
  */
 function plantedSessions(): Row[] {
-  const file = process.env.LOOP_STUB_SESSIONS;
+  const file = process.env.AGENT_STUB_SESSIONS;
   if (file) {
     return JSON.parse(readFileSync(file, 'utf8')) as Row[];
   }
@@ -307,11 +307,11 @@ function serve(): Promise<void> {
         return json(200, { apps: configured });
       if (method === 'POST' && path === '/api/v1/apps/configure') {
         const asked = JSON.parse((await body(request)) || '{}');
-        if (!asked.app || asked.app.schema !== 'loop.app/v1') {
+        if (!asked.app || asked.app.schema !== 'agent.app/v1') {
           return json(422, {
             detail: {
               problems: [
-                'The application is not an Appspec (schema loop.app/v1).',
+                'The application is not an Appspec (schema agent.app/v1).',
               ],
             },
           });
@@ -349,7 +349,7 @@ function serve(): Promise<void> {
         raise(uid);
         response.writeHead(200, { 'Content-Type': 'text/event-stream' });
         response.write(
-          `data: ${JSON.stringify({ type: 'CUSTOM', name: 'loop.session', value: session })}\n\n`
+          `data: ${JSON.stringify({ type: 'CUSTOM', name: 'agent.session', value: session })}\n\n`
         );
         response.end();
         return;
@@ -579,7 +579,7 @@ function serve(): Promise<void> {
           // The second turn edits a file: the diff display the chat draws (SHIELD §4.3).
           send({
             type: 'CUSTOM',
-            name: 'loop.display',
+            name: 'agent.display',
             value: {
               kind: 'diff',
               path: 'README.md',
@@ -621,7 +621,7 @@ function serve(): Promise<void> {
         messages.set(uid, []);
         return json(201, row);
       }
-      json(404, { detail: `The stub loop does not serve ${method} ${path}.` });
+      json(404, { detail: `The stub agent does not serve ${method} ${path}.` });
     }
   );
 
@@ -686,7 +686,7 @@ if (args[0] === '--version') {
   serve();
 } else {
   console.error(
-    `The stub loop knows --version and serve; not: ${args.join(' ')}`
+    `The stub agent knows --version and serve; not: ${args.join(' ')}`
   );
   process.exit(2);
 }

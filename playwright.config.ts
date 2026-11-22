@@ -6,7 +6,7 @@
 /**
  * Playwright configuration for the e2e suite of the Electron app (DESKTOP
  * DK-15): `tests/e2e/*.e2e.ts`, one worker (one Electron at a time), the
- * app launched from its build by `tests/e2e/app.ts` with the stub `loop`
+ * app launched from its build by `tests/e2e/app.ts` with the stub `agent`
  * and the stub IAM — `npm run build` first, then `npm run test:e2e`
  * (`xvfb-run -a npm run test:e2e` on a Linux box without a display).
  *

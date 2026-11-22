@@ -5,7 +5,7 @@
 
 /**
  * What Datalayer Desktop adds to a session's menu through Agent Runtimes'
- * `loop.session.action` point, beside the chat's own entries (*Switch
+ * `agent.session.action` point, beside the chat's own entries (*Switch
  * agent…*, *Clone from here*, *Export*, *Import…*, *Resume*): *Rename…*,
  * *Archive* and *End* on the session API, *Reveal in Finder* for a session
  * on this machine (its folder, shown by the OS) and *Open in Apps*

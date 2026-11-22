@@ -7,9 +7,9 @@
  * The local runtime (DESKTOP DK-05) and the harness on the machine (DK-06),
  * the main process's side.
  *
- * The app finds `loop` on the person's machine (a path set in the app's
+ * The app finds `agent` on the person's machine (a path set in the app's
  * settings first, then `PATH`, then `uv tool`'s and `pipx`'s bins) with
- * agent-runtimes at 1.5.70 or later, and starts `loop serve --host
+ * agent-runtimes at 1.5.70 or later, and starts `agent serve --host
  * 127.0.0.1 --port 0` as a child process **per folder** (decisions D-10,
  * D-12: never VS Code's or a terminal's runtime), its port read from the
  * first line that names one, its output in the app's log. The environment
@@ -17,7 +17,7 @@
  * trimmed set, the credentials the harness specs declare by name (the
  * environment first, the app's keychain second — never anything
  * undeclared), the folder as the workspace, `AGENT_RUNTIMES_SESSION_STORE=
- * file`, and the person's token and IAM when signed in. Missing `loop`, a
+ * file`, and the person's token and IAM when signed in. Missing `agent`, a
  * release too old or Python absent is refused in a sentence naming
  * `uv tool install 'agent-runtimes[shield]'` — never bundled (D-4).
  *
@@ -42,7 +42,7 @@ import * as readline from 'readline';
 import { app } from 'electron';
 import log from 'electron-log/main';
 import {
-  candidateLoopPaths,
+  candidateAgentPaths,
   credentialSourceSaid,
   DESKTOP_HOST,
   type HarnessCheck,
@@ -51,10 +51,10 @@ import {
   harnessesOf,
   type HarnessMachine,
   loopbackSourcesOf,
-  LOOP_SERVE_ARGUMENTS,
-  type LoopDetection,
-  type LoopRefusalReason,
-  loopDetection,
+  AGENT_SERVE_ARGUMENTS,
+  type AgentDetection,
+  type AgentRefusalReason,
+  agentDetection,
   portOf,
   runtimeEnvironment,
   shieldPrefixOf,
@@ -77,7 +77,7 @@ export const REMEMBERED_FOLDERS = 10;
 /** How long the runtime has to name its port and answer `/health`. */
 const START_TIMEOUT_MS = 90_000;
 
-/** How long a command (`loop --version`, `node --version`) has. */
+/** How long a command (`agent --version`, `node --version`) has. */
 const COMMAND_TIMEOUT_MS = 30_000;
 
 /** The local runtime is not started: the sentence says why and what to do. */
@@ -87,7 +87,7 @@ export class LocalRuntimeRefused extends Error {
    * @param sentence - The sentence shown.
    */
   constructor(
-    public readonly reason: LoopRefusalReason | 'failed',
+    public readonly reason: AgentRefusalReason | 'failed',
     sentence: string
   ) {
     super(sentence);
@@ -98,7 +98,7 @@ export class LocalRuntimeRefused extends Error {
 /** A local runtime running for one folder. */
 export interface LocalRuntime extends LocalRuntimeInfo {
   pid: number;
-  loopPath: string;
+  agentPath: string;
 }
 
 /** What the service reads from the machine and the app, so the tests give their own. */
@@ -132,8 +132,8 @@ interface Running {
 
 /** The service. */
 export interface LocalRuntimes {
-  /** Finds `loop` and judges it: the configured path, `PATH`, uv tool's and pipx's bins. */
-  detect(): Promise<LoopDetection>;
+  /** Finds `agent` and judges it: the configured path, `PATH`, uv tool's and pipx's bins. */
+  detect(): Promise<AgentDetection>;
   /** The folder's runtime, started when it is not running; the folder remembered. */
   ensureRunning(folder: string): Promise<LocalRuntime>;
   /** Stops a folder's runtime, or every runtime. */
@@ -187,7 +187,7 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
     }
   };
 
-  const settings = (): { loopPath: string } => {
+  const settings = (): { agentPath: string } => {
     let parsed: unknown;
     try {
       parsed = JSON.parse(
@@ -196,11 +196,11 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
     } catch {
       parsed = undefined;
     }
-    const loopPath =
+    const agentPath =
       parsed && typeof parsed === 'object'
-        ? (parsed as Record<string, unknown>).loopPath
+        ? (parsed as Record<string, unknown>).agentPath
         : undefined;
-    return { loopPath: typeof loopPath === 'string' ? loopPath : '' };
+    return { agentPath: typeof agentPath === 'string' ? agentPath : '' };
   };
 
   const foldersFile = (): string => join(deps.userData(), FOLDERS_FILE);
@@ -237,12 +237,12 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
     writeFileSync(path, JSON.stringify({ folders: kept }, null, 2));
   };
 
-  const detect = async (): Promise<LoopDetection> => {
-    const candidates = candidateLoopPaths({
+  const detect = async (): Promise<AgentDetection> => {
+    const candidates = candidateAgentPaths({
       platform: deps.platform,
       home: deps.home(),
       pathVariable: deps.env().PATH,
-      configured: settings().loopPath,
+      configured: settings().agentPath,
     });
     let found: string | null = null;
     for (const candidate of candidates) {
@@ -252,10 +252,10 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
       }
     }
     if (!found) {
-      return loopDetection(null, DESKTOP_HOST);
+      return agentDetection(null, DESKTOP_HOST);
     }
     const answer = await deps.run(found, ['--version']);
-    return loopDetection(
+    return agentDetection(
       {
         path: found,
         versionOutput: answer.ok ? answer.output : null,
@@ -431,11 +431,11 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
       sessionsPath: deps.env().AGENT_RUNTIMES_SESSIONS_PATH,
     });
     deps.log(
-      `Starting \`loop ${LOOP_SERVE_ARGUMENTS.join(' ')}\` (${detection.path}, agent-runtimes ${detection.version}) in ${folder}` +
+      `Starting \`agent ${AGENT_SERVE_ARGUMENTS.join(' ')}\` (${detection.path}, agent-runtimes ${detection.version}) in ${folder}` +
         (signedIn ? ', signed in' : ', signed out') +
         `; credentials handed: ${Object.keys(credentials).join(', ') || 'none'}.`
     );
-    const child = deps.spawn(detection.path, [...LOOP_SERVE_ARGUMENTS], {
+    const child = deps.spawn(detection.path, [...AGENT_SERVE_ARGUMENTS], {
       cwd: folder,
       env: environment,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -452,7 +452,7 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
       version: detection.version,
       credentials,
       pid: child.pid ?? 0,
-      loopPath: detection.path,
+      agentPath: detection.path,
     };
     running.set(folder, { runtime, child });
     child.on('exit', (code, signal) => {

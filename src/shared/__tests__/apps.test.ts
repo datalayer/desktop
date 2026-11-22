@@ -26,7 +26,7 @@ import {
 } from '../apps';
 
 const SPEC = {
-  schema: 'loop.app/v1',
+  schema: 'agent.app/v1',
   name: 'Desk',
   kind: 'chat',
   description: 'Answers the books.',
@@ -101,7 +101,7 @@ describe('the applications', () => {
           type_s: 'app',
           name_t: 'Item name',
           model_s: JSON.stringify({
-            format: 'loop.app.item/v1',
+            format: 'agent.app.item/v1',
             spec: SPEC,
             state: { revision: 4 },
           }),

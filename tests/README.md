@@ -13,8 +13,8 @@ tests/
 │   ├── electron.ts           # Electron API mocks
 │   ├── datalayer-api.ts      # Datalayer Client/API mocks
 │   ├── websocket.ts          # WebSocket and proxy mocks
-│   ├── loop.ts, loop, loop.cmd # The stub `loop` (a local runtime from fixtures)
-│   ├── loop.test.ts          # The stub's own tests
+│   ├── agent.ts, agent, agent.cmd # The stub `agent` (a local runtime from fixtures)
+│   ├── agent.test.ts          # The stub's own tests
 │   └── iam.ts                # The stub IAM, Spacer and ai-agents (sign-in, Apps)
 ├── fixtures/                  # Test data
 │   └── index.ts              # Mock users, environments, runtimes, etc.
@@ -48,7 +48,7 @@ Tests that involve multiple components, services, or IPC communication.
 - `src/renderer/pages/NotebookEditor.integration.test.tsx`
 
 ### E2E Tests (`*.e2e.ts`)
-Full application tests using Playwright for Electron: the app launched from its build (`npm run build` first) with the stub `loop` on `PATH` and the stub IAM on loopback. See TESTING.md.
+Full application tests using Playwright for Electron: the app launched from its build (`npm run build` first) with the stub `agent` on `PATH` and the stub IAM on loopback. See TESTING.md.
 
 **Location**: `tests/e2e/`
 

@@ -93,7 +93,7 @@ describe('Build', () => {
       description: '',
       revision: 4,
       spec: {
-        schema: 'loop.app/v1',
+        schema: 'agent.app/v1',
         name: 'Desk',
         kind: 'chat',
         description: 'Answers the books.',

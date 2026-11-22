@@ -133,7 +133,7 @@ export interface LocalRuntimeInfo {
   /** `http://127.0.0.1:<port>`. */
   url: string;
   port: number;
-  /** agent-runtimes' version, as `loop --version` said it. */
+  /** agent-runtimes' version, as `agent --version` said it. */
   version: string;
   /** Where each declared credential came from (O-2). */
   credentials: Record<string, CredentialSource>;

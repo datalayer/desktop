@@ -6,12 +6,12 @@
 // @vitest-environment node
 
 /**
- * The stub `loop` answers what the app's main process asks of a local
+ * The stub `agent` answers what the app's main process asks of a local
  * runtime (DESKTOP DK-15): its version, the port line, the health, the
  * harness catalogue, the sessions list with its filters, a session opened,
  * described, resumed, cloned, exported and imported, a turn answered as
  * AG-UI events, and an approval decided over its websocket. Run here as the
- * app will run it: spawned from `tests/mocks/loop`, on `PATH`.
+ * app will run it: spawned from `tests/mocks/agent`, on `PATH`.
  */
 
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
@@ -19,7 +19,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 
-const LOOP = resolve(__dirname, 'loop');
+const AGENT = resolve(__dirname, 'agent');
 
 /** The port the stub names on its first line that names one. */
 function portOf(line: string): number | null {
@@ -27,12 +27,12 @@ function portOf(line: string): number | null {
   return picked ? Number(picked[1]) : null;
 }
 
-describe('the stub loop', () => {
+describe('the stub agent', () => {
   let child: ChildProcess;
   let base = '';
 
   beforeAll(async () => {
-    child = spawn(LOOP, ['serve', '--host', '127.0.0.1', '--port', '0'], {
+    child = spawn(AGENT, ['serve', '--host', '127.0.0.1', '--port', '0'], {
       env: { ...process.env, AGENT_RUNTIMES_WORKSPACE_ROOT: '/tmp/a-folder' },
     });
     const port = await new Promise<number>((done, failed) => {
@@ -66,13 +66,13 @@ describe('the stub loop', () => {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
 
-  it('says its version as loop does', () => {
-    const answered = spawnSync(LOOP, ['--version'], { encoding: 'utf8' });
+  it('says its version as agent does', () => {
+    const answered = spawnSync(AGENT, ['--version'], { encoding: 'utf8' });
     expect(answered.status).toBe(0);
     expect(answered.stdout.trim()).toBe('agent_runtimes: 1.5.70');
-    const older = spawnSync(LOOP, ['--version'], {
+    const older = spawnSync(AGENT, ['--version'], {
       encoding: 'utf8',
-      env: { ...process.env, LOOP_STUB_VERSION: '1.5.60' },
+      env: { ...process.env, AGENT_STUB_VERSION: '1.5.60' },
     });
     expect(older.stdout.trim()).toBe('agent_runtimes: 1.5.60');
   });

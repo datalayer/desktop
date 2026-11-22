@@ -82,7 +82,7 @@ describe('the application picker', () => {
       'app'
     );
     expect(spec).toMatchObject({
-      schema: 'loop.app/v1',
+      schema: 'agent.app/v1',
       id: 'desktop-claude-code',
       name: 'Claude Code in app',
       agent: 'example-harness-claude-code',
@@ -115,7 +115,7 @@ describe('the runtime’s answers', () => {
     expect(
       sessionUidOfEvents([
         { type: 'RUN_STARTED' },
-        { type: 'CUSTOM', name: 'loop.session', value: { uid: 's-9' } },
+        { type: 'CUSTOM', name: 'agent.session', value: { uid: 's-9' } },
       ])
     ).toBe('s-9');
     expect(() => sessionUidOfEvents([{ type: 'RUN_STARTED' }])).toThrow(

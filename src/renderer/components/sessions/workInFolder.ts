@@ -10,7 +10,7 @@
  * editing in the folder done, deleting and running a command asked first,
  * every action in the record), then the folder's own Appspecs; the body of
  * `POST /api/v1/apps/configure`; the agent the runtime made; the session
- * the start stream names (`loop.session`); a refusal as the runtime said
+ * the start stream names (`agent.session`); a refusal as the runtime said
  * it; the chat's protocol on a local runtime — the session API's AG-UI
  * route of the agent, each thread a session, with its ui channel and its
  * sessions route, nothing signed (the runtime is this machine's own).
@@ -56,7 +56,7 @@ export const WORK_IN_FOLDER_WORDS = {
 } as const;
 
 /** The Appspec schema an application declares. */
-export const APPSPEC_SCHEMA = 'loop.app/v1';
+export const APPSPEC_SCHEMA = 'agent.app/v1';
 
 /** The id prefix of the blank harness application. */
 export const BLANK_APP_PREFIX = 'desktop-';
@@ -214,13 +214,13 @@ export function agentIdOf(answer: unknown): string {
 }
 
 /**
- * The session a start stream names: the `loop.session` event's `uid`.
+ * The session a start stream names: the `agent.session` event's `uid`.
  *
  * @throws Error when no event names one: the runtime opened no session.
  */
 export function sessionUidOfEvents(events: readonly AgUiEvent[]): string {
   for (const event of events) {
-    if (event.type === 'CUSTOM' && event.name === 'loop.session') {
+    if (event.type === 'CUSTOM' && event.name === 'agent.session') {
       const value =
         event.value && typeof event.value === 'object'
           ? (event.value as Record<string, unknown>)

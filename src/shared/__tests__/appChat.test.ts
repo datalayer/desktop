@@ -71,8 +71,8 @@ const item = (spec: Record<string, unknown>, revision = 3) => ({
   document: {
     name_t: 'Support Desk',
     model_s: JSON.stringify({
-      format: 'loop.app.item/v1',
-      spec: { schema: 'loop.app/v1', name: 'Support Desk', ...spec },
+      format: 'agent.app.item/v1',
+      spec: { schema: 'agent.app/v1', name: 'Support Desk', ...spec },
       state: { revision },
     }),
   },
@@ -723,18 +723,18 @@ describe('the review of 2026-10-07: live only, the version said, a signed user s
       )
     ).toEqual({
       threadId: 't',
-      forwardedProps: { loop: { user_token: 'u.t.k' } },
+      forwardedProps: { agent: { user_token: 'u.t.k' } },
     });
     expect(
       JSON.parse(
         withUserToken(
           JSON.stringify({
-            forwardedProps: { voice: 1, loop: { modes: ['x'] } },
+            forwardedProps: { voice: 1, agent: { modes: ['x'] } },
           }),
           'u'
         )
       ).forwardedProps
-    ).toEqual({ voice: 1, loop: { modes: ['x'], user_token: 'u' } });
+    ).toEqual({ voice: 1, agent: { modes: ['x'], user_token: 'u' } });
     expect(withUserToken('not json', 'u')).toBe('not json');
     expect(withUserToken('[1]', 'u')).toBe('[1]');
     const sent: Array<[string, RequestInit | undefined]> = [];
@@ -757,7 +757,7 @@ describe('the review of 2026-10-07: live only, the version said, a signed user s
     );
     await wrapped('https://example.com/x');
     expect(
-      JSON.parse(String(sent[0][1]?.body)).forwardedProps.loop.user_token
+      JSON.parse(String(sent[0][1]?.body)).forwardedProps.agent.user_token
     ).toBe('u.t.k');
     expect(sent[1][1]?.body).toBe('{}');
     expect(sent[2][1]).toBeUndefined();

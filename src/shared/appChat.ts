@@ -10,7 +10,7 @@
  * *Your applications* and talks to it as its hosted page does: over the
  * runtime's session API, an AG-UI run on
  * `<runtime>/api/v1/apps/agents/<agent>/ag-ui/` whose thread is the session
- * (LOOP R-04, APPS R-02), on the deployment's always-on runtime
+ * (AGENT R-04, APPS R-02), on the deployment's always-on runtime
  * (`always_on_record.url`, `always_on_record.agent_id`, R-33), with the person's own token — which
  * the main process lends to those requests only (`lentHeaders`), the view
  * never asking for it. Its approvals (R-05) are the Tool Approvals of
@@ -146,8 +146,8 @@ export const SURFACE = 'Desktop';
 /** How a value of the host is named (as agent-runtimes' `HOST_NAME`). */
 const HOST_NAME = /^[a-z][a-z0-9_]{0,62}$/;
 
-/** The format of an application's Spacer item (`loop.app.item/v1`). */
-export const APP_ITEM_FORMAT = 'loop.app.item/v1';
+/** The format of an application's Spacer item (`agent.app.item/v1`). */
+export const APP_ITEM_FORMAT = 'agent.app.item/v1';
 
 /** The four behaviours a rule may say. */
 const BEHAVIOURS = ['do_it', 'if_asked', 'ask_first', 'leave_to_me'];
@@ -533,7 +533,7 @@ export function revisionRefusal(
 /**
  * Whether the deployed application takes only a signed user (D-21): then
  * Datalayer signs the person signed in for it (`fetchUserToken`), and the
- * token goes with each run as `forwardedProps.loop.user_token`.
+ * token goes with each run as `forwardedProps.agent.user_token`.
  *
  * @param host - What its Appspec says of its host.
  *
@@ -649,7 +649,7 @@ export async function fetchUserToken(
 }
 
 /**
- * A run's body with the user token in it, as `forwardedProps.loop.user_token`
+ * A run's body with the user token in it, as `forwardedProps.agent.user_token`
  * — what the runtime verifies as the session opens. A body that is not a
  * JSON object goes as it was.
  *
@@ -673,7 +673,7 @@ export function withUserToken(body: string, token: string): string {
     ...(run as Record<string, unknown>),
     forwardedProps: {
       ...given,
-      loop: { ...record(given.loop), user_token: token },
+      agent: { ...record(given.agent), user_token: token },
     },
   });
 }

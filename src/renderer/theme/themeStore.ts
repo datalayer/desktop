@@ -22,7 +22,7 @@ import { createThemeStore } from '@datalayer/primer-addons';
 export const useThemeStore: ReturnType<typeof createThemeStore> =
   createThemeStore('datalayer-desktop-theme', {
     colorMode: 'light',
-    theme: 'loop',
+    theme: 'agent',
   });
 
 export default useThemeStore;

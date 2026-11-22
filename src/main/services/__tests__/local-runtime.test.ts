@@ -5,7 +5,7 @@
 
 /**
  * The local runtime (DESKTOP DK-05) and the harness check (DK-06) against
- * a stub `loop` (a Node script answering `--version`, printing its port,
+ * a stub `agent` (a Node script answering `--version`, printing its port,
  * serving `/health`, `/api/v1/harnesses` and the sessions): the refusals
  * (absent, too old) each naming the install line, the port read, the
  * environment handed (nothing beyond the declared names, the file store,
@@ -61,14 +61,14 @@ const CLAUDE_CODE_SPEC = {
 };
 
 /**
- * The stub `loop`: `--version`, then `serve` on a free port, the Uvicorn
- * line, the routes. Its shebang is absolute, as a real `loop`'s is into its
+ * The stub `agent`: `--version`, then `serve` on a free port, the Uvicorn
+ * line, the routes. Its shebang is absolute, as a real `agent`'s is into its
  * venv: the trimmed environment hands no PATH that finds `node`.
  */
 const STUB = `#!${process.execPath}
 const http = require('http');
 if (process.argv[2] === '--version') {
-  console.log(process.env.STUB_LOOP_VERSION || 'Agent Runtimes Chat v1.5.70');
+  console.log(process.env.STUB_AGENT_VERSION || 'Agent Runtimes Chat v1.5.70');
   process.exit(0);
 }
 if (process.argv[2] !== 'serve') {
@@ -96,7 +96,7 @@ describe('the local runtime', () => {
   let root: string;
   let userData: string;
   let folder: string;
-  let loopPath: string;
+  let agentPath: string;
   let kept: Record<string, string | undefined>;
   const logged: string[] = [];
   let runtimes: import('../local-runtime').LocalRuntimes;
@@ -107,12 +107,12 @@ describe('the local runtime', () => {
     folder = join(root, 'project');
     mkdirSync(userData, { recursive: true });
     mkdirSync(folder, { recursive: true });
-    loopPath = join(root, 'loop');
-    writeFileSync(loopPath, STUB);
-    chmodSync(loopPath, 0o755);
+    agentPath = join(root, 'agent');
+    writeFileSync(agentPath, STUB);
+    chmodSync(agentPath, 0o755);
     kept = {};
     logged.length = 0;
-    delete process.env.STUB_LOOP_VERSION;
+    delete process.env.STUB_AGENT_VERSION;
     const { createLocalRuntimes, pathExists, runCommand } =
       await import('../local-runtime');
     runtimes = createLocalRuntimes({
@@ -122,7 +122,7 @@ describe('the local runtime', () => {
         PATH: join(root, 'empty-bin'),
         HOME: root,
         AWS_SECRET_ACCESS_KEY: 'never',
-        STUB_LOOP_VERSION: process.env.STUB_LOOP_VERSION,
+        STUB_AGENT_VERSION: process.env.STUB_AGENT_VERSION,
       }),
       userData: () => userData,
       credentials: {
@@ -158,7 +158,7 @@ describe('the local runtime', () => {
     writeFileSync(join(userData, 'settings.json'), JSON.stringify(settings));
   };
 
-  it('refuses an absent loop in a sentence naming the install line, and a release too old', async () => {
+  it('refuses an absent agent in a sentence naming the install line, and a release too old', async () => {
     const absent = await runtimes.detect();
     expect(absent.ok).toBe(false);
     if (!absent.ok) {
@@ -172,24 +172,24 @@ describe('the local runtime', () => {
       /was not found/
     );
 
-    configure({ loopPath });
-    process.env.STUB_LOOP_VERSION = 'agent_runtimes: 1.5.69';
+    configure({ agentPath });
+    process.env.STUB_AGENT_VERSION = 'agent_runtimes: 1.5.69';
     const old = await runtimes.detect();
     expect(old.ok).toBe(false);
     if (!old.ok) {
       expect(old.reason).toBe('too-old');
       expect(old.sentence).toContain('Datalayer Desktop needs 1.5.70 or later');
     }
-    delete process.env.STUB_LOOP_VERSION;
+    delete process.env.STUB_AGENT_VERSION;
     expect(await runtimes.detect()).toEqual({
       ok: true,
-      path: loopPath,
+      path: agentPath,
       version: '1.5.70',
     });
   });
 
-  it('starts loop serve per folder, reads its port, hands the trimmed environment with the file store, and admits it on loopback', async () => {
-    configure({ loopPath });
+  it('starts agent serve per folder, reads its port, hands the trimmed environment with the file store, and admits it on loopback', async () => {
+    configure({ agentPath });
     const changes: number[] = [];
     runtimes.onChange(() => changes.push(runtimes.list().length));
     const runtime = await runtimes.ensureRunning(folder);
@@ -223,7 +223,7 @@ describe('the local runtime', () => {
   });
 
   it('hands the declared credential from the keychain once the catalogue is read, and says so', async () => {
-    configure({ loopPath });
+    configure({ agentPath });
     kept.ANTHROPIC_API_KEY = 'sk-from-keychain';
     await runtimes.ensureRunning(folder);
     const harnesses = await runtimes.harnesses(folder);
@@ -240,7 +240,7 @@ describe('the local runtime', () => {
   });
 
   it('checks the harness against the machine: the adapter not pinned offered, the keychain said (DK-06)', async () => {
-    configure({ loopPath });
+    configure({ agentPath });
     kept.ANTHROPIC_API_KEY = 'sk-from-keychain';
     await runtimes.ensureRunning(folder);
     const result = await runtimes.checkHarness('claude-code');
@@ -268,7 +268,7 @@ describe('the local runtime', () => {
   });
 
   it('starts the last folder remembered at launch (O-7), and nothing when none is', async () => {
-    configure({ loopPath });
+    configure({ agentPath });
     expect(await runtimes.startLastFolder()).toBeNull();
     expect(logged.join('\n')).toContain('No folder remembered');
     const other = join(root, 'other');

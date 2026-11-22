@@ -13,7 +13,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Renderers } from '@datalayer/reactor/ui';
-import { LoopSessionAction } from '@datalayer/agent-runtimes/lib/apps/core';
+import { AgentSessionAction } from '@datalayer/agent-runtimes/lib/apps/core';
 import {
   SHIELD_DIFF_TYPE,
   SHIELD_TERMINAL_TYPE,
@@ -38,7 +38,7 @@ describe('the desktop Reactor (DK-01)', () => {
     reactor.start();
     await reactor.whenReady();
     const ids = reactor
-      .getContributions(LoopSessionAction)
+      .getContributions(AgentSessionAction)
       .map(entry => entry.value.id);
     expect(ids).toEqual([
       'switch-agent',

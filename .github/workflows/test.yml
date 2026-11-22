@@ -36,7 +36,7 @@ jobs:
           npm run test:unit
 
   e2e-tests:
-    # The app launched from its build with the stub loop and the stub IAM
+    # The app launched from its build with the stub agent and the stub IAM
     # (DESKTOP DK-15): no Datalayer account, no Python, no installer built.
     name: E2E Tests
     runs-on: ubuntu-latest

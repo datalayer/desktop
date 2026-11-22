@@ -18,7 +18,7 @@
  * refused in a sentence. One that takes only a signed user (D-21) is opened
  * with a user token ai-agents signs for the person (asked by the main
  * process, `appChatAPI.userToken`), put in each run's body as
- * `forwardedProps.loop.user_token` (`signedRunFetch`) while the chat is
+ * `forwardedProps.agent.user_token` (`signedRunFetch`) while the chat is
  * open; what its host may pass (D-10) decides whether its
  * agent is given `host_context`, answered with the notebook last in front as
  * `page`. Its approvals (R-05, DK-13) are ai-agents' Tool Approvals, read

@@ -49,13 +49,13 @@ Download the latest version for your operating system from the [releases page](h
 
 ### A coding agent on your machine
 
-To work with a coding agent in a folder of yours, the app needs `loop` — the Datalayer agent runtime — installed on your machine, with the Shield, at **1.5.70 or later**:
+To work with a coding agent in a folder of yours, the app needs `agent` — the Datalayer agent runtime — installed on your machine, with the Shield, at **1.5.70 or later**:
 
 ```bash
 uv tool install 'agent-runtimes[shield]'
 ```
 
-(or `pipx install 'agent-runtimes[shield]'`). The app finds it on your `PATH`, in `uv tool`'s and `pipx`'s folders, or at the path you set in its settings; an older `loop`, or none, is refused in a sentence naming this line. Nothing is bundled: the same `loop` serves your terminal (`loop sessions list`) and the Datalayer extension for VS Code.
+(or `pipx install 'agent-runtimes[shield]'`). The app finds it on your `PATH`, in `uv tool`'s and `pipx`'s folders, or at the path you set in its settings; an older `agent`, or none, is refused in a sentence naming this line. Nothing is bundled: the same `agent` serves your terminal (`agent sessions list`) and the Datalayer extension for VS Code.
 
 For the agent itself (Claude Code, Codex), the app checks what the agent needs — Node, the agent's adapter, its credential (`ANTHROPIC_API_KEY` for Claude Code, from your environment or typed once into the app's keychain, never shown or logged) — and offers to install the missing part, showing the command whole before it runs.
 
@@ -74,7 +74,7 @@ For the agent itself (Claude Code, Codex), the app checks what the agent needs �
 4. **Sessions** - the app opens on your sessions: the ones on Datalayer, and *No session on this machine yet — File → Work in a folder…* until you open a folder.
 5. **Work in a folder** - *File → Work in a folder…*, pick a folder, Claude Code and the blank harness application: the session's first line says your folder's instructions file is kept. Ask for an edit: the diff appears in the chat and the file changes in your folder. When a rule asks you first, decide in the chat.
 6. **A session on Datalayer** - *File → New session on Datalayer…* lists your applications kept always on (turn on *Always on* in the application's Ship tab in Apps); pick one and talk to it in the same chat. A session listed *on Datalayer* opens on the kept runtime of its application; one whose application is not kept always on says so.
-7. **Come back** - quit and reopen: the local session is listed *paused* with its folder and resumes on it. `loop sessions list` in a terminal and VS Code's Sessions view show the same sessions; a session started in VS Code appears here as *open in VS Code or a terminal* until VS Code pauses it.
+7. **Come back** - quit and reopen: the local session is listed *paused* with its folder and resumes on it. `agent sessions list` in a terminal and VS Code's Sessions view show the same sessions; a session started in VS Code appears here as *open in VS Code or a terminal* until VS Code pauses it.
 
 ### Where things live
 
@@ -103,16 +103,16 @@ npm start                            # development mode, hot reload, DevTools
 ```bash
 npm run test:unit     # vitest: the main process's services, the pure modules, the renderer's pages
 npm run build         # the app's bundle (not an installer)
-npm run test:e2e      # Playwright: the app launched from its build with a stub `loop` and a stub sign-in
+npm run test:e2e      # Playwright: the app launched from its build with a stub `agent` and a stub sign-in
 ```
 
-The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/loop` stands in for `loop`, `tests/mocks/iam.ts` for Datalayer's sign-in and Apps' services. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
+The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/agent` stands in for `agent`, `tests/mocks/iam.ts` for Datalayer's sign-in and Apps' services. On a Linux box without a display: `xvfb-run -a npm run test:e2e`. Both suites run in CI on every push.
 
 ### The pass before 0.1.0
 
 What is checked on a real machine, with Claude Code and a funded key, before the version is tagged:
 
-1. `uv tool install 'agent-runtimes[shield]'` at 1.5.70 or later; an older `loop` is refused in a sentence.
+1. `uv tool install 'agent-runtimes[shield]'` at 1.5.70 or later; an older `agent` is refused in a sentence.
 2. `npm start` on the branch, or the development build from the GitHub pre-release.
 3. *Sign in with GitHub* inside the app; the app lands on **Sessions** with the sessions Datalayer's Activity lists, and *No session on this machine yet*.
 4. *File → Work in a folder…* on a folder **with** its own `CLAUDE.md`, Claude Code, the blank harness application: the session's first line says the file is kept.
@@ -120,21 +120,21 @@ What is checked on a real machine, with Claude Code and a funded key, before the
 6. A `git push` asked: with another window in front, the OS notification names the class and not the arguments, the badge says 1, the chat shows the request whole; *Decline* from the chat, the agent told.
 7. *Switch agent…* to Codex, the sentence shown and the agent told; *Clone from here* at turn 1 gives a *paused* row; *Export* to a file; *Import…* of that file with *on Datalayer* picked gives a new *paused* row on Datalayer, resumed in the same chat.
 8. A session on Datalayer from the web's Activity opened from the list and resumed.
-9. The app quit and reopened: the local session listed *paused* with its folder, resumed on the folder's runtime; `loop sessions list` and VS Code's Sessions view show the same local sessions; a session started in VS Code appears as *open in VS Code or a terminal* until VS Code pauses it.
+9. The app quit and reopened: the local session listed *paused* with its folder, resumed on the folder's runtime; `agent sessions list` and VS Code's Sessions view show the same local sessions; a session started in VS Code appears as *open in VS Code or a terminal* until VS Code pauses it.
 10. Then the tag `v0.1.0`.
 
 ### A coding agent in your folder
 
-Datalayer Desktop runs a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, as a **session** on this machine. It needs `loop` from Agent Runtimes on your machine, at 1.5.70 or later, installed once:
+Datalayer Desktop runs a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, as a **session** on this machine. It needs `agent` from Agent Runtimes on your machine, at 1.5.70 or later, installed once:
 
 ```bash
 uv tool install 'agent-runtimes[shield]'
 ```
 
-Desktop looks for `loop` on your `PATH`, then under `uv tool`'s and `pipx`'s folders; to point it elsewhere, put `{ "loopPath": "/path/to/loop" }` in `settings.json` in Desktop's user data folder (`~/.config/Datalayer Desktop` on Linux, `~/Library/Application Support/Datalayer Desktop` on macOS, `%APPDATA%\Datalayer Desktop` on Windows). When `loop` is missing or too old, Desktop says so and names the install line; nothing is bundled.
+Desktop looks for `agent` on your `PATH`, then under `uv tool`'s and `pipx`'s folders; to point it elsewhere, put `{ "agentPath": "/path/to/agent" }` in `settings.json` in Desktop's user data folder (`~/.config/Datalayer Desktop` on Linux, `~/Library/Application Support/Datalayer Desktop` on macOS, `%APPDATA%\Datalayer Desktop` on Windows). When `agent` is missing or too old, Desktop says so and names the install line; nothing is bundled.
 
-- **One runtime per folder.** For each folder you work in, Desktop starts its own `loop serve` on a port of this machine and stops it when you quit or choose **File → Stop the local runtime**. At launch it starts the runtime of the last folder you worked in, so your sessions on this machine are listed right away; the last ten folders are remembered.
-- **Where sessions live.** On this machine, in `~/.datalayer/sessions` — the same store `loop sessions …` in a terminal and the Datalayer VS Code extension use, so a session started there is listed here too (one that is still open elsewhere says so, and is resumed here once it is paused). On Datalayer, in your account; the list shows both places.
+- **One runtime per folder.** For each folder you work in, Desktop starts its own `agent serve` on a port of this machine and stops it when you quit or choose **File → Stop the local runtime**. At launch it starts the runtime of the last folder you worked in, so your sessions on this machine are listed right away; the last ten folders are remembered.
+- **Where sessions live.** On this machine, in `~/.datalayer/sessions` — the same store `agent sessions …` in a terminal and the Datalayer VS Code extension use, so a session started there is listed here too (one that is still open elsewhere says so, and is resumed here once it is paused). On Datalayer, in your account; the list shows both places.
 - **What the agent gets.** A trimmed environment (your `PATH`, home and locale, never your whole shell), the folder as its workspace, and only the credential its harness declares — `ANTHROPIC_API_KEY` for Claude Code — taken from your environment first, else from the key you give Desktop once, kept encrypted in the OS keychain (never in settings, never shown, never logged). Desktop says which it used. A machine without an OS keychain keeps nothing: set the key in your environment instead. Signed in, the agent also gets your Datalayer token and IAM address so the Shield can read your organization's policy.
 - **Before the agent starts**, Desktop checks what the harness needs — Node and its version, git, the pinned adapter, the credential — and offers `agent-shield setup --harness <id>` for what is missing, the command shown whole before it runs.
 - **Approvals.** When a rule says _ask me first_, the request appears whole in the chat, and you approve or decline it there — on this machine over the runtime's own channel, on Datalayer through Tool Approvals; one answered elsewhere says so.

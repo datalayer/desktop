@@ -6,7 +6,7 @@
 /**
  * The e2e suite's app (DESKTOP DK-15): Datalayer Desktop launched by
  * Playwright from its build (`dist/`, `npm run build` first) with the stub
- * `loop` on `PATH`, the stub IAM and landing on loopback, a user data folder
+ * `agent` on `PATH`, the stub IAM and landing on loopback, a user data folder
  * of its own — nothing of it needs a Datalayer account, Python or a model.
  *
  * `launchApp` gives the Electron app, its window and the stubs;
@@ -37,7 +37,7 @@ import { startStubIam, type StubIam } from '../mocks/iam';
 /** The repository, where `package.json` names the built main process. */
 export const APP_ROOT = resolve(__dirname, '../..');
 
-/** Where the stub `loop` lives: prepended to `PATH`. */
+/** Where the stub `agent` lives: prepended to `PATH`. */
 export const STUB_BIN = resolve(APP_ROOT, 'tests/mocks');
 
 /** A launched app with what it was launched against. */
@@ -61,12 +61,12 @@ export interface LaunchedApp {
 export interface LaunchOptions {
   userData?: string;
   iam?: StubIam;
-  /** The folder the stub loop names as its sessions' workspace. */
+  /** The folder the stub agent names as its sessions' workspace. */
   workspace?: string;
   /**
    * Folders remembered as worked in (`sessions-folders.json`, the first
    * being the last): the app starts the last one's runtime at launch, so
-   * the stub `loop` serves its planted sessions from the start.
+   * the stub `agent` serves its planted sessions from the start.
    */
   rememberedFolders?: string[];
   /**

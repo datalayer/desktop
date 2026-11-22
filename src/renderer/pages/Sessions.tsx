@@ -52,7 +52,7 @@ import {
 } from '@primer/octicons-react';
 import { useContributions } from '@datalayer/reactor/react';
 import {
-  LoopSessionAction,
+  AgentSessionAction,
   type SessionActionContext,
 } from '@datalayer/agent-runtimes/lib/apps/core';
 import { SessionChooseDialog } from '@datalayer/agent-runtimes/lib/apps/plugins/chat/SessionChooseDialog';
@@ -190,7 +190,7 @@ const Sessions: React.FC<SessionsProps> = ({
   const [pickDeployment, setPickDeployment] = useState(false);
   const [asked, setAsked] = useState<Asked | null>(null);
   const [choice, setChoice] = useState<Choice | null>(null);
-  const entries = useContributions(LoopSessionAction);
+  const entries = useContributions(AgentSessionAction);
 
   // The list, read on open, on a change either side says, and by the button.
   const refresh = useCallback(async () => {

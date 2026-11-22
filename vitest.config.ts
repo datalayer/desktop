@@ -9,7 +9,7 @@
  * One configuration, three projects (vitest 3.2's `test.projects`, which
  * replaces the workspace file): `main` for the main process's services and
  * the IPC contract (node, one process per file — they mock `electron` and
- * spawn the stub `loop`), `unit` for the pure modules and the renderer's
+ * spawn the stub `agent`), `unit` for the pure modules and the renderer's
  * pages (happy-dom), and `integration` for the tests that cross services
  * (`*.integration.test`). `npm run test:unit` runs `main` and `unit`.
  * Nothing here starts Electron — that is the Playwright suite under
@@ -31,7 +31,7 @@ const aliases = {
   '@tests': resolve(__dirname, './tests'),
 };
 
-/** The main process's tests: node, no DOM, the IPC contract, the stub loop. */
+/** The main process's tests: node, no DOM, the IPC contract, the stub agent. */
 const MAIN_TESTS = [
   'src/main/**/__tests__/**/*.test.ts',
   'src/shared/__tests__/ipcTypes.test.ts',

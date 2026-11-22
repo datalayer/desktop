@@ -227,9 +227,9 @@ export async function startStubIam(
           type_s: 'app',
           name_t: 'Desk',
           model_s: JSON.stringify({
-            format: 'loop.app.item/v1',
+            format: 'agent.app.item/v1',
             spec: {
-              schema: 'loop.app/v1',
+              schema: 'agent.app/v1',
               name: 'Desk',
               kind: 'chat',
               description: 'Answers the books.',

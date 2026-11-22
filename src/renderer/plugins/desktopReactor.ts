@@ -8,7 +8,7 @@
  * renderer, it carries the Shield's display renderers — a diff in the
  * file's language, a terminal's command and output, drawn in the chat's
  * tool rows (`ShieldDisplaysPlugin`, Agent Runtimes' own) — and the
- * `loop.session.action` entries a session's `⋯` menu is drawn from: the
+ * `agent.session.action` entries a session's `⋯` menu is drawn from: the
  * chat's five (`CHAT_SESSION_ACTIONS`, imported, never copied) and the
  * app's own (`desktopSessionActions`).
  *
@@ -26,7 +26,7 @@ import {
 } from '@datalayer/reactor';
 import { registerReactor } from '@datalayer/reactor/react';
 import {
-  LoopSessionAction,
+  AgentSessionAction,
   type SessionActionContribution,
 } from '@datalayer/agent-runtimes/lib/apps/core';
 import { CHAT_SESSION_ACTIONS } from '@datalayer/agent-runtimes/lib/apps/plugins/chat/sessionActions';
@@ -56,7 +56,7 @@ export function desktopSessionsPlugin(
     octicon: 'comment-discussion',
     emoji: '\u{1F4AC}',
     contributes: entries.map(entry =>
-      contribution(LoopSessionAction, entry, {
+      contribution(AgentSessionAction, entry, {
         id: entry.id,
         order: entry.order,
       })

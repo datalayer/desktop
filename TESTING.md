@@ -45,7 +45,7 @@ npm run test:e2e       # tests/e2e/*.e2e.ts, one Electron at a time
 xvfb-run -a npm run test:e2e   # on Linux without a display
 ```
 
-The app is launched from its build by `tests/e2e/app.ts` with the stub `loop` (`tests/mocks/loop`, a Node script answering `--version`, `serve`, the sessions, harnesses and approvals routes from fixtures) on `PATH`, and the stub IAM and landing (`tests/mocks/iam.ts`) as `DATALAYER_IAM_URL` and `DATALAYER_LANDING_URL`; the user data folder is a temporary one (`DATALAYER_DESKTOP_USER_DATA`). Nothing needs an account, Python or a model. With `ELECTRON_RENDERER_URL=http://localhost:5173` and `npx electron-vite dev --rendererOnly` running, the suite drives the development renderer instead of the bundle (a machine whose shell sets `ELECTRON_RUN_AS_NODE` is handled by the fixture). CI runs it on ubuntu (`test.yml`, the *E2E Tests* job) after the unit job.
+The app is launched from its build by `tests/e2e/app.ts` with the stub `agent` (`tests/mocks/agent`, a Node script answering `--version`, `serve`, the sessions, harnesses and approvals routes from fixtures) on `PATH`, and the stub IAM and landing (`tests/mocks/iam.ts`) as `DATALAYER_IAM_URL` and `DATALAYER_LANDING_URL`; the user data folder is a temporary one (`DATALAYER_DESKTOP_USER_DATA`). Nothing needs an account, Python or a model. With `ELECTRON_RENDERER_URL=http://localhost:5173` and `npx electron-vite dev --rendererOnly` running, the suite drives the development renderer instead of the bundle (a machine whose shell sets `ELECTRON_RUN_AS_NODE` is handled by the fixture). CI runs it on ubuntu (`test.yml`, the *E2E Tests* job) after the unit job.
 
 ### 3. Check the Results
 

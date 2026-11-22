@@ -39,7 +39,7 @@ export interface MenuState {
   appName: string;
   /** The person is signed in to Datalayer. */
   signedIn: boolean;
-  /** A local runtime (`loop serve`) of the app is running (DK-05). */
+  /** A local runtime (`agent serve`) of the app is running (DK-05). */
   localRuntimeRunning: boolean;
   /** A session is open in the chat (DK-07). */
   sessionInFront: boolean;

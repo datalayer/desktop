@@ -7,7 +7,7 @@
  * The Sessions page's view model (DESKTOP DK-07, DK-09): the merged list
  * the main process answers (`sessions:list`, agent-runtimes'
  * `portable/sessionList`: the places, the groups by application, each row
- * as `loop sessions list` prints it, the elsewhere rule) paged for the
+ * as `agent sessions list` prints it, the elsewhere rule) paged for the
  * page; what opening a row does — the always-on deployment of its application,
  * or the local runtime of its folder, started first when it is not
  * running — and the sentences said when it cannot: a session held in VS

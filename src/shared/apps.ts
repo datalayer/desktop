@@ -7,7 +7,7 @@
  * Apps, native (DESKTOP DK-02): what the main process reads for the
  * *Apps* tab and hands the renderer — the person's applications (their
  * Spacer items of type `app`), one application's Appspec (its item's
- * `loop.app.item/v1` model), the person's deployments at ai-agents — and
+ * `agent.app.item/v1` model), the person's deployments at ai-agents — and
  * the one change the tab makes, a deployment paused or resumed for one
  * exact version (agent-runtimes' `stateChangeBody`).
  *

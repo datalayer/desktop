@@ -5,7 +5,7 @@
 
 /**
  * The sessions (DESKTOP DK-07, DK-09, DK-13, DK-15): signed in, with the
- * stub `loop` on `PATH` and a folder remembered, the app starts that
+ * stub `agent` on `PATH` and a folder remembered, the app starts that
  * folder's runtime at launch, the Sessions page lists this machine's
  * sessions from the stub's file store with their state and folder, a row
  * opens its conversation in the chat, an approval the stub raises is
