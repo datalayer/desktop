@@ -68,7 +68,7 @@ const CLAUDE_CODE_SPEC = {
 const STUB = `#!${process.execPath}
 const http = require('http');
 if (process.argv[2] === '--version') {
-  console.log(process.env.STUB_AGENT_VERSION || 'Agent Runtimes Chat v1.5.70');
+  console.log(process.env.STUB_AGENT_VERSION || 'Agent Runtimes Chat v1.8.0');
   process.exit(0);
 }
 if (process.argv[2] !== 'serve') {
@@ -173,18 +173,18 @@ describe('the local runtime', () => {
     );
 
     configure({ agentPath });
-    process.env.STUB_AGENT_VERSION = 'agent_runtimes: 1.5.69';
+    process.env.STUB_AGENT_VERSION = 'agent_runtimes: 1.7.9';
     const old = await runtimes.detect();
     expect(old.ok).toBe(false);
     if (!old.ok) {
       expect(old.reason).toBe('too-old');
-      expect(old.sentence).toContain('Datalayer Desktop needs 1.5.70 or later');
+      expect(old.sentence).toContain('Datalayer Desktop needs 1.8.0 or later');
     }
     delete process.env.STUB_AGENT_VERSION;
     expect(await runtimes.detect()).toEqual({
       ok: true,
       path: agentPath,
-      version: '1.5.70',
+      version: '1.8.0',
     });
   });
 
@@ -194,7 +194,7 @@ describe('the local runtime', () => {
     runtimes.onChange(() => changes.push(runtimes.list().length));
     const runtime = await runtimes.ensureRunning(folder);
     expect(runtime.url).toBe(`http://127.0.0.1:${runtime.port}`);
-    expect(runtime.version).toBe('1.5.70');
+    expect(runtime.version).toBe('1.8.0');
     expect(runtime.folderName).toBe('project');
     expect(runtimes.list()).toHaveLength(1);
     expect(await runtimes.ensureRunning(folder)).toBe(runtime);

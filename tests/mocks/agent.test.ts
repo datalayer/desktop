@@ -69,12 +69,12 @@ describe('the stub agent', () => {
   it('says its version as agent does', () => {
     const answered = spawnSync(AGENT, ['--version'], { encoding: 'utf8' });
     expect(answered.status).toBe(0);
-    expect(answered.stdout.trim()).toBe('agent_runtimes: 1.5.70');
+    expect(answered.stdout.trim()).toBe('agent_runtimes: 1.8.0');
     const older = spawnSync(AGENT, ['--version'], {
       encoding: 'utf8',
-      env: { ...process.env, AGENT_STUB_VERSION: '1.5.60' },
+      env: { ...process.env, AGENT_STUB_VERSION: '1.7.9' },
     });
-    expect(older.stdout.trim()).toBe('agent_runtimes: 1.5.60');
+    expect(older.stdout.trim()).toBe('agent_runtimes: 1.7.9');
   });
 
   it('is healthy and serves the harness catalogue', async () => {

@@ -9,7 +9,7 @@
  *
  * The app finds `agent` on the person's machine (a path set in the app's
  * settings first, then `PATH`, then `uv tool`'s and `pipx`'s bins) with
- * agent-runtimes at 1.5.70 or later, and starts `agent serve --host
+ * agent-runtimes at {@link AGENT_MIN_VERSION} or later, and starts `agent serve --host
  * 127.0.0.1 --port 0` as a child process **per folder** (decisions D-10,
  * D-12: never VS Code's or a terminal's runtime), its port read from the
  * first line that names one, its output in the app's log. The environment
@@ -79,6 +79,12 @@ const START_TIMEOUT_MS = 90_000;
 
 /** How long a command (`agent --version`, `node --version`) has. */
 const COMMAND_TIMEOUT_MS = 30_000;
+
+/**
+ * The oldest Agent Runtimes whose `agent` Desktop starts: 1.8.0, the release
+ * that names the command `agent` (it was `loop`, with no alias).
+ */
+export const AGENT_MIN_VERSION = '1.8.0';
 
 /** The local runtime is not started: the sentence says why and what to do. */
 export class LocalRuntimeRefused extends Error {
@@ -252,7 +258,7 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
       }
     }
     if (!found) {
-      return agentDetection(null, DESKTOP_HOST);
+      return agentDetection(null, DESKTOP_HOST, AGENT_MIN_VERSION);
     }
     const answer = await deps.run(found, ['--version']);
     return agentDetection(
@@ -261,7 +267,8 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
         versionOutput: answer.ok ? answer.output : null,
         failure: answer.ok ? undefined : answer.output,
       },
-      DESKTOP_HOST
+      DESKTOP_HOST,
+      AGENT_MIN_VERSION
     );
   };
 
@@ -276,7 +283,7 @@ export function createLocalRuntimes(deps: LocalRuntimeDeps): LocalRuntimes {
     if (!response.ok) {
       throw new LocalRuntimeRefused(
         'failed',
-        `The local runtime at ${url} answered ${response.status} for /api/v1/harnesses: it is older than 1.5.70 — update it with \`uv tool install 'agent-runtimes[shield]'\`.`
+        `The local runtime at ${url} answered ${response.status} for /api/v1/harnesses: it is older than ${AGENT_MIN_VERSION} — update it with \`uv tool install 'agent-runtimes[shield]'\`.`
       );
     }
     harnessCache = harnessesOf(await response.json());

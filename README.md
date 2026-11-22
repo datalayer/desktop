@@ -49,7 +49,7 @@ Download the latest version for your operating system from the [releases page](h
 
 ### A coding agent on your machine
 
-To work with a coding agent in a folder of yours, the app needs `agent` — the Datalayer agent runtime — installed on your machine, with the Shield, at **1.5.70 or later**:
+To work with a coding agent in a folder of yours, the app needs `agent` — the Datalayer agent runtime — installed on your machine, with the Shield, at **1.8.0 or later**:
 
 ```bash
 uv tool install 'agent-runtimes[shield]'
@@ -112,7 +112,7 @@ The e2e suite needs no Datalayer account, no Python and no model: `tests/mocks/a
 
 What is checked on a real machine, with Claude Code and a funded key, before the version is tagged:
 
-1. `uv tool install 'agent-runtimes[shield]'` at 1.5.70 or later; an older `agent` is refused in a sentence.
+1. `uv tool install 'agent-runtimes[shield]'` at 1.8.0 or later; an older `agent` is refused in a sentence.
 2. `npm start` on the branch, or the development build from the GitHub pre-release.
 3. *Sign in with GitHub* inside the app; the app lands on **Sessions** with the sessions Datalayer's Activity lists, and *No session on this machine yet*.
 4. *File → Work in a folder…* on a folder **with** its own `CLAUDE.md`, Claude Code, the blank harness application: the session's first line says the file is kept.
@@ -125,7 +125,7 @@ What is checked on a real machine, with Claude Code and a funded key, before the
 
 ### A coding agent in your folder
 
-Datalayer Desktop runs a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, as a **session** on this machine. It needs `agent` from Agent Runtimes on your machine, at 1.5.70 or later, installed once:
+Datalayer Desktop runs a coding agent (Claude Code, Codex) in a folder of yours, under the Shield's rules, as a **session** on this machine. It needs `agent` from Agent Runtimes on your machine, at 1.8.0 or later, installed once:
 
 ```bash
 uv tool install 'agent-runtimes[shield]'

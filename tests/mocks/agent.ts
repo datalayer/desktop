@@ -8,7 +8,7 @@
  * no model, no key. Run as `node tests/mocks/agent.ts` (Node 22 strips the
  * types; `tests/mocks/agent` is the wrapper a `PATH` entry points at).
  *
- * It answers `--version` (`agent_runtimes: 1.5.70`, `AGENT_STUB_VERSION`
+ * It answers `--version` (`agent_runtimes: 1.8.0`, `AGENT_STUB_VERSION`
  * to say another), and `serve --host 127.0.0.1 --port 0` prints the lines
  * the real command prints (`Auto-selected free port N`, `Uvicorn running on
  * http://127.0.0.1:N`) and serves what the app's main process and tests call:
@@ -46,7 +46,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { WebSocketServer, type WebSocket } from 'ws';
 
-const VERSION = process.env.AGENT_STUB_VERSION || '1.5.70';
+const VERSION = process.env.AGENT_STUB_VERSION || '1.8.0';
 const args = process.argv.slice(2);
 
 type Row = Record<string, unknown>;
